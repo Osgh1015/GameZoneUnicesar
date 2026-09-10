@@ -46,7 +46,7 @@ public class SalePersistence {
                 writer.write(System.lineSeparator());
             }
         } catch (IOException e) {
-            System.out.println("Error saving sales: " + e.getMessage());
+            System.out.println("Error al guardar las ventas: " + e.getMessage());
         }
     }
 
@@ -72,7 +72,7 @@ public class SalePersistence {
             }
         } catch (IOException e) {
             // If the file does not exist yet, we simply start with no sales.
-            System.out.println("No previous sales file found. Starting empty.");
+            System.out.println("“No se encontró un archivo de ventas anterior. Se inicia vacío.”");
         }
         return sales;
     }
