@@ -10,6 +10,15 @@ public abstract class Product {
     private double price;
     private int quantity;
 
+    /**
+     * Creates a new product with its common attributes.
+     *
+     * @param id       unique identifier of the product
+     * @param title    product title
+     * @param price    unit price of the product
+     * @param quantity quantity currently available in inventory
+     */
+    
     public Product(String id, String title, double price, int quantity) {
         this.id = id;
         this.title = title;
@@ -48,4 +57,13 @@ public abstract class Product {
     public void setQuantity(int quantity) {
         this.quantity = quantity;
     }
+
+    /**
+     * Builds a complete textual description of the product, integrating
+     * the particular characteristics of each subclass. Every subclass
+     * must provide its own implementation.
+     *
+     * @return a full description of the product
+     */
+    public abstract String getDescription();
 }
