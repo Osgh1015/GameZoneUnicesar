@@ -49,7 +49,7 @@ public class PersonRepository {
         List<Client> clients = new ArrayList<>();
         File file = new File(CLIENTS_FILE);
         if (!file.exists()) {
-            return clients;
+            System.out.println("No vendors file found yet. Starting with an empty list.");
         }
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
@@ -87,6 +87,7 @@ public class PersonRepository {
      * @return the list of vendors found, or an empty list if the file
      *         does not exist yet
      */
+
     public List<Vendor> loadVendors() {
         List<Vendor> vendors = new ArrayList<>();
         File file = new File(VENDORS_FILE);
