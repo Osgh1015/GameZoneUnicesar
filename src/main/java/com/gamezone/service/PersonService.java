@@ -40,8 +40,10 @@ public class PersonService {
      * @param client the client to register
      */
     public void registerClient(Client client) {
-        clients.add(client);
-        repository.saveClients(clients);
+        if (client.getName() == null || client.getName().isBlank()) {
+            throw new IllegalArgumentException("Client name cannot be empty");
+        }
+        clients.add(client); repository.saveClients(clients);
     }
 
     /**
