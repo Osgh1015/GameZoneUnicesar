@@ -1,12 +1,27 @@
 package com.gamezone.model;
 
-
+/**
+ * Abstract base class for every person that interacts with the store.
+ * <p>
+ * It groups the attributes that are common to any person (id, name and
+ * phone number), regardless of the specific role they play in the system
+ * (Client or Vendor). It cannot be instantiated directly: a "generic
+ * person" with no role does not make sense for the business, since every
+ * person in the store is either a Client or a Vendor.
+ */
 public abstract class Person {
 
     private String id;
     private String name;
     private String phone;
 
+    /**
+     * Creates a new person with the attributes shared by all roles.
+     *
+     * @param id    unique identification of the person
+     * @param name  full name of the person
+     * @param phone contact phone number
+     */
     public Person(String id, String name, String phone) {
         this.id = id;
         this.name = name;
@@ -37,5 +52,13 @@ public abstract class Person {
         this.phone = phone;
     }
 
+    /**
+     * Returns a short description of this person, including the
+     * information that is specific to their role. Every subclass must
+     * provide its own implementation, since the way a Client and a
+     * Vendor describe themselves is different.
+     *
+     * @return a human-readable description of the person
+     */
     public abstract String describe();
 }
