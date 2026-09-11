@@ -17,8 +17,34 @@ public class VideoGame extends Product {
         this.ageRating = ageRating;
     }
 
+    public String getPlatform() {
+        return platform;
+    }
+
+    public void setPlatform(String platform) {
+        this.platform = platform;
+    }
+
+    public String getGenre() {
+        return genre;
+    }
+
+    public void setGenre(String genre) {
+        this.genre = genre;
+    }
+
+    public String getAgeRating() {
+        return ageRating;
+    }
+
+    public void setAgeRating(String ageRating) {
+        this.ageRating = ageRating;
+    }
+
     @Override
     public String getDescription() {
-        return null;
+        return String.format(
+                "Video Game: %s | Platform: %s | Genre: %s | Age Rating: %s | Price: %.2f | Stock: %d",
+                getTitle(), platform, genre, ageRating, getPrice(), getQuantity());
     }
 }
