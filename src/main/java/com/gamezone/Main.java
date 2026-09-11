@@ -16,9 +16,8 @@ import com.gamezone.ui.ConsoleMenu;
 public class Main {
 
     public static void main(String[] args) {
-        // NOTA: cuando Desarrollador 1 y Desarrollador 2 entreguen sus
-        // clases de persistencia reales, aquí se debe cargar también el
-        // inventario de productos y los clientes previamente guardados.
+
+        
         ProductService productService = new ProductService();
         PersonService personService = new PersonService();
 
