@@ -21,8 +21,8 @@ public class ProductRepository {
     private static final String DELIMITER = ";";
     private final String filePath;
 
-    public ProductRepository(String filePath) {
-        this.filePath = filePath;
+    public ProductRepository() {
+        this.filePath = "data/products.txt";
     }
 
     public void save(List<Product> products) {

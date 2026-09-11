@@ -1,2 +1,4 @@
 VIDEOGAME;P001;The Legend of Zelda;69.99;10;Switch;Adventure;E
 CONSOLE;P002;PlayStation 5;499.99;5;Sony;Slim;9
+VIDEOGAME;111;Minecraft;30.0;15;Microsoft store;Adventure;5
+CONSOLE;222;xbox one;300.0;7;Microsoft;slim;6

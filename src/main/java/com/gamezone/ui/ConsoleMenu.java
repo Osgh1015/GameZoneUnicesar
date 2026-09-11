@@ -1,9 +1,11 @@
 package com.gamezone.ui;
 
 import com.gamezone.model.Client;
+import com.gamezone.model.Console;
 import com.gamezone.model.Product;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Seller;
+import com.gamezone.model.VideoGame;
 import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
 import com.gamezone.service.SaleService;
@@ -83,11 +85,11 @@ public class ConsoleMenu {
 
         switch (option) {
             case "1":
-                System.out.println("(Se delega al flujo de registro del Desarrollador 1.)");
+                registerVideoGameFlow();
                 break;
 
             case "2":
-                System.out.println("(Se delega al flujo de registro del Desarrollador 1.)");
+                registerConsoleFlow();
                 break;
 
             case "3":
@@ -99,7 +101,7 @@ public class ConsoleMenu {
 
                 for (Product p : products) {
                     System.out.println(
-                            p.getDescription() + " | stock: " + p.getStock()
+                            p.getDescription() + " | stock: " + p.getQuantity()
                     );
                 }
                 break;
@@ -110,6 +112,48 @@ public class ConsoleMenu {
             default:
                 System.out.println("Opción inválida.");
         }
+    }
+
+    private void registerVideoGameFlow() {
+        System.out.print("ID del producto: ");
+        String id = scanner.nextLine();
+        System.out.print("Título: ");
+        String title = scanner.nextLine();
+        System.out.print("Precio: ");
+        double price = Double.parseDouble(scanner.nextLine());
+        System.out.print("Cantidad en stock: ");
+        int quantity = Integer.parseInt(scanner.nextLine());
+        System.out.print("Plataforma: ");
+        String platform = scanner.nextLine();
+        System.out.print("Género: ");
+        String genre = scanner.nextLine();
+        System.out.print("Clasificación de edad: ");
+        String ageRating = scanner.nextLine();
+
+        VideoGame videoGame = new VideoGame(id, title, price, quantity, platform, genre, ageRating);
+        productService.registerVideoGame(videoGame);
+        System.out.println("Videojuego registrado correctamente.");
+    }
+
+    private void registerConsoleFlow() {
+        System.out.print("ID del producto: ");
+        String id = scanner.nextLine();
+        System.out.print("Título: ");
+        String title = scanner.nextLine();
+        System.out.print("Precio: ");
+        double price = Double.parseDouble(scanner.nextLine());
+        System.out.print("Cantidad en stock: ");
+        int quantity = Integer.parseInt(scanner.nextLine());
+        System.out.print("Marca: ");
+        String brand = scanner.nextLine();
+        System.out.print("Modelo: ");
+        String model = scanner.nextLine();
+        System.out.print("Generación: ");
+        int generation = Integer.parseInt(scanner.nextLine());
+
+        Console console = new Console(id, title, price, quantity, brand, model, generation);
+        productService.registerConsole(console);
+        System.out.println("Consola registrada correctamente.");
     }
 
     private void peopleMenu() {
@@ -124,7 +168,7 @@ public class ConsoleMenu {
 
         switch (option) {
             case "1":
-                System.out.println("(Se delega al flujo de registro del Desarrollador 2.)");
+                registerClientFlow();
                 break;
 
             case "2":
@@ -145,6 +189,21 @@ public class ConsoleMenu {
             default:
                 System.out.println("Opción inválida.");
         }
+    }
+
+    private void registerClientFlow() {
+        System.out.print("ID del cliente: ");
+        String id = scanner.nextLine();
+        System.out.print("Nombre completo: ");
+        String name = scanner.nextLine();
+        System.out.print("Teléfono: ");
+        String phone = scanner.nextLine();
+        System.out.print("Correo electrónico: ");
+        String email = scanner.nextLine();
+
+        Client client = new Client(id, name, phone, email);
+        personService.registerClient(client);
+        System.out.println("Cliente registrado correctamente.");
     }
 
     private void salesMenu() {

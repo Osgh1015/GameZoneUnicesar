@@ -1,7 +1,7 @@
 package com.gamezone.service;
 
 import com.gamezone.model.Client;
-import com.gamezone.model.Vendor;
+import com.gamezone.model.Seller;
 import com.gamezone.persistence.PersonRepository;
 
 import java.util.List;
@@ -20,16 +20,14 @@ public class PersonService {
 
     private final PersonRepository repository;
     private List<Client> clients;
-    private List<Vendor> vendors;
+    private List<Seller> vendors;
 
     /**
      * Creates the service, loading clients and vendors already stored
      * on disk.
-     *
-     * @param repository the repository used to read/write person data
      */
-    public PersonService(PersonRepository repository) {
-        this.repository = repository;
+    public PersonService() {
+        this.repository = new PersonRepository();
         this.clients = repository.loadClients();
         this.vendors = repository.loadVendors();
     }
@@ -62,7 +60,7 @@ public class PersonService {
      *
      * @return the list of vendors
      */
-    public List<Vendor> listVendors() {
+    public List<Seller> listVendors() {
         return vendors;
     }
 
@@ -87,12 +85,29 @@ public class PersonService {
      * @param id the vendor id to search for
      * @return the matching vendor, or {@code null} if not found
      */
-    public Vendor findVendorById(String id) {
-        for (Vendor v : vendors) {
+    public Seller findVendorById(String id) {
+        for (Seller v : vendors) {
             if (v.getId().equals(id)) {
                 return v;
             }
         }
         return null;
+    }
+
+    public Seller findSellerById(String id) {
+        for (Seller v : vendors) {
+            if (v.getId().equals(id)) {
+                return v;
+            }
+        }
+        return null;
+    }
+
+    public Seller[] listSellers() {
+        return vendors.toArray(new Seller[0]);
+    }
+
+    public void preloadSeller(Seller seller) {
+        vendors.add(seller);
     }
 }
