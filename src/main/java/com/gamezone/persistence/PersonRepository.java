@@ -1,7 +1,7 @@
 package com.gamezone.persistence;
 
 import com.gamezone.model.Client;
-import com.gamezone.model.Vendor;
+import com.gamezone.model.Seller;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -50,7 +50,8 @@ public class PersonRepository {
         List<Client> clients = new ArrayList<>();
         File file = new File(CLIENTS_FILE);
         if (!file.exists()) {
-            System.out.println("No vendors file found yet. Starting with an empty list.");
+            System.out.println("No clients file found yet. Starting with an empty list.");
+            return clients;
         }
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
@@ -72,8 +73,8 @@ public class PersonRepository {
      *         does not exist yet
      */
 
-    public List<Vendor> loadVendors() {
-        List<Vendor> vendors = new ArrayList<>();
+    public List<Seller> loadVendors() {
+        List<Seller> vendors = new ArrayList<>();
         File file = new File(VENDORS_FILE);
         if (!file.exists()) {
             return vendors;
@@ -83,7 +84,7 @@ public class PersonRepository {
             while ((line = reader.readLine()) != null) {
                 if (line.isBlank()) continue;
                 String[] parts = line.split(";");
-                vendors.add(new Vendor(parts[0], parts[1], parts[2], parts[3], parts[4]));
+                vendors.add(new Seller(parts[0], parts[1], parts[2], parts[3], parts[4]));
             }
         } catch (IOException e) {
             System.out.println("Error loading vendors: " + e.getMessage());

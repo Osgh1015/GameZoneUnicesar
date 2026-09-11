@@ -31,4 +31,11 @@ public class Client extends Person {
         return email;
     }
 
+    public String getDescription() {
+        return "Client: " + getName() + " | ID: " + getId() + " | Phone: " + getPhone() + " | Email: " + email;
+    }
+
+    public String getFullName() {
+        return getName();
+    }
 }

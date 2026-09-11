@@ -17,8 +17,8 @@ public class ProductService {
     private final ProductRepository repository;
     private final List<Product> products;
 
-    public ProductService(ProductRepository repository) {
-        this.repository = repository;
+    public ProductService() {
+        this.repository = new ProductRepository();
         this.products = repository.load();
     }
 
@@ -53,10 +53,18 @@ public class ProductService {
         repository.save(products);
     }
 
-    private Product findById(String id) {
+    public Product findById(String id) {
         for (Product product : products) {
             if (product.getId().equals(id)) return product;
         }
         return null;
+    }
+
+    public void reduceStock(String productId, int amount) {
+        decreaseStock(productId, amount);
+    }
+
+    public List<Product> listAll() {
+        return listProducts();
     }
 }

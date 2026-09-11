@@ -114,7 +114,7 @@ public class SaleService {
                     .filter(id -> id.equals(product.getId()))
                     .count();
 
-            if (product.getStock() < requested) {
+            if (product.getQuantity() < requested) {
                 return false;
             }
         }

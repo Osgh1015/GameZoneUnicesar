@@ -9,7 +9,7 @@ package com.gamezone.model;
  * the team (they are already hired staff) instead of being registered
  * through the user interface.
  */
-public class Vendor extends Person {
+public class Seller extends Person {
 
     private String employeeCode;
     private String workShift;
@@ -23,7 +23,7 @@ public class Vendor extends Person {
      * @param employeeCode internal employee code
      * @param workShift    assigned work shift (e.g. "Morning", "Afternoon")
      */
-    public Vendor(String id, String name, String phone, String employeeCode, String workShift) {
+    public Seller(String id, String name, String phone, String employeeCode, String workShift) {
         super(id, name, phone);
         this.employeeCode = employeeCode;
         this.workShift = workShift;
@@ -45,4 +45,11 @@ public class Vendor extends Person {
         this.workShift = workShift;
     }
 
+    public String getDescription() {
+        return "Seller: " + getName() + " | ID: " + getId() + " | Employee Code: " + employeeCode + " | Shift: " + workShift;
+    }
+
+    public String getFullName() {
+        return getName();
+    }
 }
