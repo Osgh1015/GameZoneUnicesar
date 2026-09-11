@@ -31,15 +31,4 @@ public class Client extends Person {
         return email;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String describe() {
-        return "Client: " + getName() + " (ID: " + getId() + ", email: " + email + ")";
-    }
 }

@@ -66,23 +66,6 @@ public class PersonRepository {
     }
 
     /**
-     * Saves the given list of vendors to the vendors data file,
-     * overwriting any previous content.
-     *
-     * @param vendors the vendors to persist
-     */
-    public void saveVendors(List<Vendor> vendors) {
-        try (PrintWriter writer = new PrintWriter(new FileWriter(VENDORS_FILE))) {
-            for (Vendor v : vendors) {
-                writer.println(v.getId() + ";" + v.getName() + ";" + v.getPhone() + ";"
-                        + v.getEmployeeCode() + ";" + v.getWorkShift());
-            }
-        } catch (IOException e) {
-            System.out.println("Error saving vendors: " + e.getMessage());
-        }
-    }
-
-    /**
      * Loads all vendors previously saved in the vendors data file.
      *
      * @return the list of vendors found, or an empty list if the file

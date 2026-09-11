@@ -40,25 +40,8 @@ public abstract class Person {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public String getPhone() {
         return phone;
     }
 
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    /**
-     * Returns a short description of this person, including the
-     * information that is specific to their role. Every subclass must
-     * provide its own implementation, since the way a Client and a
-     * Vendor describe themselves is different.
-     *
-     * @return a human-readable description of the person
-     */
-    public abstract String describe();
 }

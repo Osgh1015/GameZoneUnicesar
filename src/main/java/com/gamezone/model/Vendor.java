@@ -45,12 +45,4 @@ public class Vendor extends Person {
         this.workShift = workShift;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public String describe() {
-        return "Vendor: " + getName() + " (Employee code: " + employeeCode
-                + ", Shift: " + workShift + ")";
-    }
 }
