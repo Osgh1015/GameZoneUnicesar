@@ -7,7 +7,7 @@ import java.time.LocalDate;
  * covers manufacturing defects and accidental damage, lasts twelve
  * months from the sale date and costs ten percent of the price of the
  * covered product.
- 
+
  */
 public class ExtendedWarranty extends Warranty {
 

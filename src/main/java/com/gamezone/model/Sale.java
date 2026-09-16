@@ -19,6 +19,7 @@ public class Sale {
     private Client client;
     private Seller seller;
     private List<Product> products;
+    private double warrantyCost;
 
     /**
      * Creates a new sale.
@@ -34,6 +35,7 @@ public class Sale {
         this.client = client;
         this.seller = seller;
         this.products = new ArrayList<>();
+        this.warrantyCost = 0.0;
     }
 
     public String getId() {
@@ -70,6 +72,27 @@ public class Sale {
     }
 
     /**
+     * Returns the extra amount charged for the extended warranties
+     * requested during this sale.
+     *
+     * @return the accumulated cost of the extended warranties
+     */
+    public double getWarrantyCost() {
+        return warrantyCost;
+    }
+
+    /**
+     * Adds the cost of an extended warranty to this sale. It is called
+     * once for every extended warranty granted, so the total of the
+     * sale always reflects the coverage the client actually bought.
+     *
+     * @param amount additional cost to accumulate
+     */
+    public void addWarrantyCost(double amount) {
+        this.warrantyCost += amount;
+    }
+
+    /**
      * A sale is only valid if it contains at least one product.
      * @return true if the sale has one or more products
      */
@@ -88,6 +111,9 @@ public class Sale {
         for (Product product : products) {
             total += product.getPrice();
         }
+        // The extended warranties requested by the client are part of
+        // the amount the client has to pay for this sale.
+        total += warrantyCost;
         return total;
     }
 
