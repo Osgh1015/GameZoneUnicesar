@@ -5,6 +5,7 @@ import com.gamezone.model.Product;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Seller;
 import com.gamezone.persistence.SalePersistence;
+import com.gamezone.model.Accessory;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -25,14 +26,17 @@ public class SaleService {
     private SalePersistence salePersistence;
     private ProductService productService;
     private PersonService personService;
+    private final AccessoryService accessoryService;
 
     public SaleService(SalePersistence salePersistence,
                        ProductService productService,
-                       PersonService personService) {
+                       PersonService personService,
+                       AccessoryService accessoryService) {
         this.salePersistence = salePersistence;
         this.productService = productService;
         this.personService = personService;
         this.sales = salePersistence.loadAll(productService, personService);
+        this.accessoryService = accessoryService;
     }
 
     /**
@@ -44,7 +48,9 @@ public class SaleService {
      * @param clientId   id of the client making the purchase
      * @param sellerId   id of the seller attending the sale
      * @param productIds ids of the products purchased (may repeat if more
-     *                   than one unit of the same product is bought)
+     *                   than one unit of the same product is bought). Ids
+     *                   may belong either to the product catalogue or to
+     *                   the accessory catalogue.
      * @return the registered sale, or null if validation failed
      */
     public Sale registerSale(String clientId, String sellerId, List<String> productIds) {
@@ -65,7 +71,7 @@ public class SaleService {
         List<Product> products = new ArrayList<>();
 
         for (String productId : productIds) {
-            Product product = productService.findById(productId);
+            Product product = findSellableItem(productId);
 
             if (product == null) {
                 System.out.println("Producto no encontrado: " + productId);
@@ -95,15 +101,36 @@ public class SaleService {
             return null;
         }
 
-        // Update inventory automatically for each product sold.
-        for (String productId : productIds) {
-            productService.reduceStock(productId, 1);
+        // Update inventory automatically for each item sold, delegating
+        // to the service that owns that item's stock (product or accessory).
+        for (Product product : products) {
+            if (product instanceof Accessory) {
+                accessoryService.decreaseStock(product.getId(), 1);
+            } else {
+                productService.reduceStock(product.getId(), 1);
+            }
         }
 
         sales.add(sale);
         salePersistence.saveAll(sales);
 
         return sale;
+    }
+
+    /**
+     * Resolves a sale item id, which may belong either to the product
+     * catalogue (video games, consoles) or to the accessory catalogue
+     * (controllers, cables, memory units).
+     *
+     * @param itemId identifier of the item being sold
+     * @return the matching product or accessory, or {@code null} if neither exists
+     */
+    private Product findSellableItem(String itemId) {
+        Product product = productService.findById(itemId);
+        if (product != null) {
+            return product;
+        }
+        return accessoryService.findById(itemId);
     }
 
     private boolean hasSufficientStock(List<Product> products, List<String> productIds) {
