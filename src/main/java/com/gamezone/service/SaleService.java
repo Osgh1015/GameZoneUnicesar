@@ -38,11 +38,14 @@ public class SaleService {
      * @param productService   service that owns the product catalogue
      * @param personService    service that owns clients and sellers
      * @param accessoryService service that owns the accessory catalogue
+     * @param warrantyService  service used to grant the warranties that
+     *                         every sale generates
      */
     public SaleService(SalePersistence salePersistence,
                        ProductService productService,
                        PersonService personService,
-                       AccessoryService accessoryService) {
+                       AccessoryService accessoryService,
+                       WarrantyService warrantyService) {
         this.salePersistence = salePersistence;
         this.productService = productService;
         this.personService = personService;
