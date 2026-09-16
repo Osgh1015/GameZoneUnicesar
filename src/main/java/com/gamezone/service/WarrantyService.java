@@ -22,7 +22,7 @@ import java.util.UUID;
  * responsibility to the repository, respecting the layer separation
  * required by the workshop.
  *
- 
+
  */
 public class WarrantyService {
 
