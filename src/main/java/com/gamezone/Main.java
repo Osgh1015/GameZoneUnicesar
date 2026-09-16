@@ -3,18 +3,20 @@ package com.gamezone;
 import com.gamezone.model.Seller;
 import com.gamezone.persistence.AccessoryRepository;
 import com.gamezone.persistence.SalePersistence;
+import com.gamezone.persistence.WarrantyRepository;
 import com.gamezone.service.AccessoryService;
 import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
 import com.gamezone.service.SaleService;
+import com.gamezone.service.WarrantyService;
 import com.gamezone.ui.ConsoleMenu;
 
 /**
- * Application entry point. Wires together the four modules (products,
- * people, sales, accessories), loads initial data and starts the
- * console interface.
+ * Application entry point. Wires together the five modules (products,
+ * people, sales, accessories, warranties), loads initial data and
+ * starts the console interface.
  *
- * Responsabilidad: Líder Técnico.
+
  */
 public class Main {
 
@@ -30,9 +32,19 @@ public class Main {
         AccessoryService accessoryService = new AccessoryService(accessoryRepository);
 
         SalePersistence salePersistence = new SalePersistence("data/sales.txt");
-        SaleService saleService = new SaleService(salePersistence, productService, personService, accessoryService);
 
-        ConsoleMenu menu = new ConsoleMenu(productService, personService, saleService, accessoryService);
+        // The warranty module is built before the sales module because
+        // every sale registered from now on grants warranties, while a
+        // warranty only needs to read the sales already stored.
+        WarrantyRepository warrantyRepository = new WarrantyRepository(
+                "data/warranties.csv", productService, accessoryService, salePersistence, personService);
+        WarrantyService warrantyService = new WarrantyService(warrantyRepository);
+
+        SaleService saleService = new SaleService(
+                salePersistence, productService, personService, accessoryService, warrantyService);
+
+        ConsoleMenu menu = new ConsoleMenu(
+                productService, personService, saleService, accessoryService, warrantyService);
         menu.start();
     }
 

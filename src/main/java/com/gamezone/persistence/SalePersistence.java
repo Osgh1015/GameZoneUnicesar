@@ -18,7 +18,12 @@ import java.util.List;
 /**
  * Handles saving and loading Sale records to and from a plain text file.
  * Each line represents one sale in CSV format:
- * id;date;clientId;sellerId;productId1|productId2|...
+ * id;date;clientId;sellerId;productId1|productId2|...;warrantyCost
+ *
+ * The last field stores the cost of the extended warranties requested
+ * during the sale. Lines written before the warranty module existed
+ * have only five fields and are still read correctly, assuming a
+ * warranty cost of zero.
  *
  * Responsabilidad: Líder Técnico - Módulo de Ventas.
  * Nota: esta clase NO contiene reglas de negocio, solo lectura/escritura
@@ -90,7 +95,8 @@ public class SalePersistence {
                 + sale.getDate() + SEPARATOR
                 + sale.getClient().getId() + SEPARATOR
                 + sale.getSeller().getId() + SEPARATOR
-                + productIds;
+                + productIds + SEPARATOR
+                + sale.getWarrantyCost();
     }
 
     private Sale fromLine(String line, ProductService productService, PersonService personService) {
@@ -113,6 +119,9 @@ public class SalePersistence {
                     sale.addProduct(product);
                 }
             }
+        }
+        if (parts.length >= 6 && !parts[5].isEmpty()) {
+            sale.addWarrantyCost(Double.parseDouble(parts[5]));
         }
         return sale;
     }
