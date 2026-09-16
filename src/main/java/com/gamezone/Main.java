@@ -1,15 +1,18 @@
 package com.gamezone;
 
 import com.gamezone.model.Seller;
+import com.gamezone.persistence.AccessoryRepository;
 import com.gamezone.persistence.SalePersistence;
+import com.gamezone.service.AccessoryService;
 import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
 import com.gamezone.service.SaleService;
 import com.gamezone.ui.ConsoleMenu;
 
 /**
- * Application entry point. Wires together the three modules (products,
- * people, sales), loads initial data and starts the console interface.
+ * Application entry point. Wires together the four modules (products,
+ * people, sales, accessories), loads initial data and starts the
+ * console interface.
  *
  * Responsabilidad: Líder Técnico.
  */
@@ -17,16 +20,19 @@ public class Main {
 
     public static void main(String[] args) {
 
-        
+
         ProductService productService = new ProductService();
         PersonService personService = new PersonService();
 
         preloadSellers(personService);
 
-        SalePersistence salePersistence = new SalePersistence("data/sales.txt");
-        SaleService saleService = new SaleService(salePersistence, productService, personService);
+        AccessoryRepository accessoryRepository = new AccessoryRepository("data/accessories.csv");
+        AccessoryService accessoryService = new AccessoryService(accessoryRepository);
 
-        ConsoleMenu menu = new ConsoleMenu(productService, personService, saleService);
+        SalePersistence salePersistence = new SalePersistence("data/sales.txt");
+        SaleService saleService = new SaleService(salePersistence, productService, personService, accessoryService);
+
+        ConsoleMenu menu = new ConsoleMenu(productService, personService, saleService, accessoryService);
         menu.start();
     }
 
