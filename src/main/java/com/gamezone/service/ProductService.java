@@ -64,6 +64,21 @@ public class ProductService {
         decreaseStock(productId, amount);
     }
 
+    /**
+     * Increases the stock of the given product by the specified quantity
+     * and persists the change.
+     * @param productId the id of the product to restore
+     * @param amount    the quantity to add back to stock
+     */
+    public void restoreStock(String productId, int amount) {
+        Product product = findById(productId);
+        if (product == null) {
+            throw new NoSuchElementException("Product not found: " + productId);
+        }
+        product.setQuantity(product.getQuantity() + amount);
+        repository.save(products);
+    }
+
     public List<Product> listAll() {
         return listProducts();
     }
