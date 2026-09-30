@@ -34,6 +34,8 @@ Diagramas de diseño disponibles en la carpeta [`docs/`](./docs):
 - [`docs/hierarchy-diagram.md`](./docs/hierarchy-diagram.md) — Diagrama de jerarquías
 - [`docs/class-diagram.md`](./docs/class-diagram.md) — Diagrama de clases
 - [`docs/layers-diagram.md`](./docs/layers-diagram.md) — Diagrama de capas
+- [`docs/promotion-analysis.md`](./docs/promotion-analysis.md) — Análisis del módulo de promociones
+- [`docs/promotion-class-diagram.md`](./docs/promotion-class-diagram.md) — Diagrama de clases del módulo de promociones
 
 ## Requisitos previos
 
@@ -77,10 +79,16 @@ El menú de consola permite ejecutar las siguientes operaciones:
 - Consultar el historial completo de ventas
 - Consultar el historial de compras de un cliente específico
 - Consultar el historial de ventas atendidas por un vendedor específico
+- Ver el detalle (recibo) de una venta, con subtotal, descuento aplicado y total final
+
+**Gestión de promociones**
+- Registrar promociones por porcentaje, por categoría (`VIDEOGAME` / `CONSOLE`) y por volumen de compra
+- Listar todas las promociones registradas y solo las vigentes en la fecha actual
+- Aplicación automática al registrar una venta: se aplica la única promoción vigente que otorga el mayor descuento (no son acumulables)
 
 ## Persistencia de datos
 
-Toda la información (productos, personas y ventas) se almacena en archivos dentro de la carpeta [`data/`](./data). Los datos se cargan automáticamente al iniciar la aplicación y se guardan automáticamente al finalizar cada operación. El archivo de vendedores incluye al menos tres registros precargados.
+Toda la información (productos, personas, ventas y promociones, en `data/promotions.csv`) se almacena en archivos dentro de la carpeta [`data/`](./data). Los datos se cargan automáticamente al iniciar la aplicación y se guardan automáticamente al finalizar cada operación. El archivo de vendedores incluye al menos tres registros precargados.
 
 ## Control de versiones
 
