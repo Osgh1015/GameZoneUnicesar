@@ -2,6 +2,7 @@ package com.gamezone.service;
 
 import com.gamezone.model.Client;
 import com.gamezone.model.Product;
+import com.gamezone.model.Promotion;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Seller;
 import com.gamezone.persistence.SalePersistence;
@@ -27,16 +28,19 @@ public class SaleService {
     private ProductService productService;
     private PersonService personService;
     private final AccessoryService accessoryService;
+    private final PromotionService promotionService;
 
     public SaleService(SalePersistence salePersistence,
                        ProductService productService,
                        PersonService personService,
-                       AccessoryService accessoryService) {
+                       AccessoryService accessoryService,
+                       PromotionService promotionService) {
         this.salePersistence = salePersistence;
         this.productService = productService;
         this.personService = personService;
         this.sales = salePersistence.loadAll(productService, personService);
         this.accessoryService = accessoryService;
+        this.promotionService = promotionService;
     }
 
     /**
@@ -99,6 +103,14 @@ public class SaleService {
 
         if (!sale.isValid()) {
             return null;
+        }
+
+        // Apply automatically the promotion granting the highest discount
+        // (promotions are not cumulative). If none applies, no discount.
+        Promotion bestPromotion = promotionService.findBestPromotionFor(sale);
+        if (bestPromotion != null) {
+            sale.setAppliedPromotionName(bestPromotion.getName());
+            sale.setDiscountAmount(Math.round(bestPromotion.calculateDiscount(sale) * 100.0) / 100.0);
         }
 
         // Update inventory automatically for each item sold, delegating
