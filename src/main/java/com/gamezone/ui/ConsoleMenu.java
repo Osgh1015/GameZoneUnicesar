@@ -7,16 +7,20 @@ import com.gamezone.model.Console;
 import com.gamezone.model.Controller;
 import com.gamezone.model.Memory;
 import com.gamezone.model.Product;
+import com.gamezone.model.Promotion;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Seller;
 import com.gamezone.model.VideoGame;
 import com.gamezone.service.AccessoryService;
 import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
+import com.gamezone.service.PromotionService;
 import com.gamezone.service.SaleService;
 import com.gamezone.model.Return;
 import com.gamezone.service.ReturnService;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -37,15 +41,17 @@ public class ConsoleMenu {
     private SaleService saleService;
     private AccessoryService accessoryService;
     private ReturnService returnService;
+    private PromotionService promotionService;
 
     public ConsoleMenu(ProductService productService, PersonService personService,
                        SaleService saleService, AccessoryService accessoryService,
-                       ReturnService returnService) {
+                       ReturnService returnService, PromotionService promotionService) {
         this.productService = productService;
         this.personService = personService;
         this.saleService = saleService;
         this.accessoryService = accessoryService;
         this.returnService = returnService;
+        this.promotionService = promotionService;
     }
 
     /** Starts the main loop of the console menu. */
@@ -59,6 +65,7 @@ public class ConsoleMenu {
             System.out.println("3. Menú de ventas");
             System.out.println("4. Gestión de accesorios");
             System.out.println("5. Gestión de devoluciones");
+            System.out.println("6. Gestión de promociones");
             System.out.println("0. Salir");
             System.out.print("Seleccione una opción: ");
 
@@ -83,6 +90,10 @@ public class ConsoleMenu {
 
                 case "5":
                     returnsMenu();
+                    break;
+
+                case "6":
+                    promotionsMenu();
                     break;
 
                 case "0":
@@ -235,6 +246,7 @@ public class ConsoleMenu {
         System.out.println("2. Historial completo de ventas");
         System.out.println("3. Historial de compras por cliente");
         System.out.println("4. Historial de ventas por vendedor");
+        System.out.println("5. Ver detalle de una venta (recibo)");
         System.out.println("0. Volver");
         System.out.print("Seleccione una opción: ");
 
@@ -266,6 +278,16 @@ public class ConsoleMenu {
 
                 for (Sale sale : saleService.getSalesBySeller(sellerId)) {
                     System.out.println(sale);
+                }
+                break;
+
+            case "5":
+                System.out.print("ID de la venta: ");
+                Sale detail = saleService.findById(scanner.nextLine());
+                if (detail == null) {
+                    System.out.println("Venta no encontrada.");
+                } else {
+                    System.out.println(detail.generateReceipt());
                 }
                 break;
 
@@ -306,7 +328,8 @@ public class ConsoleMenu {
         );
 
         if (sale != null) {
-            System.out.println("Venta registrada correctamente: " + sale);
+            System.out.println("Venta registrada correctamente.");
+            System.out.println(sale.generateReceipt());
         } else {
             System.out.println("No se pudo registrar la venta.");
         }
@@ -539,5 +562,121 @@ public class ConsoleMenu {
         } catch (IllegalArgumentException e) {
             System.out.println("Error: " + e.getMessage());
         }
+    }
+
+    private void promotionsMenu() {
+        System.out.println("\n-- Gestión de promociones --");
+        System.out.println("1. Registrar promoción por porcentaje");
+        System.out.println("2. Registrar promoción por categoría");
+        System.out.println("3. Registrar promoción por volumen de compra");
+        System.out.println("4. Listar todas las promociones");
+        System.out.println("5. Listar promociones vigentes");
+        System.out.println("0. Volver");
+        System.out.print("Seleccione una opción: ");
+
+        String option = scanner.nextLine();
+
+        switch (option) {
+            case "1":
+                registerPercentagePromotionFlow();
+                break;
+
+            case "2":
+                registerCategoryPromotionFlow();
+                break;
+
+            case "3":
+                registerBulkPromotionFlow();
+                break;
+
+            case "4":
+                printPromotions(promotionService.listAllPromotions(),
+                        "Aún no hay promociones registradas.");
+                break;
+
+            case "5":
+                printPromotions(promotionService.listActivePromotions(),
+                        "No hay promociones vigentes hoy.");
+                break;
+
+            case "0":
+                break;
+
+            default:
+                System.out.println("Opción inválida.");
+        }
+    }
+
+    private void printPromotions(List<Promotion> promotions, String emptyMessage) {
+        if (promotions.isEmpty()) {
+            System.out.println(emptyMessage);
+            return;
+        }
+        for (Promotion promotion : promotions) {
+            System.out.println(promotion.getDescription());
+        }
+    }
+
+    private void registerPercentagePromotionFlow() {
+        try {
+            System.out.print("ID de la promoción: ");
+            String id = scanner.nextLine();
+            System.out.print("Nombre: ");
+            String name = scanner.nextLine();
+            LocalDate start = readDate("Fecha de inicio (AAAA-MM-DD): ");
+            LocalDate end = readDate("Fecha de fin (AAAA-MM-DD): ");
+            System.out.print("Porcentaje de descuento (0-100): ");
+            double percentage = Double.parseDouble(scanner.nextLine());
+
+            promotionService.registerPercentageDiscount(id, name, start, end, percentage);
+            System.out.println("Promoción registrada correctamente.");
+        } catch (IllegalArgumentException | DateTimeParseException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    private void registerCategoryPromotionFlow() {
+        try {
+            System.out.print("ID de la promoción: ");
+            String id = scanner.nextLine();
+            System.out.print("Nombre: ");
+            String name = scanner.nextLine();
+            LocalDate start = readDate("Fecha de inicio (AAAA-MM-DD): ");
+            LocalDate end = readDate("Fecha de fin (AAAA-MM-DD): ");
+            System.out.print("Porcentaje de descuento (0-100): ");
+            double percentage = Double.parseDouble(scanner.nextLine());
+            System.out.print("Categoría (VIDEOGAME / CONSOLE): ");
+            String category = scanner.nextLine();
+
+            promotionService.registerCategoryDiscount(id, name, start, end, percentage, category);
+            System.out.println("Promoción registrada correctamente.");
+        } catch (IllegalArgumentException | DateTimeParseException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    private void registerBulkPromotionFlow() {
+        try {
+            System.out.print("ID de la promoción: ");
+            String id = scanner.nextLine();
+            System.out.print("Nombre: ");
+            String name = scanner.nextLine();
+            LocalDate start = readDate("Fecha de inicio (AAAA-MM-DD): ");
+            LocalDate end = readDate("Fecha de fin (AAAA-MM-DD): ");
+            System.out.print("Cantidad mínima de productos: ");
+            int minQuantity = Integer.parseInt(scanner.nextLine());
+            System.out.print("Porcentaje de descuento (0-100): ");
+            double percentage = Double.parseDouble(scanner.nextLine());
+
+            promotionService.registerBulkPurchaseDiscount(id, name, start, end, minQuantity, percentage);
+            System.out.println("Promoción registrada correctamente.");
+        } catch (IllegalArgumentException | DateTimeParseException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    private LocalDate readDate(String prompt) {
+        System.out.print(prompt);
+        return LocalDate.parse(scanner.nextLine().trim());
     }
 }
