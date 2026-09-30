@@ -20,6 +20,8 @@ public class Sale {
     private Client client;
     private Seller seller;
     private List<Product> products;
+    private String appliedPromotionName;
+    private double discountAmount;
 
     /**
      * Creates a new sale.
@@ -35,6 +37,8 @@ public class Sale {
         this.client = client;
         this.seller = seller;
         this.products = new ArrayList<>();
+        this.appliedPromotionName = null;
+        this.discountAmount = 0.0;
     }
 
     public String getId() {
@@ -93,6 +97,72 @@ public class Sale {
     }
 
     /**
+     * @return the name of the promotion applied to this sale, or
+     *         {@code null} if no promotion was applied
+     */
+    public String getAppliedPromotionName() {
+        return appliedPromotionName;
+    }
+
+    /**
+     * @param appliedPromotionName name of the promotion applied to this sale
+     */
+    public void setAppliedPromotionName(String appliedPromotionName) {
+        this.appliedPromotionName = appliedPromotionName;
+    }
+
+    /**
+     * @return the monetary discount applied to this sale (zero if none)
+     */
+    public double getDiscountAmount() {
+        return discountAmount;
+    }
+
+    /**
+     * @param discountAmount the monetary discount applied to this sale
+     */
+    public void setDiscountAmount(double discountAmount) {
+        this.discountAmount = discountAmount;
+    }
+
+    /**
+     * Calculates the final amount to pay: the subtotal minus the discount
+     * applied by the promotion (if any).
+     * @return the subtotal minus the discount amount
+     */
+    public double calculateFinalTotal() {
+        return calculateTotal() - discountAmount;
+    }
+
+    /**
+     * Generates the formatted receipt (in Spanish) of this sale, showing
+     * the subtotal, the applied discount with the promotion name, and the
+     * final total.
+     * @return the formatted receipt text
+     */
+    public String generateReceipt() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("--- Recibo de Venta ---\n");
+        sb.append("ID Venta: ").append(id).append("\n");
+        sb.append("Fecha: ").append(date).append("\n");
+        sb.append("Cliente: ").append(client.getFullName()).append("\n");
+        sb.append("Vendedor: ").append(seller.getFullName()).append("\n");
+        sb.append("Productos:\n");
+        for (Product product : products) {
+            sb.append("  - ").append(product.getTitle())
+                    .append(" ($").append(product.getPrice()).append(")\n");
+        }
+        sb.append(String.format("Subtotal: $%.2f%n", calculateTotal()));
+        if (appliedPromotionName != null && discountAmount > 0) {
+            sb.append(String.format("Descuento (%s): -$%.2f%n", appliedPromotionName, discountAmount));
+        } else {
+            sb.append("Descuento: $0.00 (sin promoción aplicada)\n");
+        }
+        sb.append(String.format("Total final: $%.2f%n", calculateFinalTotal()));
+        return sb.toString();
+    }
+
+    /**
      * Checks whether this sale is still within the 30-day return window
      * from its sale date.
      * @return true if today is within 30 calendar days of the sale date
@@ -110,7 +180,9 @@ public class Sale {
                 ", cliente=" + client.getFullName() +
                 ", vendedor=" + seller.getFullName() +
                 ", productos=" + products.size() +
-                ", total=" + calculateTotal() +
+                ", subtotal=" + calculateTotal() +
+                ", descuento=" + discountAmount +
+                ", total=" + calculateFinalTotal() +
                 '}';
     }
 }
