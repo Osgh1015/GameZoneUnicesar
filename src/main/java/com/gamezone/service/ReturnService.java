@@ -128,7 +128,7 @@ public class ReturnService {
         double totalSales = 0.0;
         for (Sale sale : saleService.getSalesHistory()) {
             if (sale.getDate().getMonthValue() == month && sale.getDate().getYear() == year) {
-                totalSales += sale.calculateTotal();
+                totalSales += sale.calculateFinalTotal();
             }
         }
 
