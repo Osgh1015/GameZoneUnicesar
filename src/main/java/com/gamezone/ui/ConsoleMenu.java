@@ -14,6 +14,8 @@ import com.gamezone.service.AccessoryService;
 import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
 import com.gamezone.service.SaleService;
+import com.gamezone.model.Return;
+import com.gamezone.service.ReturnService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,13 +36,16 @@ public class ConsoleMenu {
     private PersonService personService;
     private SaleService saleService;
     private AccessoryService accessoryService;
+    private ReturnService returnService;
 
     public ConsoleMenu(ProductService productService, PersonService personService,
-                       SaleService saleService, AccessoryService accessoryService) {
+                       SaleService saleService, AccessoryService accessoryService,
+                       ReturnService returnService) {
         this.productService = productService;
         this.personService = personService;
         this.saleService = saleService;
         this.accessoryService = accessoryService;
+        this.returnService = returnService;
     }
 
     /** Starts the main loop of the console menu. */
@@ -53,6 +58,7 @@ public class ConsoleMenu {
             System.out.println("2. Menú de personas");
             System.out.println("3. Menú de ventas");
             System.out.println("4. Gestión de accesorios");
+            System.out.println("5. Gestión de devoluciones");
             System.out.println("0. Salir");
             System.out.print("Seleccione una opción: ");
 
@@ -73,6 +79,10 @@ public class ConsoleMenu {
 
                 case "4":
                     accessoriesMenu();
+                    break;
+
+                case "5":
+                    returnsMenu();
                     break;
 
                 case "0":
@@ -446,5 +456,88 @@ public class ConsoleMenu {
             }
         }
         return compatibleConsoleIds;
+    }
+
+    private void returnsMenu() {
+        System.out.println("\n-- Gestión de devoluciones --");
+        System.out.println("1. Registrar una devolución");
+        System.out.println("2. Consultar todas las devoluciones");
+        System.out.println("3. Consultar devoluciones por cliente");
+        System.out.println("4. Consultar devoluciones por venta");
+        System.out.println("5. Consultar balance mensual");
+        System.out.println("0. Volver");
+        System.out.print("Seleccione una opción: ");
+
+        String option = scanner.nextLine();
+
+        switch (option) {
+            case "1":
+                registerReturnFlow();
+                break;
+
+            case "2":
+                for (Return r : returnService.viewAllReturns()) {
+                    System.out.println(r.generateReturnReceipt());
+                }
+                break;
+
+            case "3":
+                System.out.print("ID del cliente: ");
+                String customerId = scanner.nextLine();
+                for (Return r : returnService.viewReturnsByCustomer(customerId)) {
+                    System.out.println(r.generateReturnReceipt());
+                }
+                break;
+
+            case "4":
+                System.out.print("ID de la venta: ");
+                String saleId = scanner.nextLine();
+                for (Return r : returnService.viewReturnsBySale(saleId)) {
+                    System.out.println(r.generateReturnReceipt());
+                }
+                break;
+
+            case "5":
+                System.out.print("Mes (1-12): ");
+                int month = Integer.parseInt(scanner.nextLine());
+                System.out.print("Año: ");
+                int year = Integer.parseInt(scanner.nextLine());
+                double balance = returnService.generateMonthlyBalance(month, year);
+                System.out.println("Balance neto del período: $" + balance);
+                break;
+
+            case "0":
+                break;
+
+            default:
+                System.out.println("Opción inválida.");
+        }
+    }
+
+    private void registerReturnFlow() {
+        System.out.print("ID de la venta original: ");
+        String saleId = scanner.nextLine();
+
+        List<String> productIds = new ArrayList<>();
+        boolean addingProducts = true;
+        while (addingProducts) {
+            System.out.print("ID de producto a devolver (deje vacío para finalizar): ");
+            String productId = scanner.nextLine();
+            if (productId.isEmpty()) {
+                addingProducts = false;
+            } else {
+                productIds.add(productId);
+            }
+        }
+
+        System.out.print("Motivo de la devolución: ");
+        String reason = scanner.nextLine();
+
+        try {
+            Return r = returnService.registerReturn(saleId, productIds, reason);
+            System.out.println(r.generateReturnReceipt());
+        } catch (IllegalArgumentException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
     }
 }
