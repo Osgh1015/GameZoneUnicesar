@@ -2,10 +2,12 @@ package com.gamezone;
 
 import com.gamezone.model.Seller;
 import com.gamezone.persistence.AccessoryRepository;
+import com.gamezone.persistence.ReturnRepository;
 import com.gamezone.persistence.SalePersistence;
 import com.gamezone.service.AccessoryService;
 import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
+import com.gamezone.service.ReturnService;
 import com.gamezone.service.SaleService;
 import com.gamezone.ui.ConsoleMenu;
 
@@ -20,7 +22,6 @@ public class Main {
 
     public static void main(String[] args) {
 
-
         ProductService productService = new ProductService();
         PersonService personService = new PersonService();
 
@@ -32,7 +33,12 @@ public class Main {
         SalePersistence salePersistence = new SalePersistence("data/sales.txt");
         SaleService saleService = new SaleService(salePersistence, productService, personService, accessoryService);
 
-        ConsoleMenu menu = new ConsoleMenu(productService, personService, saleService, accessoryService);
+        ReturnRepository returnRepository = new ReturnRepository(
+                "data/returns.txt", saleService, productService, accessoryService);
+        ReturnService returnService = new ReturnService(
+                returnRepository, saleService, productService, accessoryService);
+
+        ConsoleMenu menu = new ConsoleMenu(productService, personService, saleService, accessoryService, returnService);
         menu.start();
     }
 
