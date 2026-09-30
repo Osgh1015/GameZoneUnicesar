@@ -1,5 +1,6 @@
 package com.gamezone.model;
 
+import java.time.temporal.ChronoUnit;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -89,6 +90,16 @@ public class Sale {
             total += product.getPrice();
         }
         return total;
+    }
+
+    /**
+     * Checks whether this sale is still within the 30-day return window
+     * from its sale date.
+     * @return true if today is within 30 calendar days of the sale date
+     */
+    public boolean canBeReturned() {
+        long daysPassed = ChronoUnit.DAYS.between(this.date, LocalDate.now());
+        return daysPassed <= 30;
     }
 
     @Override
