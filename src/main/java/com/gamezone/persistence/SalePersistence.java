@@ -18,7 +18,9 @@ import java.util.List;
 /**
  * Handles saving and loading Sale records to and from a plain text file.
  * Each line represents one sale in CSV format:
- * id;date;clientId;sellerId;productId1|productId2|...
+ * id;date;clientId;sellerId;productId1|productId2|...;appliedPromotionName;discountAmount
+ * The last two fields are optional when loading, so files written before
+ * the promotions module still load correctly.
  *
  * Responsabilidad: Líder Técnico - Módulo de Ventas.
  * Nota: esta clase NO contiene reglas de negocio, solo lectura/escritura
@@ -90,7 +92,9 @@ public class SalePersistence {
                 + sale.getDate() + SEPARATOR
                 + sale.getClient().getId() + SEPARATOR
                 + sale.getSeller().getId() + SEPARATOR
-                + productIds;
+                + productIds + SEPARATOR
+                + (sale.getAppliedPromotionName() == null ? "" : sale.getAppliedPromotionName()) + SEPARATOR
+                + sale.getDiscountAmount();
     }
 
     private Sale fromLine(String line, ProductService productService, PersonService personService) {
@@ -112,6 +116,14 @@ public class SalePersistence {
                 if (product != null) {
                     sale.addProduct(product);
                 }
+            }
+        }
+        if (parts.length >= 7) {
+            if (!parts[5].isEmpty()) {
+                sale.setAppliedPromotionName(parts[5]);
+            }
+            if (!parts[6].isEmpty()) {
+                sale.setDiscountAmount(Double.parseDouble(parts[6]));
             }
         }
         return sale;
