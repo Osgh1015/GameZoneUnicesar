@@ -11,6 +11,10 @@ import java.util.List;
  * refunded proportionally to that discount, so the client never gets back
  * more than what was actually paid for the item:
  * {@code refund = price × (1 − discount / subtotal)}.</p>
+ *
+ * <p>When a returned console had an extended warranty, that warranty is
+ * cancelled and its cost is also refunded ({@code warrantyRefund}); the
+ * basic warranty is free, so it adds nothing.</p>
  */
 public class Return {
 
@@ -20,6 +24,7 @@ public class Return {
     private final List<Product> returnedProducts;
     private String reason;
     private double refundAmount;
+    private double warrantyRefund;
 
     /**
      * Creates a new return.
@@ -38,6 +43,7 @@ public class Return {
         this.returnedProducts = returnedProducts;
         this.reason = reason;
         this.refundAmount = 0.0;
+        this.warrantyRefund = 0.0;
     }
 
     public String getId() {
@@ -62,6 +68,24 @@ public class Return {
 
     public double getRefundAmount() {
         return refundAmount;
+    }
+
+    /**
+     * @return the amount refunded for the warranties cancelled because of
+     *         this return (zero when no extended warranty was cancelled)
+     */
+    public double getWarrantyRefund() {
+        return warrantyRefund;
+    }
+
+    /**
+     * Sets the amount refunded for the warranties cancelled because of this
+     * return. It must be called before {@link #calculateRefundAmount()}.
+     *
+     * @param warrantyRefund refundable cost of the cancelled warranties
+     */
+    public void setWarrantyRefund(double warrantyRefund) {
+        this.warrantyRefund = warrantyRefund;
     }
 
     /**
@@ -109,8 +133,8 @@ public class Return {
 
     /**
      * Calculates the total refund of this return as the sum of the
-     * proportional refund of every returned item, and stores it in
-     * {@code refundAmount}.
+     * proportional refund of every returned item plus the refund of the
+     * cancelled extended warranties, and stores it in {@code refundAmount}.
      *
      * @return the total amount to refund to the client
      */
@@ -119,6 +143,7 @@ public class Return {
         for (Product product : returnedProducts) {
             total += calculateItemRefund(product);
         }
+        total += warrantyRefund;
         this.refundAmount = round(total);
         return this.refundAmount;
     }
@@ -126,7 +151,8 @@ public class Return {
     /**
      * Generates the formatted receipt (in Spanish) of this return. For
      * every returned item it shows the list price, the proportional
-     * discount and the refunded amount, followed by the total refund.
+     * discount and the refunded amount; then the refund of the cancelled
+     * extended warranties (if any) and the total refund.
      *
      * @return the formatted receipt text
      */
@@ -149,6 +175,9 @@ public class Return {
                     calculateItemDiscount(product)));
             sb.append(String.format("      Monto reembolsado:      $%.2f%n",
                     calculateItemRefund(product)));
+        }
+        if (warrantyRefund > 0) {
+            sb.append(String.format("Garantías extendidas anuladas: +$%.2f%n", warrantyRefund));
         }
         sb.append("Motivo: ").append(reason).append("\n");
         sb.append(String.format("Total reembolsado: $%.2f%n", refundAmount));

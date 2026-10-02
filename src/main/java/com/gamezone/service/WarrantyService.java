@@ -249,6 +249,59 @@ public class WarrantyService {
     }
 
     /**
+     * Cancels the warranties of a returned product in the indicated sale.
+     * A returned console cannot keep a valid warranty, so its basic warranty
+     * and, if it was bought, its extended warranty are removed. When the
+     * same console appears several times in the sale, each call cancels the
+     * warranties of one unit (one basic and one extended at most).
+     *
+     * @param productId identifier of the returned product
+     * @param saleId    identifier of the original sale
+     * @return the refundable cost of the cancelled warranties: zero for the
+     *         basic warranty and the additional cost for the extended one
+     */
+    public double cancelWarranties(String productId, String saleId) {
+
+        Warranty basicToCancel = null;
+        Warranty extendedToCancel = null;
+
+        for (Warranty warranty : warranties) {
+
+            boolean sameProduct = warranty.getProduct().getId().equals(productId);
+            boolean sameSale = warranty.getSale().getId().equals(saleId);
+
+            if (!sameProduct || !sameSale) {
+                continue;
+            }
+
+            if (warranty instanceof ExtendedWarranty) {
+                if (extendedToCancel == null) {
+                    extendedToCancel = warranty;
+                }
+            } else if (basicToCancel == null) {
+                basicToCancel = warranty;
+            }
+        }
+
+        double refundableCost = 0.0;
+
+        if (basicToCancel != null) {
+            warranties.remove(basicToCancel);
+            refundableCost += basicToCancel.getAdditionalCost();
+        }
+        if (extendedToCancel != null) {
+            warranties.remove(extendedToCancel);
+            refundableCost += extendedToCancel.getAdditionalCost();
+        }
+
+        if (basicToCancel != null || extendedToCancel != null) {
+            repository.saveAll(warranties);
+        }
+
+        return refundableCost;
+    }
+
+    /**
      * Calculates the total additional cost of all warranties associated
      * with a specific sale.
      *

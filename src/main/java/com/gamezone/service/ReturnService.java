@@ -9,8 +9,9 @@ import java.util.*;
 /**
  * Contains the business rules for registering and consulting returns:
  * a return must reference an existing sale within its 30-day window,
- * the returned products must belong to that sale, and stock must be
- * restored automatically when a return is confirmed.
+ * the returned products must belong to that sale, stock must be
+ * restored automatically when a return is confirmed, and every returned
+ * console loses its warranties (the extended warranty cost is refunded).
  */
 public class ReturnService {
 
@@ -18,20 +19,37 @@ public class ReturnService {
     private final SaleService saleService;
     private final ProductService productService;
     private final AccessoryService accessoryService;
+    private final WarrantyService warrantyService;
     private final List<Return> returns;
 
+    /**
+     * Creates the return service with its collaborators, injected by
+     * constructor from {@code Main}.
+     *
+     * @param repository       repository used to persist returns
+     * @param saleService      service used to find the original sales
+     * @param productService   service used to restore the stock of products
+     * @param accessoryService service used to restore the stock of accessories
+     * @param warrantyService  service used to cancel the warranties of
+     *                         returned consoles
+     */
     public ReturnService(ReturnRepository repository, SaleService saleService,
-                         ProductService productService, AccessoryService accessoryService) {
+                         ProductService productService, AccessoryService accessoryService,
+                         WarrantyService warrantyService) {
         this.repository = repository;
         this.saleService = saleService;
         this.productService = productService;
         this.accessoryService = accessoryService;
+        this.warrantyService = warrantyService;
         this.returns = repository.loadAll();
     }
 
     /**
      * Registers a new return after validating the 30-day deadline and
      * that every requested product actually belongs to the original sale.
+     * The warranties of every returned console are cancelled through
+     * {@link WarrantyService#cancelWarranties(String, String)} and the
+     * refundable cost is included in the refund amount.
      *
      * @param saleId     id of the original sale
      * @param productIds ids of the products being returned
@@ -68,6 +86,16 @@ public class ReturnService {
 
         String newId = UUID.randomUUID().toString();
         Return newReturn = new Return(newId, LocalDate.now(), sale, productsToReturn, reason);
+
+        // A returned console cannot keep a valid warranty: cancel its
+        // warranties and refund the cost of the extended one (if any).
+        double warrantyRefund = 0.0;
+        for (Product p : productsToReturn) {
+            if (p instanceof Console) {
+                warrantyRefund += warrantyService.cancelWarranties(p.getId(), sale.getId());
+            }
+        }
+        newReturn.setWarrantyRefund(Math.round(warrantyRefund * 100.0) / 100.0);
         newReturn.calculateRefundAmount();
 
         for (Product p : productsToReturn) {
