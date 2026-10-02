@@ -116,9 +116,6 @@ public class Sale {
         for (Product product : products) {
             total += product.getPrice();
         }
-        // The extended warranties requested by the client are part of
-        // the amount the client has to pay for this sale.
-        total += warrantyCost;
         return total;
     }
 
@@ -164,8 +161,8 @@ public class Sale {
 
     /**
      * Generates the formatted receipt (in Spanish) of this sale, showing
-     * the subtotal, the applied discount with the promotion name, and the
-     * final total.
+     * the subtotal, the applied discount with the promotion name, the cost
+     * of the extended warranties (if any) and the final total.
      * @return the formatted receipt text
      */
     public String generateReceipt() {
