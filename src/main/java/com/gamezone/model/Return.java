@@ -103,17 +103,19 @@ public class Return {
     }
 
     /**
-     * Calculates the refund amount as the sum of the prices of all
-     * returned products, and stores it in the refundAmount field.
-     * @return the calculated refund amount
+     * Calculates the total refund of this return as the sum of the
+     * proportional refund of every returned item, and stores it in
+     * {@code refundAmount}.
+     *
+     * @return the total amount to refund to the client
      */
     public double calculateRefundAmount() {
         double total = 0.0;
         for (Product product : returnedProducts) {
-            total += product.getPrice();
+            total += calculateItemRefund(product);
         }
-        this.refundAmount = total;
-        return total;
+        this.refundAmount = round(total);
+        return this.refundAmount;
     }
 
     /**
