@@ -56,22 +56,42 @@ public class PromotionService {
      * @param startDate      first valid day
      * @param endDate        last valid day
      * @param percentage     discount percentage (0-100)
-     * @param targetCategory "VIDEOGAME" or "CONSOLE"
+     * @param targetCategory "VIDEOGAME", "CONSOLE" or "ACCESSORY"
      * @return the registered promotion
-     * @throws IllegalArgumentException if any business rule is violated
+     * @throws IllegalArgumentException if any business rule is violated,
+     *                                  including a category other than the
+     *                                  three allowed ones
      */
     public Promotion registerCategoryDiscount(String id, String name, LocalDate startDate,
                                               LocalDate endDate, double percentage,
                                               String targetCategory) {
         validateCommon(id, name, startDate, endDate);
         validatePercentage(percentage);
-        if (targetCategory == null
-                || !(targetCategory.equalsIgnoreCase(CategoryDiscount.VIDEOGAME)
-                || targetCategory.equalsIgnoreCase(CategoryDiscount.CONSOLE))) {
-            throw new IllegalArgumentException("La categoría debe ser VIDEOGAME o CONSOLE.");
-        }
+        validateCategory(targetCategory);
         return save(new CategoryDiscount(id, name, startDate, endDate, percentage,
-                targetCategory.toUpperCase()));
+                targetCategory.trim().toUpperCase()));
+    }
+
+    /**
+     * Validates that the target category is one of the three allowed
+     * values: "VIDEOGAME", "CONSOLE" or "ACCESSORY" (case-insensitive).
+     *
+     * @param targetCategory category to validate
+     * @throws IllegalArgumentException if the category is null or not allowed
+     */
+    private void validateCategory(String targetCategory) {
+        if (targetCategory == null) {
+            throw new IllegalArgumentException(
+                    "La categoría debe ser VIDEOGAME, CONSOLE o ACCESSORY.");
+        }
+        String category = targetCategory.trim();
+        boolean allowed = category.equalsIgnoreCase(CategoryDiscount.VIDEOGAME)
+                || category.equalsIgnoreCase(CategoryDiscount.CONSOLE)
+                || category.equalsIgnoreCase(CategoryDiscount.ACCESSORY);
+        if (!allowed) {
+            throw new IllegalArgumentException(
+                    "La categoría debe ser VIDEOGAME, CONSOLE o ACCESSORY.");
+        }
     }
 
     /**
