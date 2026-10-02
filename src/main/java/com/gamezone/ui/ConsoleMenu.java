@@ -2,6 +2,7 @@ package com.gamezone.ui;
 
 import com.gamezone.model.Accessory;
 import com.gamezone.model.Cable;
+import com.gamezone.model.CategoryDiscount;
 import com.gamezone.model.Client;
 import com.gamezone.model.Console;
 import com.gamezone.model.Controller;
@@ -645,13 +646,42 @@ public class ConsoleMenu {
             LocalDate end = readDate("Fecha de fin (AAAA-MM-DD): ");
             System.out.print("Porcentaje de descuento (0-100): ");
             double percentage = Double.parseDouble(scanner.nextLine());
-            System.out.print("Categoría (VIDEOGAME / CONSOLE): ");
-            String category = scanner.nextLine();
+            String category = readPromotionCategory();
+            if (category == null) {
+                System.out.println("Opción de categoría inválida.");
+                return;
+            }
 
             promotionService.registerCategoryDiscount(id, name, start, end, percentage, category);
             System.out.println("Promoción registrada correctamente.");
         } catch (IllegalArgumentException | DateTimeParseException e) {
             System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Asks the user to choose the target category of a category promotion.
+     *
+     * @return "VIDEOGAME", "CONSOLE" or "ACCESSORY", or {@code null} if the
+     *         option is not valid
+     */
+    private String readPromotionCategory() {
+        System.out.println("Categoría objetivo:");
+        System.out.println("1. Videojuegos");
+        System.out.println("2. Consolas");
+        System.out.println("3. Accesorios");
+        System.out.print("Seleccione una opción: ");
+        String option = scanner.nextLine().trim();
+
+        switch (option) {
+            case "1":
+                return CategoryDiscount.VIDEOGAME;
+            case "2":
+                return CategoryDiscount.CONSOLE;
+            case "3":
+                return CategoryDiscount.ACCESSORY;
+            default:
+                return null;
         }
     }
 
