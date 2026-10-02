@@ -152,12 +152,14 @@ public class Sale {
     }
 
     /**
-     * Calculates the final amount to pay: the subtotal minus the discount
-     * applied by the promotion (if any).
-     * @return the subtotal minus the discount amount
+     * Calculates the final amount to pay: the subtotal of the items minus
+     * the discount applied by the promotion (if any), plus the cost of the
+     * extended warranties requested. The discount is calculated only over
+     * the items, so warranties are never discounted.
+     * @return subtotal - discount + extended warranty cost
      */
     public double calculateFinalTotal() {
-        return calculateTotal() - discountAmount;
+        return calculateTotal() - discountAmount + warrantyCost;
     }
 
     /**
@@ -184,6 +186,9 @@ public class Sale {
         } else {
             sb.append("Descuento: $0.00 (sin promoción aplicada)\n");
         }
+        if (warrantyCost > 0) {
+            sb.append(String.format("Garantías extendidas: +$%.2f%n", warrantyCost));
+        }
         sb.append(String.format("Total final: $%.2f%n", calculateFinalTotal()));
         return sb.toString();
     }
@@ -209,6 +214,7 @@ public class Sale {
                 ", subtotal=" + calculateTotal() +
                 ", descuento=" + discountAmount +
                 ", total=" + calculateFinalTotal() +
+                ", garantias=" + warrantyCost +
                 '}';
     }
 }
