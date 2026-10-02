@@ -16,10 +16,11 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Contains the business rules for registering and consulting sales:
- * a sale must have at least one product, stock must be sufficient for
- * every product sold, and inventory must be updated automatically when
- * a sale is confirmed.
+ * Contains the business rules for registering and consulting sales. A
+ * sale is registered through a single unified flow that integrates the
+ * accessories, promotions and warranties modules: validation of items and
+ * stock, best promotion over the items, warranties for consoles, final
+ * total, inventory update and persistence.
  *
  * Responsabilidad: Líder Técnico - Módulo de Ventas.
  */
@@ -60,17 +61,29 @@ public class SaleService {
     }
 
     /**
-     * Registers a new sale after validating business rules: the sale
-     * must include at least one product, and there must be enough stock
-     * for every product requested. If validation passes, the stock of
-     * each product is reduced and the sale is persisted.
+     * Registers a new sale following the unified flow of the integrated
+     * system. The order of the steps determines the result, so it is fixed:
+     * <ol>
+     *   <li>Validate that the sale has at least one item.</li>
+     *   <li>Resolve every item as a product or an accessory and validate its stock.</li>
+     *   <li>Create the sale and calculate its subtotal.</li>
+     *   <li>Apply the best valid promotion; the discount is calculated only
+     *       over the subtotal of the items.</li>
+     *   <li>Grant the basic warranty of every console and the extended
+     *       warranties requested, adding their cost to the sale.</li>
+     *   <li>Calculate the final total: subtotal - discount + extended warranty cost.</li>
+     *   <li>Update the inventory, delegating to ProductService or
+     *       AccessoryService according to the type of each item.</li>
+     *   <li>Persist the sale (its warranties are stored by WarrantyService
+     *       when they are granted in step 5).</li>
+     * </ol>
      *
      * @param clientId   id of the client making the purchase
      * @param sellerId   id of the seller attending the sale
-     * @param productIds ids of the products purchased (may repeat if more
-     *                   than one unit of the same product is bought). Ids
-     *                   may belong either to the product catalogue or to
-     *                   the accessory catalogue.
+     * @param productIds ids of the items purchased (may repeat if more than
+     *                   one unit of the same item is bought). Ids may belong
+     *                   either to the product catalogue or to the accessory
+     *                   catalogue.
      * @param productIdsWithExtendedWarranty ids of the consoles for which the
      *                   client requested extended warranty. When the list is
      *                   empty or null, no extended warranty is applied.
@@ -79,6 +92,7 @@ public class SaleService {
     public Sale registerSale(String clientId, String sellerId, List<String> productIds,
                              List<String> productIdsWithExtendedWarranty) {
 
+        // Step 1: the sale must contain at least one item.
         if (productIds == null || productIds.isEmpty()) {
             System.out.println("Una venta debe contener al menos un producto.");
             return null;
@@ -92,63 +106,35 @@ public class SaleService {
             return null;
         }
 
-        List<Product> products = new ArrayList<>();
-
-        for (String productId : productIds) {
-            Product product = findSellableItem(productId);
-
-            if (product == null) {
-                System.out.println("Producto no encontrado: " + productId);
-                return null;
-            }
-
-            products.add(product);
+        // Step 2: resolve every item as a product or an accessory and
+        // validate that there is enough stock for all of them.
+        List<Product> items = resolveItems(productIds);
+        if (items == null) {
+            return null;
         }
-
-        if (!hasSufficientStock(products, productIds)) {
+        if (!hasSufficientStock(items, productIds)) {
             System.out.println("Stock insuficiente para uno o más productos.");
             return null;
         }
 
-        Sale sale = new Sale(
-                UUID.randomUUID().toString(),
-                LocalDate.now(),
-                client,
-                seller
-        );
+        // Step 3: create the sale; its subtotal is the sum of the item prices
+        // (Sale.calculateTotal()).
+        Sale sale = createSale(client, seller, items);
 
-        for (Product product : products) {
-            sale.addProduct(product);
-        }
+        // Step 4: apply the best valid promotion over the subtotal of the items.
+        applyBestPromotion(sale);
 
-        if (!sale.isValid()) {
-            return null;
-        }
+        // Step 5: grant the warranties and add the extended warranty cost.
+        generateWarranties(sale, items, productIdsWithExtendedWarranty);
 
-        // Apply automatically the promotion granting the highest discount
-        // (promotions are not cumulative). If none applies, no discount.
-        Promotion bestPromotion = promotionService.findBestPromotionFor(sale);
-        if (bestPromotion != null) {
-            sale.setAppliedPromotionName(bestPromotion.getName());
-            sale.setDiscountAmount(Math.round(bestPromotion.calculateDiscount(sale) * 100.0) / 100.0);
-        }
+        // Step 6: the final total is subtotal - discount + extended warranty
+        // cost, calculated by Sale.calculateFinalTotal() with the values
+        // registered in steps 3, 4 and 5.
 
-        // Grant the warranties of the sale: a free basic warranty for every
-        // console and, when requested, an extended warranty whose cost is
-        // added to the sale. This happens after the promotion, so the
-        // discount is calculated only over the items.
-        generateWarranties(sale, products, productIdsWithExtendedWarranty);
+        // Step 7: update the inventory of every item sold.
+        updateInventory(items);
 
-        // Update inventory automatically for each item sold, delegating
-        // to the service that owns that item's stock (product or accessory).
-        for (Product product : products) {
-            if (product instanceof Accessory) {
-                accessoryService.decreaseStock(product.getId(), 1);
-            } else {
-                productService.reduceStock(product.getId(), 1);
-            }
-        }
-
+        // Step 8: persist the sale.
         sales.add(sale);
         salePersistence.saveAll(sales);
 
@@ -169,36 +155,105 @@ public class SaleService {
     }
 
     /**
-     * Grants the warranties generated by a sale. Only consoles are covered:
-     * video games and accessories never generate a warranty. Every console
-     * receives a free basic warranty; when the client requested extended
-     * warranty for it, an extended warranty is also granted and its cost is
-     * added to the sale. If the same console appears several times, each
-     * requested id grants one extended warranty.
+     * Step 2 of the flow: resolves every requested id as a product or an
+     * accessory.
+     *
+     * @param productIds ids requested for the sale
+     * @return the resolved items, or {@code null} if any id does not exist
+     */
+    private List<Product> resolveItems(List<String> productIds) {
+        List<Product> items = new ArrayList<>();
+        for (String productId : productIds) {
+            Product item = findSellableItem(productId);
+            if (item == null) {
+                System.out.println("Producto no encontrado: " + productId);
+                return null;
+            }
+            items.add(item);
+        }
+        return items;
+    }
+
+    /**
+     * Step 3 of the flow: creates the sale with the current date and adds
+     * every resolved item to it.
+     *
+     * @param client client making the purchase
+     * @param seller seller attending the sale
+     * @param items  items included in the sale
+     * @return the new sale
+     */
+    private Sale createSale(Client client, Seller seller, List<Product> items) {
+        Sale sale = new Sale(UUID.randomUUID().toString(), LocalDate.now(), client, seller);
+        for (Product item : items) {
+            sale.addProduct(item);
+        }
+        return sale;
+    }
+
+    /**
+     * Step 4 of the flow: selects the valid promotion that grants the
+     * highest discount (promotions are not cumulative) and registers it in
+     * the sale. It runs before the warranties are granted, so the discount
+     * is calculated only over the subtotal of the items.
+     *
+     * @param sale sale being registered
+     */
+    private void applyBestPromotion(Sale sale) {
+        Promotion bestPromotion = promotionService.findBestPromotionFor(sale);
+        if (bestPromotion != null) {
+            sale.setAppliedPromotionName(bestPromotion.getName());
+            sale.setDiscountAmount(Math.round(bestPromotion.calculateDiscount(sale) * 100.0) / 100.0);
+        }
+    }
+
+    /**
+     * Step 5 of the flow: grants the warranties generated by a sale. Only
+     * consoles are covered: video games and accessories never generate a
+     * warranty. Every console receives a free basic warranty; when the client
+     * requested extended warranty for it, an extended warranty is also
+     * granted and its cost is added to the sale. If the same console appears
+     * several times, each requested id grants one extended warranty.
      *
      * @param sale                           sale being registered
-     * @param products                       products included in the sale
+     * @param items                          items included in the sale
      * @param productIdsWithExtendedWarranty ids requested with extended coverage
      */
-    private void generateWarranties(Sale sale, List<Product> products,
+    private void generateWarranties(Sale sale, List<Product> items,
                                     List<String> productIdsWithExtendedWarranty) {
 
         List<String> pendingExtended = productIdsWithExtendedWarranty == null
                 ? new ArrayList<>()
                 : new ArrayList<>(productIdsWithExtendedWarranty);
 
-        for (Product product : products) {
+        for (Product item : items) {
 
-            if (!(product instanceof Console)) {
+            if (!(item instanceof Console)) {
                 continue;
             }
 
-            warrantyService.assignBasicWarranty(product, sale, sale.getDate());
+            warrantyService.assignBasicWarranty(item, sale, sale.getDate());
 
-            if (pendingExtended.remove(product.getId())) {
+            if (pendingExtended.remove(item.getId())) {
                 ExtendedWarranty extendedWarranty =
-                        warrantyService.assignExtendedWarranty(product, sale, sale.getDate());
+                        warrantyService.assignExtendedWarranty(item, sale, sale.getDate());
                 sale.addWarrantyCost(extendedWarranty.getAdditionalCost());
+            }
+        }
+    }
+
+    /**
+     * Step 7 of the flow: reduces the stock of every item sold, delegating
+     * to the service that owns that item's inventory.
+     *
+     * @param items items included in the sale
+     */
+    private void updateInventory(List<Product> items) {
+        for (Product item : items) {
+            if (item instanceof Accessory) {
+                accessoryService.decreaseStock(item.getId(), 1);
+            } else {
+                productService.reduceStock(item.getId(), 1);
             }
         }
     }
