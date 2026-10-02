@@ -12,7 +12,9 @@ import java.util.*;
 /**
  * Handles saving and loading Return records to and from a plain text file.
  * Each line represents one return in CSV format:
- * id;date;saleId;productId1|productId2|...;reason;refundAmount
+ * id;date;saleId;productId1|productId2|...;reason;refundAmount;warrantyRefund
+ * The last field (refund of the cancelled extended warranties) is optional
+ * when loading, so files written before it existed still load correctly.
  *
  * This class contains no business rules, only file reading/writing,
  * respecting the layer separation required by the workshop.
@@ -81,7 +83,8 @@ public class ReturnRepository {
                 + r.getOriginalSale().getId() + SEPARATOR
                 + productIds + SEPARATOR
                 + r.getReason() + SEPARATOR
-                + r.getRefundAmount();
+                + r.getRefundAmount() + SEPARATOR
+                + r.getWarrantyRefund();
     }
 
     private Return fromLine(String line) {
@@ -107,6 +110,9 @@ public class ReturnRepository {
         String reason = parts[4];
 
         Return r = new Return(id, date, originalSale, returnedProducts, reason);
+        if (parts.length >= 7 && !parts[6].isEmpty()) {
+            r.setWarrantyRefund(Double.parseDouble(parts[6]));
+        }
         r.calculateRefundAmount();
         return r;
     }
