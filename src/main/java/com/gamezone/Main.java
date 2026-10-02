@@ -39,9 +39,12 @@ public class Main {
 
         SalePersistence salePersistence = new SalePersistence("data/sales.txt");
 
-        WarrantyRepository warrantyRepository = new WarrantyRepository(
-                "data/warranties.csv", productService, accessoryService, salePersistence, personService);
-        WarrantyService warrantyService = new WarrantyService(warrantyRepository);
+        // The warranty module is built before the sales module. Its
+        // repository only stores ids and the service resolves them, so
+        // neither of them depends on SaleService (no circular dependency).
+        WarrantyRepository warrantyRepository = new WarrantyRepository("data/warranties.csv");
+        WarrantyService warrantyService = new WarrantyService(
+                warrantyRepository, salePersistence, productService, personService);
 
         SaleService saleService = new SaleService(
                 salePersistence, productService, personService, accessoryService,
@@ -54,8 +57,7 @@ public class Main {
 
         ConsoleMenu menu = new ConsoleMenu(productService, personService, saleService,
                 accessoryService, returnService, promotionService, warrantyService);
-        
-            menu.start();
+        menu.start();
     }
 
     /**
