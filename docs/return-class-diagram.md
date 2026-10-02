@@ -8,8 +8,10 @@ classDiagram
         -client: Client
         -seller: Seller
         -products: List~Product~
+        -discountAmount: double
         +canBeReturned() boolean
         +calculateTotal() double
+        +getDiscountAmount() double
     }
 
     class Return {
@@ -19,8 +21,12 @@ classDiagram
         -returnedProducts: List~Product~
         -reason: String
         -refundAmount: double
+        +calculatePaidRatio() double
+        +calculateItemDiscount(product: Product) double
+        +calculateItemRefund(product: Product) double
         +calculateRefundAmount() double
         +generateReturnReceipt() String
+        -round(value: double) double
     }
 
     class ReturnRepository {
