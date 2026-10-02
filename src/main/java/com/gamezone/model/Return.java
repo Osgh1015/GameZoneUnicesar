@@ -6,6 +6,11 @@ import java.util.List;
 /**
  * Represents a return transaction for one or more products originally
  * purchased in a specific sale.
+ *
+ * <p>When the original sale received a promotion, each returned item is
+ * refunded proportionally to that discount, so the client never gets back
+ * more than what was actually paid for the item:
+ * {@code refund = price × (1 − discount / subtotal)}.</p>
  */
 public class Return {
 
@@ -119,7 +124,10 @@ public class Return {
     }
 
     /**
-     * Generates a formatted receipt (in Spanish) with the return's details.
+     * Generates the formatted receipt (in Spanish) of this return. For
+     * every returned item it shows the list price, the proportional
+     * discount and the refunded amount, followed by the total refund.
+     *
      * @return the formatted receipt text
      */
     public String generateReturnReceipt() {
@@ -128,13 +136,22 @@ public class Return {
         sb.append("ID Devolución: ").append(id).append("\n");
         sb.append("Fecha: ").append(date).append("\n");
         sb.append("Venta original: ").append(originalSale.getId()).append("\n");
+        if (originalSale.getAppliedPromotionName() != null
+                && originalSale.getDiscountAmount() > 0) {
+            sb.append("Promoción de la venta: ")
+                    .append(originalSale.getAppliedPromotionName()).append("\n");
+        }
         sb.append("Productos devueltos:\n");
         for (Product product : returnedProducts) {
-            sb.append("  - ").append(product.getTitle())
-                    .append(" ($").append(product.getPrice()).append(")\n");
+            sb.append("  - ").append(product.getTitle()).append("\n");
+            sb.append(String.format("      Precio de lista:        $%.2f%n", product.getPrice()));
+            sb.append(String.format("      Descuento proporcional: -$%.2f%n",
+                    calculateItemDiscount(product)));
+            sb.append(String.format("      Monto reembolsado:      $%.2f%n",
+                    calculateItemRefund(product)));
         }
         sb.append("Motivo: ").append(reason).append("\n");
-        sb.append("Monto reembolsado: $").append(refundAmount).append("\n");
+        sb.append(String.format("Total reembolsado: $%.2f%n", refundAmount));
         return sb.toString();
     }
 
