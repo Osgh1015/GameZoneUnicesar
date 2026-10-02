@@ -170,4 +170,21 @@ public class AccessoryService {
             default -> false;
         };
     }
+
+    /**
+     * Increases the stock of the given accessory by the specified quantity
+     * and persists the change.
+     * @param accessoryId the id of the accessory to restore
+     * @param amount      the quantity to add back to stock
+     * @throws NoSuchElementException if the accessory does not exist
+     */
+    public void restoreStock(String accessoryId, int amount) {
+        Accessory accessory = findById(accessoryId);
+        if (accessory == null) {
+            throw new NoSuchElementException("Accessory not found: " + accessoryId);
+        }
+        accessory.setQuantity(accessory.getQuantity() + amount);
+        repository.saveAll(accessories);
+    }
+
 }
