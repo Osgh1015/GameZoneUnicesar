@@ -1,4 +1,4 @@
-# Warranty Module - Class Diagram
+          # Warranty Module - Class Diagram
 
 ```mermaid
 classDiagram
