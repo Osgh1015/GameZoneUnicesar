@@ -53,7 +53,7 @@ public class Main {
         ReturnRepository returnRepository = new ReturnRepository(
                 "data/returns.txt", saleService, productService, accessoryService);
         ReturnService returnService = new ReturnService(
-                returnRepository, saleService, productService, accessoryService);
+                returnRepository, saleService, productService, accessoryService, warrantyService);
 
         ConsoleMenu menu = new ConsoleMenu(productService, personService, saleService,
                 accessoryService, returnService, promotionService, warrantyService);
