@@ -160,9 +160,10 @@ public class Sale {
     }
 
     /**
-     * Generates the formatted receipt (in Spanish) of this sale, showing
-     * the subtotal, the applied discount with the promotion name, the cost
-     * of the extended warranties (if any) and the final total.
+     * Generates the formatted receipt (in Spanish) of this sale. It lists
+     * every item with its type and price, and shows the full breakdown of
+     * the integrated sale: subtotal of the items, discount with the name of
+     * the applied promotion, cost of the extended warranties and final total.
      * @return the formatted receipt text
      */
     public String generateReceipt() {
@@ -174,8 +175,8 @@ public class Sale {
         sb.append("Vendedor: ").append(seller.getFullName()).append("\n");
         sb.append("Productos:\n");
         for (Product product : products) {
-            sb.append("  - ").append(product.getTitle())
-                    .append(" ($").append(product.getPrice()).append(")\n");
+            sb.append(String.format("  - %s [%s] ($%.2f)%n",
+                    product.getTitle(), describeItemType(product), product.getPrice()));
         }
         sb.append(String.format("Subtotal: $%.2f%n", calculateTotal()));
         if (appliedPromotionName != null && discountAmount > 0) {
@@ -185,9 +186,31 @@ public class Sale {
         }
         if (warrantyCost > 0) {
             sb.append(String.format("Garantías extendidas: +$%.2f%n", warrantyCost));
+        } else {
+            sb.append("Garantías extendidas: $0.00 (no se solicitaron)\n");
         }
         sb.append(String.format("Total final: $%.2f%n", calculateFinalTotal()));
         return sb.toString();
+    }
+
+    /**
+     * Returns the name of the type of an item, in Spanish, to be shown in
+     * the receipt.
+     *
+     * @param product item of the sale
+     * @return "Consola", "Videojuego", "Accesorio" or "Producto"
+     */
+    private String describeItemType(Product product) {
+        if (product instanceof Console) {
+            return "Consola";
+        }
+        if (product instanceof VideoGame) {
+            return "Videojuego";
+        }
+        if (product instanceof Accessory) {
+            return "Accesorio";
+        }
+        return "Producto";
     }
 
     /**
