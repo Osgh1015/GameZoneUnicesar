@@ -4,6 +4,7 @@ import com.gamezone.model.Client;
 import com.gamezone.model.Product;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Seller;
+import com.gamezone.service.AccessoryService;
 import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
 
@@ -18,9 +19,10 @@ import java.util.List;
 /**
  * Handles saving and loading Sale records to and from a plain text file.
  * Each line represents one sale in CSV format:
- * id;date;clientId;sellerId;productId1|productId2|...;appliedPromotionName;discountAmount
- * The last two fields are optional when loading, so files written before
- * the promotions module still load correctly.
+ * id;date;clientId;sellerId;itemId1|itemId2|...;appliedPromotionName;discountAmount;warrantyCost
+ * The last three fields are optional when loading, so files written before
+ * the promotions and warranty modules still load correctly. Item ids may
+ * belong to the product catalogue or to the accessory catalogue.
  *
  * Responsabilidad: Líder Técnico - Módulo de Ventas.
  * Nota: esta clase NO contiene reglas de negocio, solo lectura/escritura
@@ -32,9 +34,19 @@ public class SalePersistence {
     private static final String PRODUCTS_SEPARATOR = "\\|";
 
     private String filePath;
+    private final AccessoryService accessoryService;
 
-    public SalePersistence(String filePath) {
+    /**
+     * Creates the persistence of sales.
+     *
+     * @param filePath         path of the file where sales are stored
+     * @param accessoryService service used to resolve the accessories sold,
+     *                         since a sale may include items of the
+     *                         accessory catalogue
+     */
+    public SalePersistence(String filePath, AccessoryService accessoryService) {
         this.filePath = filePath;
+        this.accessoryService = accessoryService;
     }
 
     /**
@@ -113,9 +125,9 @@ public class SalePersistence {
         Sale sale = new Sale(id, date, client, seller);
         if (!parts[4].isEmpty()) {
             for (String productId : parts[4].split(PRODUCTS_SEPARATOR)) {
-                Product product = productService.findById(productId);
-                if (product != null) {
-                    sale.addProduct(product);
+                Product item = resolveItem(productId, productService);
+                if (item != null) {
+                    sale.addProduct(item);
                 }
             }
         }
@@ -131,5 +143,22 @@ public class SalePersistence {
             sale.addWarrantyCost(Double.parseDouble(parts[7]));
         }
         return sale;
+    }
+
+    /**
+     * Resolves an item id stored in a sale, which may belong either to the
+     * product catalogue (video games, consoles) or to the accessory
+     * catalogue (controllers, cables, memory units).
+     *
+     * @param itemId         id stored in the file
+     * @param productService service used to resolve product references
+     * @return the matching product or accessory, or {@code null} if neither exists
+     */
+    private Product resolveItem(String itemId, ProductService productService) {
+        Product product = productService.findById(itemId);
+        if (product != null) {
+            return product;
+        }
+        return accessoryService.findById(itemId);
     }
 }
