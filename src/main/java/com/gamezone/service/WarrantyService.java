@@ -1,6 +1,7 @@
 package com.gamezone.service;
 
 import com.gamezone.model.BasicWarranty;
+import com.gamezone.model.ExtendedWarranty;
 import com.gamezone.model.Product;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Warranty;
@@ -21,53 +22,70 @@ import java.util.UUID;
  */
 public class WarrantyService {
 
-    private final WarrantyRepository warrantyRepository;
+    private final WarrantyRepository repository;
     private final List<Warranty> warranties;
 
     /**
      * Creates the warranty service and loads the warranties already
      * stored in the repository.
      *
-     * @param warrantyRepository repository used to persist warranty data
+     * @param repository repository used to persist warranty data
      */
-    public WarrantyService(
-            WarrantyRepository warrantyRepository) {
-
-        this.warrantyRepository =
-                warrantyRepository;
-
-        this.warranties =
-                new ArrayList<>(
-                        warrantyRepository.loadAll()
-                );
+    public WarrantyService(WarrantyRepository repository) {
+        this.repository = repository;
+        this.warranties = new ArrayList<>(repository.loadAll());
     }
 
     /**
-     * Registers the basic warranty associated with a product in a sale.
+     * Creates and persists the basic warranty associated with a product
+     * sold in a given sale.
      *
      * @param product   product covered by the warranty
-     * @param sale      sale associated with the warranty
-     * @param startDate date when the warranty starts
-     * @return the basic warranty created
+     * @param sale      sale in which the product was purchased
+     * @param startDate date on which the coverage begins
+     * @return the basic warranty that was granted
      */
-    public BasicWarranty registerBasicWarranty(
+    public BasicWarranty assignBasicWarranty(
             Product product,
             Sale sale,
             LocalDate startDate) {
 
-        BasicWarranty warranty =
-                new BasicWarranty(
-                        generateWarrantyId(),
-                        product,
-                        sale,
-                        startDate
-                );
+        BasicWarranty warranty = new BasicWarranty(
+                generateId(),
+                product,
+                sale,
+                startDate
+        );
 
         warranties.add(warranty);
+        repository.saveAll(warranties);
 
-        warrantyRepository.saveAll(
-                warranties
+        return warranty;
+    }
+
+    /**
+     * Creates and persists the optional extended warranty bought by the
+     * client for a product sold in a given sale.
+     *
+     * @param product   product covered by the warranty
+     * @param sale      sale in which the product was purchased
+     * @param startDate date on which the coverage begins
+     * @return the extended warranty that was granted
+     */
+    public ExtendedWarranty assignExtendedWarranty(
+            Product product,
+            Sale sale,
+            LocalDate startDate) {
+
+        ExtendedWarranty warranty = new ExtendedWarranty(
+                generateId(),
+                product,
+                sale,
+                startDate
         );
+
+        warranties.add(warranty);
+        repository.saveAll(warranties);
 
         return warranty;
     }
@@ -77,8 +95,7 @@ public class WarrantyService {
      *
      * @return generated warranty identifier
      */
-    private String generateWarrantyId() {
-
+    private String generateId() {
         return "W-" + UUID.randomUUID();
     }
 }
