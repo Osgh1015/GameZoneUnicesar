@@ -328,6 +328,8 @@ public class ConsoleMenu {
         System.out.print("ID del vendedor: ");
         String sellerId = scanner.nextLine();
 
+        printSellableItems();
+
         List<String> productIds = new ArrayList<>();
         List<String> productIdsWithExtendedWarranty = new ArrayList<>();
 
@@ -358,6 +360,40 @@ public class ConsoleMenu {
             showWarrantiesOfSale(sale);
         } else {
             System.out.println("No se pudo registrar la venta.");
+        }
+    }
+
+    /**
+     * Shows the products (video games and consoles) and the accessories
+     * that have stock, so the seller can choose the items of the sale.
+     * Consoles are marked because they admit extended warranty.
+     */
+    private void printSellableItems() {
+        System.out.println("Productos disponibles:");
+        boolean anyProduct = false;
+        for (Product product : productService.listAll()) {
+            if (product.getQuantity() > 0) {
+                String type = product instanceof Console ? "Consola - admite garantía extendida" : "Videojuego";
+                System.out.printf("  %s | %s [%s] | $%.2f | stock: %d%n",
+                        product.getId(), product.getTitle(), type, product.getPrice(), product.getQuantity());
+                anyProduct = true;
+            }
+        }
+        if (!anyProduct) {
+            System.out.println("  (no hay productos con stock)");
+        }
+
+        System.out.println("Accesorios disponibles:");
+        boolean anyAccessory = false;
+        for (Accessory accessory : accessoryService.listAllAccessories()) {
+            if (accessory.getQuantity() > 0) {
+                System.out.printf("  %s | %s [Accesorio] | $%.2f | stock: %d%n",
+                        accessory.getId(), accessory.getTitle(), accessory.getPrice(), accessory.getQuantity());
+                anyAccessory = true;
+            }
+        }
+        if (!anyAccessory) {
+            System.out.println("  (no hay accesorios con stock)");
         }
     }
 
