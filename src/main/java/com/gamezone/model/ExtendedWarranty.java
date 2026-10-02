@@ -51,10 +51,11 @@ public class ExtendedWarranty extends Warranty {
     /**
      * {@inheritDoc}
      *
-     * @return ten percent of the price of the covered product
+     * @return ten percent of the price of the covered product, rounded
+     *         to two decimals
      */
     @Override
     public double getAdditionalCost() {
-        return getProduct().getPrice() * COST_RATE;
+        return Math.round(getProduct().getPrice() * COST_RATE * 100.0) / 100.0;
     }
 }
