@@ -5,7 +5,9 @@ import com.gamezone.model.ExtendedWarranty;
 import com.gamezone.model.Product;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Warranty;
+import com.gamezone.persistence.SalePersistence;
 import com.gamezone.persistence.WarrantyRepository;
+import com.gamezone.persistence.WarrantyRepository.WarrantyRecord;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -16,24 +18,93 @@ import java.util.UUID;
  * Provides the business operations related to warranties.
  *
  * It coordinates the creation, storage and consultation of warranty
- * objects while delegating file access to WarrantyRepository.
+ * objects while delegating file access to WarrantyRepository. The
+ * repository only stores identifiers; this service resolves them into
+ * {@link Sale} and {@link Product} objects when the warranties are loaded,
+ * so the persistence layer does not depend on any service.
  *
  * Responsabilidad: Desarrollador 2 - Servicio de garantias.
  */
 public class WarrantyService {
 
     private final WarrantyRepository repository;
+    private final SalePersistence salePersistence;
+    private final ProductService productService;
+    private final PersonService personService;
     private final List<Warranty> warranties;
 
     /**
      * Creates the warranty service and loads the warranties already
-     * stored in the repository.
+     * stored, resolving the sale and product of each one from the
+     * identifiers kept by the repository.
      *
-     * @param repository repository used to persist warranty data
+     * @param repository      repository used to persist warranty records
+     * @param salePersistence persistence used to rebuild the stored sales
+     * @param productService  service used to resolve product references
+     * @param personService   service used by SalePersistence to resolve
+     *                        clients and sellers
      */
-    public WarrantyService(WarrantyRepository repository) {
+    public WarrantyService(WarrantyRepository repository,
+                           SalePersistence salePersistence,
+                           ProductService productService,
+                           PersonService personService) {
         this.repository = repository;
-        this.warranties = new ArrayList<>(repository.loadAll());
+        this.salePersistence = salePersistence;
+        this.productService = productService;
+        this.personService = personService;
+        this.warranties = loadWarranties();
+    }
+
+    /**
+     * Loads the warranty records and resolves their product and sale
+     * references, rebuilding the concrete warranty type indicated by the
+     * discriminator. Records whose product or sale no longer exist are
+     * skipped.
+     *
+     * @return the warranties reconstructed from persistence
+     */
+    private List<Warranty> loadWarranties() {
+
+        List<Warranty> result = new ArrayList<>();
+        List<Sale> sales = salePersistence.loadAll(productService, personService);
+
+        for (WarrantyRecord record : repository.loadAll()) {
+
+            Product product = productService.findById(record.productId());
+            Sale sale = findSaleById(sales, record.saleId());
+
+            if (product == null || sale == null) {
+                continue;
+            }
+
+            Warranty warranty = switch (record.type()) {
+                case "BASIC" -> new BasicWarranty(record.id(), product, sale, record.startDate());
+                case "EXTENDED" -> new ExtendedWarranty(record.id(), product, sale, record.startDate());
+                default -> null;
+            };
+
+            if (warranty != null) {
+                result.add(warranty);
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Finds a sale by its identifier inside a list of sales.
+     *
+     * @param sales  sales rebuilt from persistence
+     * @param saleId identifier of the sale
+     * @return the matching sale, or {@code null} when it does not exist
+     */
+    private Sale findSaleById(List<Sale> sales, String saleId) {
+        for (Sale sale : sales) {
+            if (sale.getId().equals(saleId)) {
+                return sale;
+            }
+        }
+        return null;
     }
 
     /**
