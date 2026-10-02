@@ -18,12 +18,9 @@ import java.util.List;
 /**
  * Handles saving and loading Sale records to and from a plain text file.
  * Each line represents one sale in CSV format:
- * id;date;clientId;sellerId;productId1|productId2|...;warrantyCost
- *
- * The last field stores the cost of the extended warranties requested
- * during the sale. Lines written before the warranty module existed
- * have only five fields and are still read correctly, assuming a
- * warranty cost of zero.
+ * id;date;clientId;sellerId;productId1|productId2|...;appliedPromotionName;discountAmount
+ * The last two fields are optional when loading, so files written before
+ * the promotions module still load correctly.
  *
  * Responsabilidad: Líder Técnico - Módulo de Ventas.
  * Nota: esta clase NO contiene reglas de negocio, solo lectura/escritura
@@ -96,7 +93,8 @@ public class SalePersistence {
                 + sale.getClient().getId() + SEPARATOR
                 + sale.getSeller().getId() + SEPARATOR
                 + productIds + SEPARATOR
-                + sale.getWarrantyCost();
+                + (sale.getAppliedPromotionName() == null ? "" : sale.getAppliedPromotionName()) + SEPARATOR
+                + sale.getDiscountAmount();
     }
 
     private Sale fromLine(String line, ProductService productService, PersonService personService) {
@@ -120,8 +118,13 @@ public class SalePersistence {
                 }
             }
         }
-        if (parts.length >= 6 && !parts[5].isEmpty()) {
-            sale.addWarrantyCost(Double.parseDouble(parts[5]));
+        if (parts.length >= 7) {
+            if (!parts[5].isEmpty()) {
+                sale.setAppliedPromotionName(parts[5]);
+            }
+            if (!parts[6].isEmpty()) {
+                sale.setDiscountAmount(Double.parseDouble(parts[6]));
+            }
         }
         return sale;
     }
