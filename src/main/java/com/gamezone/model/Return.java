@@ -80,6 +80,29 @@ public class Return {
     }
 
     /**
+     * Calculates the share of the original sale discount that corresponds
+     * to one returned item.
+     *
+     * @param product returned item
+     * @return the proportional discount of the item, rounded to 2 decimals
+     */
+    public double calculateItemDiscount(Product product) {
+        return round(product.getPrice() - calculateItemRefund(product));
+    }
+
+    /**
+     * Calculates the amount refunded for one returned item, proportional
+     * to the discount of the original sale:
+     * {@code price × (1 − discount / subtotal)}.
+     *
+     * @param product returned item
+     * @return the refund of the item, rounded to 2 decimals
+     */
+    public double calculateItemRefund(Product product) {
+        return round(product.getPrice() * calculatePaidRatio());
+    }
+
+    /**
      * Calculates the refund amount as the sum of the prices of all
      * returned products, and stores it in the refundAmount field.
      * @return the calculated refund amount
