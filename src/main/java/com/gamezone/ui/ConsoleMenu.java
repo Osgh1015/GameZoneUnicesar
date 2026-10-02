@@ -12,6 +12,7 @@ import com.gamezone.model.Promotion;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Seller;
 import com.gamezone.model.VideoGame;
+import com.gamezone.model.Warranty;
 import com.gamezone.service.AccessoryService;
 import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
@@ -19,6 +20,7 @@ import com.gamezone.service.PromotionService;
 import com.gamezone.service.SaleService;
 import com.gamezone.model.Return;
 import com.gamezone.service.ReturnService;
+import com.gamezone.service.WarrantyService;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
@@ -43,16 +45,30 @@ public class ConsoleMenu {
     private AccessoryService accessoryService;
     private ReturnService returnService;
     private PromotionService promotionService;
+    private WarrantyService warrantyService;
 
+    /**
+     * Creates the console menu with the services of every module.
+     *
+     * @param productService   service of the products module
+     * @param personService    service of the people module
+     * @param saleService      service of the sales module
+     * @param accessoryService service of the accessories module
+     * @param returnService    service of the returns module
+     * @param promotionService service of the promotions module
+     * @param warrantyService  service of the warranties module
+     */
     public ConsoleMenu(ProductService productService, PersonService personService,
                        SaleService saleService, AccessoryService accessoryService,
-                       ReturnService returnService, PromotionService promotionService) {
+                       ReturnService returnService, PromotionService promotionService,
+                       WarrantyService warrantyService) {
         this.productService = productService;
         this.personService = personService;
         this.saleService = saleService;
         this.accessoryService = accessoryService;
         this.returnService = returnService;
         this.promotionService = promotionService;
+        this.warrantyService = warrantyService;
     }
 
     /** Starts the main loop of the console menu. */
@@ -67,6 +83,7 @@ public class ConsoleMenu {
             System.out.println("4. Gestión de accesorios");
             System.out.println("5. Gestión de devoluciones");
             System.out.println("6. Gestión de promociones");
+            System.out.println("7. Gestión de garantías");
             System.out.println("0. Salir");
             System.out.print("Seleccione una opción: ");
 
@@ -95,6 +112,10 @@ public class ConsoleMenu {
 
                 case "6":
                     promotionsMenu();
+                    break;
+
+                case "7":
+                    warrantiesMenu();
                     break;
 
                 case "0":
@@ -708,5 +729,110 @@ public class ConsoleMenu {
     private LocalDate readDate(String prompt) {
         System.out.print(prompt);
         return LocalDate.parse(scanner.nextLine().trim());
+    }
+
+    /**
+     * Shows the warranty management submenu and executes the option
+     * chosen by the user.
+     */
+    private void warrantiesMenu() {
+        System.out.println("\n-- Gestión de garantías --");
+        System.out.println("1. Consultar la garantía de un producto en una venta");
+        System.out.println("2. Listar todas las garantías registradas");
+        System.out.println("3. Listar las garantías vigentes a la fecha actual");
+        System.out.println("4. Listar las garantías próximas a vencer");
+        System.out.println("0. Volver");
+        System.out.print("Seleccione una opción: ");
+
+        String option = scanner.nextLine();
+
+        switch (option) {
+            case "1":
+                findWarrantyFlow();
+                break;
+
+            case "2":
+                printWarranties(warrantyService.listAllWarranties(),
+                        "Aún no hay garantías registradas.");
+                break;
+
+            case "3":
+                printWarranties(warrantyService.listActiveWarranties(),
+                        "No hay garantías vigentes en la fecha actual.");
+                break;
+
+            case "4":
+                listWarrantiesExpiringSoonFlow();
+                break;
+
+            case "0":
+                break;
+
+            default:
+                System.out.println("Opción inválida.");
+        }
+    }
+
+    /**
+     * Asks for a sale and a product and shows the certificate of the
+     * warranty associated with that product inside that sale.
+     */
+    private void findWarrantyFlow() {
+        System.out.print("ID de la venta: ");
+        String saleId = scanner.nextLine();
+
+        System.out.print("ID del producto: ");
+        String productId = scanner.nextLine();
+
+        Warranty warranty = warrantyService.findWarrantyByProduct(productId, saleId);
+
+        if (warranty == null) {
+            System.out.println("Ese producto no tiene garantía registrada en esa venta.");
+        } else {
+            System.out.println(warranty.generateWarrantyCertificate());
+        }
+    }
+
+    /**
+     * Asks for the number of days of anticipation and lists the
+     * warranties that expire within that period.
+     */
+    private void listWarrantiesExpiringSoonFlow() {
+        System.out.print("Días de anticipación (por ejemplo 30): ");
+        String input = scanner.nextLine();
+
+        int daysAhead;
+
+        try {
+            daysAhead = Integer.parseInt(input.trim());
+        } catch (NumberFormatException e) {
+            System.out.println("Debe ingresar un número entero de días.");
+            return;
+        }
+
+        if (daysAhead < 0) {
+            System.out.println("Los días de anticipación no pueden ser negativos.");
+            return;
+        }
+
+        System.out.println("Garantías que vencen en los próximos " + daysAhead + " días:");
+        printWarranties(warrantyService.listWarrantiesExpiringSoon(daysAhead),
+                "No hay garantías próximas a vencer en ese periodo.");
+    }
+
+    /**
+     * Prints a list of warranties, or a message when the list is empty.
+     *
+     * @param warranties   warranties to print
+     * @param emptyMessage message shown when there is nothing to print
+     */
+    private void printWarranties(List<Warranty> warranties, String emptyMessage) {
+        if (warranties.isEmpty()) {
+            System.out.println(emptyMessage);
+            return;
+        }
+        for (Warranty warranty : warranties) {
+            System.out.println(warranty);
+        }
     }
 }

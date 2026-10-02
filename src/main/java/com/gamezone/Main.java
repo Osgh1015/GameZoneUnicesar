@@ -52,8 +52,10 @@ public class Main {
         ReturnService returnService = new ReturnService(
                 returnRepository, saleService, productService, accessoryService);
 
-        ConsoleMenu menu = new ConsoleMenu(productService, personService, saleService, accessoryService, returnService, promotionService);
-        menu.start();
+        ConsoleMenu menu = new ConsoleMenu(productService, personService, saleService,
+                accessoryService, returnService, promotionService, warrantyService);
+        
+            menu.start();
     }
 
     /**
