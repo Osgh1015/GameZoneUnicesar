@@ -39,3 +39,25 @@ from both sales and returns, and `ReturnService` already depends on
 during registration. Placing the report here avoids creating a new,
 unnecessary service just for one report, and keeps the dependency direction
 consistent with the layered architecture.
+
+## 6. Refund of sales with a discount (integration adjustment A5)
+**Problem:** `Return.calculateRefundAmount` added up the list prices of the
+returned items. When the original sale had a promotion, the client received
+more money than they actually paid.
+
+**Cause:** the refund ignored `Sale.discountAmount`, which was added to `Sale`
+by the promotions module after the returns module was designed.
+
+**Solution:** each returned item is refunded proportionally to the discount
+of the original sale: `price × (1 − discount / subtotal)`, where the subtotal
+is the sum of the list prices of the items in the sale (extended warranty
+costs are excluded, since the discount is calculated only over the items).
+The calculation lives in the model (`Return`), because the refund is an
+intrinsic property of the return and needs no file access or external
+service. `generateReturnReceipt` shows, for every item, the list price, the
+proportional discount and the refunded amount.
+
+**Example:** a sale of $639.97 with a 15% promotion ($96.00 discount). Returning
+the console ($499.99) and a controller ($69.99) now refunds $424.99 + $59.49 =
+$484.48, instead of $569.98.
+
