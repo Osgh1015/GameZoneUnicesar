@@ -94,7 +94,8 @@ public class SalePersistence {
                 + sale.getSeller().getId() + SEPARATOR
                 + productIds + SEPARATOR
                 + (sale.getAppliedPromotionName() == null ? "" : sale.getAppliedPromotionName()) + SEPARATOR
-                + sale.getDiscountAmount();
+                + sale.getDiscountAmount() + SEPARATOR
+                + sale.getWarrantyCost();
     }
 
     private Sale fromLine(String line, ProductService productService, PersonService personService) {
@@ -125,6 +126,9 @@ public class SalePersistence {
             if (!parts[6].isEmpty()) {
                 sale.setDiscountAmount(Double.parseDouble(parts[6]));
             }
+        }
+        if (parts.length >= 8 && !parts[7].isEmpty()) {
+            sale.addWarrantyCost(Double.parseDouble(parts[7]));
         }
         return sale;
     }

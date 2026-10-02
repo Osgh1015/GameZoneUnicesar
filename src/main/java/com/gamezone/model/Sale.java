@@ -22,6 +22,7 @@ public class Sale {
     private List<Product> products;
     private String appliedPromotionName;
     private double discountAmount;
+    private double warrantyCost;
 
     /**
      * Creates a new sale.
@@ -39,6 +40,7 @@ public class Sale {
         this.products = new ArrayList<>();
         this.appliedPromotionName = null;
         this.discountAmount = 0.0;
+        this.warrantyCost = 0.0;
     }
 
     public String getId() {
@@ -75,6 +77,27 @@ public class Sale {
     }
 
     /**
+     * Returns the extra amount charged for the extended warranties
+     * requested during this sale.
+     *
+     * @return the accumulated cost of the extended warranties
+     */
+    public double getWarrantyCost() {
+        return warrantyCost;
+    }
+
+    /**
+     * Adds the cost of an extended warranty to this sale. It is called
+     * once for every extended warranty granted, so the total of the
+     * sale always reflects the coverage the client actually bought.
+     *
+     * @param amount additional cost to accumulate
+     */
+    public void addWarrantyCost(double amount) {
+        this.warrantyCost += amount;
+    }
+
+    /**
      * A sale is only valid if it contains at least one product.
      * @return true if the sale has one or more products
      */
@@ -93,6 +116,9 @@ public class Sale {
         for (Product product : products) {
             total += product.getPrice();
         }
+        // The extended warranties requested by the client are part of
+        // the amount the client has to pay for this sale.
+        total += warrantyCost;
         return total;
     }
 
@@ -126,12 +152,14 @@ public class Sale {
     }
 
     /**
-     * Calculates the final amount to pay: the subtotal minus the discount
-     * applied by the promotion (if any).
-     * @return the subtotal minus the discount amount
+     * Calculates the final amount to pay: the subtotal of the items minus
+     * the discount applied by the promotion (if any), plus the cost of the
+     * extended warranties requested. The discount is calculated only over
+     * the items, so warranties are never discounted.
+     * @return subtotal - discount + extended warranty cost
      */
     public double calculateFinalTotal() {
-        return calculateTotal() - discountAmount;
+        return calculateTotal() - discountAmount + warrantyCost;
     }
 
     /**
@@ -158,6 +186,9 @@ public class Sale {
         } else {
             sb.append("Descuento: $0.00 (sin promoción aplicada)\n");
         }
+        if (warrantyCost > 0) {
+            sb.append(String.format("Garantías extendidas: +$%.2f%n", warrantyCost));
+        }
         sb.append(String.format("Total final: $%.2f%n", calculateFinalTotal()));
         return sb.toString();
     }
@@ -183,6 +214,7 @@ public class Sale {
                 ", subtotal=" + calculateTotal() +
                 ", descuento=" + discountAmount +
                 ", total=" + calculateFinalTotal() +
+                ", garantias=" + warrantyCost +
                 '}';
     }
 }

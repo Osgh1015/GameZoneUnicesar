@@ -36,6 +36,8 @@ Diagramas de diseño disponibles en la carpeta [`docs/`](./docs):
 - [`docs/layers-diagram.md`](./docs/layers-diagram.md) — Diagrama de capas
 - [`docs/promotion-analysis.md`](./docs/promotion-analysis.md) — Análisis del módulo de promociones
 - [`docs/promotion-class-diagram.md`](./docs/promotion-class-diagram.md) — Diagrama de clases del módulo de promociones
+- [`docs/warranty-analysis.md`](./docs/warranty-analysis.md) — Análisis del módulo de garantías
+- [`docs/warranty-class-diagram.md`](./docs/warranty-class-diagram.md) — Diagrama de clases del módulo de garantías
 
 ## Requisitos previos
 
@@ -75,20 +77,28 @@ El menú de consola permite ejecutar las siguientes operaciones:
 - Listar todos los vendedores registrados
 
 **Gestión de ventas**
-- Registrar una nueva venta (cliente, vendedor y uno o más productos)
+- Registrar una nueva venta (cliente, vendedor y uno o más productos o accesorios); por cada consola se pregunta si el cliente desea garantía extendida
 - Consultar el historial completo de ventas
 - Consultar el historial de compras de un cliente específico
 - Consultar el historial de ventas atendidas por un vendedor específico
-- Ver el detalle (recibo) de una venta, con subtotal, descuento aplicado y total final
+- Ver el detalle (recibo) de una venta, con subtotal, descuento aplicado, costo de garantías extendidas y total final
 
 **Gestión de promociones**
-- Registrar promociones por porcentaje, por categoría (`VIDEOGAME` / `CONSOLE`) y por volumen de compra
+- Registrar promociones por porcentaje, por categoría (`VIDEOGAME` / `CONSOLE` / `ACCESSORY`) y por volumen de compra
 - Listar todas las promociones registradas y solo las vigentes en la fecha actual
 - Aplicación automática al registrar una venta: se aplica la única promoción vigente que otorga el mayor descuento (no son acumulables)
 
+**Gestión de garantías**
+- Garantía básica automática (6 meses, sin costo) para cada consola vendida; los videojuegos y accesorios no generan garantía
+- Garantía extendida opcional para consolas (12 meses), con un costo del 10% del precio de la consola que se suma al total de la venta
+- Consultar la garantía de un producto dentro de una venta específica (certificado con vigencia)
+- Listar todas las garantías registradas
+- Listar las garantías vigentes en la fecha actual
+- Listar las garantías próximas a vencer, indicando los días de anticipación
+
 ## Persistencia de datos
 
-Toda la información (productos, personas, ventas y promociones, en `data/promotions.csv`) se almacena en archivos dentro de la carpeta [`data/`](./data). Los datos se cargan automáticamente al iniciar la aplicación y se guardan automáticamente al finalizar cada operación. El archivo de vendedores incluye al menos tres registros precargados.
+Toda la información (productos, personas, ventas, promociones en `data/promotions.csv` y garantías en `data/warranties.csv`) se almacena en archivos dentro de la carpeta [`data/`](./data). Los datos se cargan automáticamente al iniciar la aplicación y se guardan automáticamente al finalizar cada operación. El archivo de vendedores incluye al menos tres registros precargados.
 
 ## Control de versiones
 
