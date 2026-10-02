@@ -145,6 +145,30 @@ public class WarrantyService {
     }
 
     /**
+     * Calculates the total additional cost of all warranties associated
+     * with a specific sale.
+     *
+     * Basic warranties do not add any cost, while extended warranties
+     * contribute their additional cost.
+     *
+     * @param saleId identifier of the sale
+     * @return total additional warranty cost for the sale
+     */
+    public double calculateWarrantyCost(String saleId) {
+
+        double total = 0.0;
+
+        for (Warranty warranty : warranties) {
+
+            if (warranty.getSale().getId().equals(saleId)) {
+                total += warranty.getAdditionalCost();
+            }
+        }
+
+        return total;
+    }
+
+    /**
      * Generates a unique identifier for a warranty.
      *
      * @return generated warranty identifier
