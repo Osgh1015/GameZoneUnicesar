@@ -639,12 +639,7 @@ public class ConsoleMenu {
                 break;
 
             case "5":
-                System.out.print("Mes (1-12): ");
-                int month = Integer.parseInt(scanner.nextLine());
-                System.out.print("Año: ");
-                int year = Integer.parseInt(scanner.nextLine());
-                double balance = returnService.generateMonthlyBalance(month, year);
-                System.out.println("Balance neto del período: $" + balance);
+                monthlyBalanceFlow();
                 break;
 
             case "0":
@@ -653,6 +648,39 @@ public class ConsoleMenu {
             default:
                 System.out.println("Opción inválida.");
         }
+    }
+
+    /**
+     * Asks for a month and a year and shows the monthly balance report:
+     * total sales (final totals, including discounts and extended
+     * warranties), total returns and net balance.
+     */
+    private void monthlyBalanceFlow() {
+        int month;
+        int year;
+        try {
+            System.out.print("Mes (1-12): ");
+            month = Integer.parseInt(scanner.nextLine().trim());
+            System.out.print("Año: ");
+            year = Integer.parseInt(scanner.nextLine().trim());
+        } catch (NumberFormatException e) {
+            System.out.println("Debe ingresar números enteros para el mes y el año.");
+            return;
+        }
+
+        if (month < 1 || month > 12) {
+            System.out.println("El mes debe estar entre 1 y 12.");
+            return;
+        }
+
+        double totalSales = returnService.calculateMonthlySales(month, year);
+        double totalReturns = returnService.calculateMonthlyReturns(month, year);
+        double balance = returnService.generateMonthlyBalance(month, year);
+
+        System.out.printf("--- Balance mensual %02d/%d ---%n", month, year);
+        System.out.printf("Total de ventas:       $%.2f%n", totalSales);
+        System.out.printf("Total de devoluciones: -$%.2f%n", totalReturns);
+        System.out.printf("Balance neto:          $%.2f%n", balance);
     }
 
     private void registerReturnFlow() {
