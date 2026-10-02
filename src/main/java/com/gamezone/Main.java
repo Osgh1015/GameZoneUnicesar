@@ -36,12 +36,26 @@ public class Main {
         // The warranty module is built before the sales module because
         // every sale registered from now on grants warranties, while a
         // warranty only needs to read the sales already stored.
-        WarrantyRepository warrantyRepository = new WarrantyRepository(
-                "data/warranties.csv", productService, accessoryService, salePersistence, personService);
-        WarrantyService warrantyService = new WarrantyService(warrantyRepository);
+        WarrantyRepository warrantyRepository =
+                new WarrantyRepository(
+                        "data/warranties.csv"
+                );
+        WarrantyService warrantyService =
+                new WarrantyService(
+                        warrantyRepository,
+                        salePersistence,
+                        productService,
+                        personService
+                );
 
-        SaleService saleService = new SaleService(
-                salePersistence, productService, personService, accessoryService, warrantyService);
+        SaleService saleService =
+                new SaleService(
+                        salePersistence,
+                        productService,
+                        personService,
+                        accessoryService,
+                        warrantyService
+                );
 
         ConsoleMenu menu = new ConsoleMenu(
                 productService, personService, saleService, accessoryService, warrantyService);
