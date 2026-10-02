@@ -37,7 +37,7 @@ public class Main {
         PromotionRepository promotionRepository = new PromotionRepository("data/promotions.csv");
         PromotionService promotionService = new PromotionService(promotionRepository);
 
-        SalePersistence salePersistence = new SalePersistence("data/sales.txt");
+        SalePersistence salePersistence = new SalePersistence("data/sales.txt", accessoryService);
 
         // The warranty module is built before the sales module. Its
         // repository only stores ids and the service resolves them, so
