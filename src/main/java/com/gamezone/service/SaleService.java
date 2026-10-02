@@ -29,18 +29,32 @@ public class SaleService {
     private PersonService personService;
     private final AccessoryService accessoryService;
     private final PromotionService promotionService;
+    private final WarrantyService warrantyService;
 
+    /**
+     * Creates the sale service with all its collaborators, injected by
+     * constructor from {@code Main}.
+     *
+     * @param salePersistence  persistence used to save and load sales
+     * @param productService   service that owns the product catalogue and stock
+     * @param personService    service used to resolve clients and sellers
+     * @param accessoryService service that owns the accessory catalogue and stock
+     * @param promotionService service used to select the best promotion
+     * @param warrantyService  service used to grant warranties for the items sold
+     */
     public SaleService(SalePersistence salePersistence,
                        ProductService productService,
                        PersonService personService,
                        AccessoryService accessoryService,
-                       PromotionService promotionService) {
+                       PromotionService promotionService,
+                       WarrantyService warrantyService) {
         this.salePersistence = salePersistence;
         this.productService = productService;
         this.personService = personService;
         this.sales = salePersistence.loadAll(productService, personService);
         this.accessoryService = accessoryService;
         this.promotionService = promotionService;
+        this.warrantyService = warrantyService;
     }
 
     /**
