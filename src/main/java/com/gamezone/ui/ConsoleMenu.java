@@ -1,5 +1,9 @@
 package com.gamezone.ui;
 
+import com.gamezone.exceptions.BusinessRuleException;
+import com.gamezone.exceptions.InvalidDataException;
+import com.gamezone.exceptions.PersistenceException;
+import com.gamezone.exceptions.ResourceNotFoundException;
 import com.gamezone.model.Accessory;
 import com.gamezone.model.Cable;
 import com.gamezone.model.CategoryDiscount;
@@ -71,7 +75,14 @@ public class ConsoleMenu {
         this.warrantyService = warrantyService;
     }
 
-    /** Starts the main loop of the console menu. */
+    /**
+     * Starts the main loop of the console menu.
+     * <p>
+     * Every operation runs inside a single {@code try} block with one
+     * {@code catch} per category of error, ordered from the most specific
+     * exception to the most general one. Each category shows a different
+     * message to the user, and no stack trace is ever shown.
+     */
     public void start() {
         boolean running = true;
 
@@ -127,9 +138,19 @@ public class ConsoleMenu {
                     default:
                         System.out.println("Opción inválida.");
                 }
+            } catch (ResourceNotFoundException e) {
+                System.out.println("No se encontró el recurso solicitado: " + e.getMessage());
+            } catch (BusinessRuleException e) {
+                System.out.println("No se puede completar la operación: " + e.getMessage());
+            } catch (InvalidDataException e) {
+                System.out.println("Los datos ingresados no son válidos: " + e.getMessage());
+            } catch (PersistenceException e) {
+                System.out.println("Ocurrió un problema al acceder a los datos del sistema. "
+                        + "Contacte al administrador.");
             } catch (RuntimeException e) {
-                // Safety net: an unexpected error must not close the application.
-                System.out.println("Ocurrió un error: " + e.getMessage());
+                // Safety net: an unexpected error must not close the application
+                // nor show a technical message to the user.
+                System.out.println("Ocurrió un error inesperado. Intente de nuevo.");
             }
         }
     }
