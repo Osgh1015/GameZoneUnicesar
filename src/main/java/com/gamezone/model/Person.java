@@ -44,4 +44,12 @@ public abstract class Person {
         return phone;
     }
 
+    /**
+     * Returns a complete description of the person, including the
+     * attributes of its specific role. Each subclass must implement it.
+     *
+     * @return formatted description of the person, in Spanish
+     */
+    public abstract String getDescription();
+
 }

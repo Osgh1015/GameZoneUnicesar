@@ -45,8 +45,9 @@ public class Seller extends Person {
         this.workShift = workShift;
     }
 
+    @Override
     public String getDescription() {
-        return "Seller: " + getName() + " | ID: " + getId() + " | Employee Code: " + employeeCode + " | Shift: " + workShift;
+        return "Vendedor: " + getName() + " | ID: " + getId() + " | Código de empleado: " + employeeCode + " | Turno: " + workShift;
     }
 
     public String getFullName() {
