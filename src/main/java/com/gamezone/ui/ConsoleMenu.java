@@ -382,13 +382,11 @@ public class ConsoleMenu {
                 productIdsWithExtendedWarranty
         );
 
-        if (sale != null) {
-            System.out.println("Venta registrada correctamente.");
-            System.out.println(sale.generateReceipt());
-            showWarrantiesOfSale(sale);
-        } else {
-            System.out.println("No se pudo registrar la venta.");
-        }
+        // registerSale no longer returns null: if the sale cannot be
+        // registered it throws a custom exception, handled in start().
+        System.out.println("Venta registrada correctamente.");
+        System.out.println(sale.generateReceipt());
+        showWarrantiesOfSale(sale);
     }
 
     /**
