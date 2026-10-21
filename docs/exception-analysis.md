@@ -55,6 +55,81 @@ before still cause an error, but now with a more informative exception.
    modifying the existing exceptions or the code that catches `GameZoneException`.
    Abstraction: `GameZoneException` is abstract because a "generic" error with no
    category has no meaning in the system; only the four specialized exceptions are thrown.
+3. Where the validators are called
+
+The validators are called **from the services, at the beginning of each operation, before
+any change of state or any write to a file**. For example:
+
+- `ProductService.registerVideoGame` and `registerConsole` call
+  `ProductValidator.validateProductData` before adding the product to the list.
+- `PersonService.registerClient` calls `PersonValidator.validatePersonData` and
+  `validateUniquePerson` before adding the client.
+- `SaleService.registerSale` calls `SaleValidator.validateSaleData` and
+  `ProductValidator.validateStockAvailability` before creating the sale, so the stock is
+  never decreased for a sale that will later be rejected.
+
+Validating before acting guarantees that a failed operation leaves the system exactly as it
+was: no half-registered sales and no stock decreased by mistake.
+
+This location is consistent with the layered architecture because the validation layer sits
+logically **between `service` and `model`**: the services depend on the validators, and the
+validators depend only on the model classes and on the exceptions layer, which is
+transversal.
+
+**Validators cannot access the persistence package.**
+
+- It would create a dependency (`validation → persistence`) that breaks the direction of the
+  architecture, and it would duplicate the data access that already belongs to the
+  repositories.
+- The validators would stop being simple, reusable classes with static methods and would
+  start depending on files.
+
+When a validator needs existing data, the service passes it as a parameter. That is why
+`validateUniquePerson` receives the list of existing people instead of loading it: the
+service, which owns the data, supplies it, and the validator only checks the rule.
+4. Preserving the external behavior
+
+The strategy of the team is to change only **the type of exception**, never the
+**condition** that causes it. Every place that threw `IllegalArgumentException`,
+`IllegalStateException` or `NoSuchElementException`, or printed a message and returned
+`null`, now throws the equivalent custom exception under exactly the same condition.
+
+To make sure nothing was broken:
+
+1. **Baseline before the refactor.** Before writing any code, the ten operations of the
+   menu were executed on `develop` and the results were recorded.
+2. **Incremental integration.** The work was split into three Pull Requests (exceptions
+   and validators, services and repositories, user interface). After each one, the project
+   was compiled and the ten operations were executed again.
+3. **Same data files.** The format of the files in `data/` did not change, so the data
+   saved before the refactor still loads correctly. A missing data file still starts the
+   system with an empty list; only a real read or write error throws
+   `PersistenceException`.
+
+**Evidence:** the following table compares the result of every operation before and after
+the refactor, including the error cases.
+
+| # | Operation | Input | Result before | Result after |
+|---|---|---|---|---|
+| 1 | Register video game | Valid data | | |
+| 2 | Register console | Valid data | | |
+| 3 | List products | - | | |
+| 4 | Register client | Valid data | | |
+| 5 | List clients | - | | |
+| 6 | List sellers | - | | |
+| 7 | Register sale | Client, seller and items | | |
+| 8 | Sales history | - | | |
+| 9 | Purchase history of a client | Client id | | |
+| 10 | Sales attended by a seller | Seller id | | |
+| E1 | Register sale | No items | | |
+| E2 | Register sale | Quantity above the stock | | |
+| E3 | Register sale | Item id that does not exist | | |
+| E4 | Register client | Id that already exists | | |
+| E5 | Register client | Empty name / invalid email | | |
+| E6 | Register product | Price of zero | | |
+
+The "before" and "after" columns are filled with the output of the console, and
+screenshots of both runs are added to this document.
 5. How ConsoleMenu catches the exceptions
    The team uses a single `try` block with multiple `catch` blocks, placed in `start()`
    around the main menu `switch`, ordered from the most specific exception to the most
@@ -90,3 +165,24 @@ goes last. Java does not compile a `catch` of a subclass placed after the `catch
 superclass, so the compiler itself protects this order.
 Safety net. The final `catch (RuntimeException e)` guarantees that no unexpected error
 closes the application or shows a raw stack trace to the user.
+6. Project-specific decisions
+
+- **`SalePersistence` instead of `SaleRepository`.** The statement calls the sales
+  repository `SaleRepository`. In this project the class has been called `SalePersistence`
+  since the Workshop; the name was kept to avoid changing `Main`, `WarrantyService` and the
+  previous diagrams. Its responsibility is the same.
+- **`Client` instead of `Customer`.** The statement uses `Customer` in
+  `SaleValidator.validateSaleData`; in this project the class is `Client`.
+- **`validateUniquePerson` receives `List<? extends Person>`.** In Java a `List<Client>` is
+  not a `List<Person>`, so the wildcard lets the same method validate clients and sellers.
+- **`findById` methods still return `null`.** `SaleService`, `ReturnService`,
+  `WarrantyService` and the repositories use `findById` to check whether an id belongs to a
+  product or to an accessory, so they depend on a `null` result. Instead of changing that
+  contract, the services call `validateProductExists`, `validatePersonExists` and
+  `validateSaleExists`, which throw `ResourceNotFoundException` when the result is `null`.
+- **Scope of the refactor.** Requirement 6 refactors `ProductService`, `PersonService`,
+  `SaleService` and their repositories. The services of the extension modules
+  (`ReturnService`, `PromotionService`, `AccessoryService`, `WarrantyService`) are outside
+  that scope, so the menu keeps handling their `IllegalArgumentException` in the flows that
+  use them.
+
