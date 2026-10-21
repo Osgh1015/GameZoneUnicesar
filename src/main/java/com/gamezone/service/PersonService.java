@@ -39,7 +39,7 @@ public class PersonService {
      */
     public void registerClient(Client client) {
         if (client.getName() == null || client.getName().isBlank()) {
-            throw new IllegalArgumentException("Client name cannot be empty");
+            throw new IllegalArgumentException("El nombre del cliente no puede estar vacío.");
         }
         clients.add(client); repository.saveClients(clients);
     }
@@ -105,9 +105,5 @@ public class PersonService {
 
     public Seller[] listSellers() {
         return vendors.toArray(new Seller[0]);
-    }
-
-    public void preloadSeller(Seller seller) {
-        vendors.add(seller);
     }
 }

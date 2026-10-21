@@ -1,6 +1,5 @@
 package com.gamezone;
 
-import com.gamezone.model.Seller;
 import com.gamezone.persistence.AccessoryRepository;
 import com.gamezone.persistence.PromotionRepository;
 import com.gamezone.persistence.ReturnRepository;
@@ -29,8 +28,6 @@ public class Main {
         ProductService productService = new ProductService();
         PersonService personService = new PersonService();
 
-        preloadSellers(personService);
-
         AccessoryRepository accessoryRepository = new AccessoryRepository("data/accessories.csv");
         AccessoryService accessoryService = new AccessoryService(accessoryRepository);
 
@@ -58,15 +55,5 @@ public class Main {
         ConsoleMenu menu = new ConsoleMenu(productService, personService, saleService,
                 accessoryService, returnService, promotionService, warrantyService);
         menu.start();
-    }
-
-    /**
-     * Preloads at least three sellers, as required by the workshop:
-     * sellers are already hired and must not be registered through the UI.
-     */
-    private static void preloadSellers(PersonService personService) {
-        personService.preloadSeller(new Seller("S001", "Laura Gomez", "3001234567", "EMP001", "Dia"));
-        personService.preloadSeller(new Seller("S002", "Carlos Perez", "3007654321", "EMP002", "Tarde"));
-        personService.preloadSeller(new Seller("S003", "Ana Torres", "3009876543", "EMP003", "noche"));
     }
 }

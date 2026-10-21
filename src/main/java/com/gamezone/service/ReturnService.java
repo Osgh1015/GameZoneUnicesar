@@ -47,6 +47,8 @@ public class ReturnService {
     /**
      * Registers a new return after validating the 30-day deadline and
      * that every requested product actually belongs to the original sale.
+     * A product cannot be returned more times than it was sold in that
+     * sale, counting the units already returned in previous returns.
      * The warranties of every returned console are cancelled through
      * {@link WarrantyService#cancelWarranties(String, String)} and the
      * refundable cost is included in the refund amount.
@@ -61,6 +63,9 @@ public class ReturnService {
         Sale sale = saleService.findById(saleId);
         if (sale == null) {
             throw new IllegalArgumentException("La venta no existe.");
+        }
+        if (productIds == null || productIds.isEmpty()) {
+            throw new IllegalArgumentException("Debe indicar al menos un producto a devolver.");
         }
 
         if (!sale.canBeReturned()) {
@@ -83,6 +88,8 @@ public class ReturnService {
             }
             productsToReturn.add(match);
         }
+
+        validateReturnableUnits(sale, productIds);
 
         String newId = UUID.randomUUID().toString();
         Return newReturn = new Return(newId, LocalDate.now(), sale, productsToReturn, reason);
@@ -110,6 +117,62 @@ public class ReturnService {
         repository.saveAll(returns);
 
         return newReturn;
+    }
+
+    /**
+     * Checks that no product is returned more times than it was sold in the
+     * sale, taking into account the units already returned before.
+     *
+     * @param sale       original sale
+     * @param productIds ids of the products requested in the new return
+     * @throws IllegalArgumentException if a product exceeds its returnable units
+     */
+    private void validateReturnableUnits(Sale sale, List<String> productIds) {
+        for (String productId : new LinkedHashSet<>(productIds)) {
+            int requested = Collections.frequency(productIds, productId);
+            int available = countSoldUnits(sale, productId)
+                    - countReturnedUnits(sale.getId(), productId);
+            if (requested > available) {
+                throw new IllegalArgumentException("Solo se pueden devolver " + available
+                        + " unidad(es) del producto " + productId + " en esta venta.");
+            }
+        }
+    }
+
+    /**
+     * Counts how many units of a product were sold in a sale.
+     *
+     * @param sale      the sale
+     * @param productId id of the product
+     * @return number of units sold
+     */
+    private int countSoldUnits(Sale sale, String productId) {
+        int count = 0;
+        for (Product product : sale.getProducts()) {
+            if (product.getId().equals(productId)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /**
+     * Counts how many units of a product were already returned for a sale.
+     *
+     * @param saleId    id of the sale
+     * @param productId id of the product
+     * @return number of units already returned
+     */
+    private int countReturnedUnits(String saleId, String productId) {
+        int count = 0;
+        for (Return previous : viewReturnsBySale(saleId)) {
+            for (Product product : previous.getReturnedProducts()) {
+                if (product.getId().equals(productId)) {
+                    count++;
+                }
+            }
+        }
+        return count;
     }
 
     /** @return every return registered in the system */

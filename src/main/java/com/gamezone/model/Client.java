@@ -31,8 +31,9 @@ public class Client extends Person {
         return email;
     }
 
+    @Override
     public String getDescription() {
-        return "Client: " + getName() + " | ID: " + getId() + " | Phone: " + getPhone() + " | Email: " + email;
+        return "Cliente: " + getName() + " | ID: " + getId() + " | Teléfono: " + getPhone() + " | Correo: " + email;
     }
 
     public String getFullName() {
