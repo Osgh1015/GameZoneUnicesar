@@ -1,5 +1,6 @@
 package com.gamezone.persistence;
 
+import com.gamezone.exceptions.PersistenceException;
 import com.gamezone.model.Client;
 import com.gamezone.model.Product;
 import com.gamezone.model.Sale;
@@ -9,6 +10,7 @@ import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -51,7 +53,9 @@ public class SalePersistence {
 
     /**
      * Saves the full list of sales to the file, overwriting its content.
+     *
      * @param sales list of sales to persist
+     * @throws PersistenceException if the file cannot be written
      */
     public void saveAll(List<Sale> sales) {
         try (FileWriter writer = new FileWriter(filePath)) {
@@ -60,7 +64,8 @@ public class SalePersistence {
                 writer.write(System.lineSeparator());
             }
         } catch (IOException e) {
-            System.out.println("Error al guardar las ventas: " + e.getMessage());
+            throw new PersistenceException(
+                    "Error de escritura en el archivo " + filePath + " al guardar las ventas.", e);
         }
     }
 
@@ -70,25 +75,55 @@ public class SalePersistence {
      *
      * @param productService service used to resolve product references
      * @param personService  service used to resolve client/seller references
-     * @return the list of sales reconstructed from the file
+     * @return the list of sales reconstructed from the file, or an empty
+     *         list if the file does not exist yet
+     * @throws PersistenceException if the file cannot be read or one of its
+     *                              lines is corrupted
      */
     public List<Sale> loadAll(ProductService productService, PersonService personService) {
         List<Sale> sales = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+        File file = new File(filePath);
+        if (!file.exists()) {
+            return sales;
+        }
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
+            int lineNumber = 0;
             while ((line = reader.readLine()) != null) {
+                lineNumber++;
                 if (!line.trim().isEmpty()) {
-                    Sale sale = fromLine(line, productService, personService);
+                    Sale sale = parseLine(line, lineNumber, productService, personService);
                     if (sale != null) {
                         sales.add(sale);
                     }
                 }
             }
         } catch (IOException e) {
-            // If the file does not exist yet, we simply start with no sales.
-            System.out.println("“No se encontró un archivo de ventas anterior. Se inicia vacío.”");
+            throw new PersistenceException(
+                    "Error de lectura en el archivo " + filePath + " al cargar las ventas.", e);
         }
         return sales;
+    }
+
+    /**
+     * Converts a line of the file into a sale, reporting a corrupted line as
+     * a persistence error.
+     *
+     * @param line           line of the file
+     * @param lineNumber     number of the line, used in the error message
+     * @param productService service used to resolve product references
+     * @param personService  service used to resolve client/seller references
+     * @return the sale, or {@code null} if its client or seller no longer exist
+     * @throws PersistenceException if the line does not have the expected format
+     */
+    private Sale parseLine(String line, int lineNumber, ProductService productService,
+                           PersonService personService) {
+        try {
+            return fromLine(line, productService, personService);
+        } catch (RuntimeException e) {
+            throw new PersistenceException("El archivo " + filePath + " está dañado en la línea "
+                    + lineNumber + " (lectura de ventas).", e);
+        }
     }
 
     private String toLine(Sale sale) {
