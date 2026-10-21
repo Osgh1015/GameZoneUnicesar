@@ -333,12 +333,8 @@ public class ConsoleMenu {
 
             case "5":
                 System.out.print("ID de la venta: ");
-                Sale detail = saleService.findById(scanner.nextLine());
-                if (detail == null) {
-                    System.out.println("Venta no encontrada.");
-                } else {
-                    System.out.println(detail.generateReceipt());
-                }
+                Sale detail = saleService.getSaleDetail(scanner.nextLine());
+                System.out.println(detail.generateReceipt());
                 break;
 
             case "0":
