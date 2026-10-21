@@ -1,8 +1,12 @@
 package com.gamezone.service;
 
+import com.gamezone.exceptions.BusinessRuleException;
+import com.gamezone.exceptions.InvalidDataException;
+import com.gamezone.exceptions.PersistenceException;
 import com.gamezone.model.Client;
 import com.gamezone.model.Seller;
 import com.gamezone.persistence.PersonRepository;
+import com.gamezone.validation.PersonValidator;
 
 import java.util.List;
 
@@ -15,6 +19,9 @@ import java.util.List;
  * vendors) goes through this service, which loads data on startup and
  * saves it after every change, keeping the in-memory lists and the
  * files in sync.
+ * <p>
+ * The validations are delegated to {@link PersonValidator}, which throws
+ * the custom exceptions of the system.
  */
 public class PersonService {
 
@@ -25,6 +32,8 @@ public class PersonService {
     /**
      * Creates the service, loading clients and vendors already stored
      * on disk.
+     *
+     * @throws PersistenceException if a data file cannot be read
      */
     public PersonService() {
         this.repository = new PersonRepository();
@@ -36,12 +45,18 @@ public class PersonService {
      * Registers a new client and immediately persists the updated list.
      *
      * @param client the client to register
+     * @throws InvalidDataException  if a required field is empty or the email
+     *                               does not have a valid format
+     * @throws BusinessRuleException if a client or seller already uses the same id
+     * @throws PersistenceException  if the clients file cannot be written
      */
     public void registerClient(Client client) {
-        if (client.getName() == null || client.getName().isBlank()) {
-            throw new IllegalArgumentException("El nombre del cliente no puede estar vacío.");
-        }
-        clients.add(client); repository.saveClients(clients);
+        PersonValidator.validatePersonData(client.getId(), client.getName(),
+                client.getEmail(), client.getPhone());
+        PersonValidator.validateUniquePerson(clients, client.getId());
+        PersonValidator.validateUniquePerson(vendors, client.getId());
+        clients.add(client);
+        repository.saveClients(clients);
     }
 
     /**

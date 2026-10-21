@@ -1,5 +1,8 @@
 package com.gamezone.service;
 
+import com.gamezone.exceptions.BusinessRuleException;
+import com.gamezone.exceptions.PersistenceException;
+import com.gamezone.exceptions.ResourceNotFoundException;
 import com.gamezone.model.Client;
 import com.gamezone.model.Console;
 import com.gamezone.model.ExtendedWarranty;
@@ -9,9 +12,14 @@ import com.gamezone.model.Sale;
 import com.gamezone.model.Seller;
 import com.gamezone.persistence.SalePersistence;
 import com.gamezone.model.Accessory;
+import com.gamezone.validation.PersonValidator;
+import com.gamezone.validation.ProductValidator;
+import com.gamezone.validation.SaleValidator;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,6 +29,11 @@ import java.util.UUID;
  * accessories, promotions and warranties modules: validation of items and
  * stock, best promotion over the items, warranties for consoles, final
  * total, inventory update and persistence.
+ *
+ * <p>
+ * The validations are delegated to {@link SaleValidator},
+ * {@link PersonValidator} and {@link ProductValidator}, which throw the
+ * custom exceptions of the system instead of returning {@code null}.
  *
  * Responsabilidad: Líder Técnico - Módulo de Ventas.
  */
@@ -87,36 +100,29 @@ public class SaleService {
      * @param productIdsWithExtendedWarranty ids of the consoles for which the
      *                   client requested extended warranty. When the list is
      *                   empty or null, no extended warranty is applied.
-     * @return the registered sale, or null if validation failed
+
+     * @return the registered sale
+     * @throws ResourceNotFoundException if the client, the seller or an item
+     *                                   does not exist
+     * @throws BusinessRuleException     if the sale has no items or the stock
+     *                                   of an item is not enough
+     * @throws PersistenceException      if a data file cannot be written
      */
     public Sale registerSale(String clientId, String sellerId, List<String> productIds,
                              List<String> productIdsWithExtendedWarranty) {
 
-        // Step 1: the sale must contain at least one item.
-        if (productIds == null || productIds.isEmpty()) {
-            System.out.println("Una venta debe contener al menos un producto.");
-            return null;
-        }
-
         Client client = personService.findClientById(clientId);
+        PersonValidator.validatePersonExists(client, clientId);
         Seller seller = personService.findSellerById(sellerId);
+        PersonValidator.validatePersonExists(seller, sellerId);
 
-        if (client == null || seller == null) {
-            System.out.println("Cliente o vendedor no encontrado.");
-            return null;
-        }
-
-        // Step 2: resolve every item as a product or an accessory and
-        // validate that there is enough stock for all of them.
-        List<Product> items = resolveItems(productIds);
-        if (items == null) {
-            return null;
-        }
-        if (!hasSufficientStock(items, productIds)) {
-            System.out.println("Stock insuficiente para uno o más productos.");
-            return null;
-        }
-
+        // Steps 1 and 2: resolve every item as a product or an accessory,
+        // validate that the sale has at least one item and that there is
+        // enough stock for all of them.
+        List<String> requestedIds = productIds == null ? new ArrayList<>() : productIds;
+        List<Product> items = resolveItems(requestedIds);
+        SaleValidator.validateSaleData(client, seller, items);
+        validateStock(items, requestedIds);
         // Step 3: create the sale; its subtotal is the sum of the item prices
         // (Sale.calculateTotal()).
         Sale sale = createSale(client, seller, items);
@@ -148,7 +154,7 @@ public class SaleService {
      * @param clientId   id of the client making the purchase
      * @param sellerId   id of the seller attending the sale
      * @param productIds ids of the products purchased
-     * @return the registered sale, or null if validation failed
+     * @return the registered sale
      */
     public Sale registerSale(String clientId, String sellerId, List<String> productIds) {
         return registerSale(clientId, sellerId, productIds, new ArrayList<>());
@@ -158,17 +164,16 @@ public class SaleService {
      * Step 2 of the flow: resolves every requested id as a product or an
      * accessory.
      *
+
      * @param productIds ids requested for the sale
-     * @return the resolved items, or {@code null} if any id does not exist
+     * @return the resolved items
+     * @throws ResourceNotFoundException if any id does not exist
      */
     private List<Product> resolveItems(List<String> productIds) {
         List<Product> items = new ArrayList<>();
         for (String productId : productIds) {
             Product item = findSellableItem(productId);
-            if (item == null) {
-                System.out.println("Producto no encontrado: " + productId);
-                return null;
-            }
+            ProductValidator.validateProductExists(item, productId);
             items.add(item);
         }
         return items;
@@ -274,20 +279,19 @@ public class SaleService {
         return accessoryService.findById(itemId);
     }
 
-    private boolean hasSufficientStock(List<Product> products, List<String> productIds) {
-
-        for (Product product : products) {
-
-            long requested = productIds.stream()
-                    .filter(id -> id.equals(product.getId()))
-                    .count();
-
-            if (product.getQuantity() < requested) {
-                return false;
-            }
+    /**
+     * Step 2 of the flow: validates that every item has enough stock for
+     * the number of units requested (an id may appear more than once).
+     *
+     * @param items      resolved items of the sale
+     * @param productIds ids requested for the sale
+     * @throws BusinessRuleException if the stock of an item is not enough
+     */
+    private void validateStock(List<Product> items, List<String> productIds) {
+        for (Product item : new LinkedHashSet<>(items)) {
+            int requested = Collections.frequency(productIds, item.getId());
+            ProductValidator.validateStockAvailability(item, requested);
         }
-
-        return true;
     }
 
     /** @return the full history of registered sales */
@@ -343,5 +347,18 @@ public class SaleService {
             }
         }
         return null;
+    }
+    /**
+     * Returns an existing sale, used when the user asks for the detail of a
+     * specific sale.
+     *
+     * @param saleId the id of the sale to search for
+     * @return the matching sale
+     * @throws ResourceNotFoundException if the sale does not exist
+     */
+    public Sale getSaleDetail(String saleId) {
+        Sale sale = findById(saleId);
+        SaleValidator.validateSaleExists(sale, saleId);
+        return sale;
     }
 }
