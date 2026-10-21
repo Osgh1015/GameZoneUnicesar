@@ -89,42 +89,47 @@ public class ConsoleMenu {
 
             String option = scanner.nextLine();
 
-            switch (option) {
-                case "1":
-                    productsMenu();
-                    break;
+            try {
+                switch (option) {
+                    case "1":
+                        productsMenu();
+                        break;
 
-                case "2":
-                    peopleMenu();
-                    break;
+                    case "2":
+                        peopleMenu();
+                        break;
 
-                case "3":
-                    salesMenu();
-                    break;
+                    case "3":
+                        salesMenu();
+                        break;
 
-                case "4":
-                    accessoriesMenu();
-                    break;
+                    case "4":
+                        accessoriesMenu();
+                        break;
 
-                case "5":
-                    returnsMenu();
-                    break;
+                    case "5":
+                        returnsMenu();
+                        break;
 
-                case "6":
-                    promotionsMenu();
-                    break;
+                    case "6":
+                        promotionsMenu();
+                        break;
 
-                case "7":
-                    warrantiesMenu();
-                    break;
+                    case "7":
+                        warrantiesMenu();
+                        break;
 
-                case "0":
-                    running = false;
-                    System.out.println("¡Hasta la próxima!");
-                    break;
+                    case "0":
+                        running = false;
+                        System.out.println("¡Hasta la próxima!");
+                        break;
 
-                default:
-                    System.out.println("Opción inválida.");
+                    default:
+                        System.out.println("Opción inválida.");
+                }
+            } catch (RuntimeException e) {
+                // Safety net: an unexpected error must not close the application.
+                System.out.println("Ocurrió un error: " + e.getMessage());
             }
         }
     }
@@ -176,9 +181,9 @@ public class ConsoleMenu {
         System.out.print("Título: ");
         String title = scanner.nextLine();
         System.out.print("Precio: ");
-        double price = Double.parseDouble(scanner.nextLine());
+        double price = readDouble();
         System.out.print("Cantidad en stock: ");
-        int quantity = Integer.parseInt(scanner.nextLine());
+        int quantity = readInt();
         System.out.print("Plataforma: ");
         String platform = scanner.nextLine();
         System.out.print("Género: ");
@@ -197,15 +202,15 @@ public class ConsoleMenu {
         System.out.print("Título: ");
         String title = scanner.nextLine();
         System.out.print("Precio: ");
-        double price = Double.parseDouble(scanner.nextLine());
+        double price = readDouble();
         System.out.print("Cantidad en stock: ");
-        int quantity = Integer.parseInt(scanner.nextLine());
+        int quantity = readInt();
         System.out.print("Marca: ");
         String brand = scanner.nextLine();
         System.out.print("Modelo: ");
         String model = scanner.nextLine();
         System.out.print("Generación: ");
-        int generation = Integer.parseInt(scanner.nextLine());
+        int generation = readInt();
 
         Console console = new Console(id, title, price, quantity, brand, model, generation);
         productService.registerConsole(console);
@@ -257,9 +262,13 @@ public class ConsoleMenu {
         System.out.print("Correo electrónico: ");
         String email = scanner.nextLine();
 
-        Client client = new Client(id, name, phone, email);
-        personService.registerClient(client);
-        System.out.println("Cliente registrado correctamente.");
+        try {
+            Client client = new Client(id, name, phone, email);
+            personService.registerClient(client);
+            System.out.println("Cliente registrado correctamente.");
+        } catch (IllegalArgumentException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
     }
 
     private void salesMenu() {
@@ -527,9 +536,9 @@ public class ConsoleMenu {
         System.out.print("Título: ");
         String title = scanner.nextLine();
         System.out.print("Precio: ");
-        double price = Double.parseDouble(scanner.nextLine());
+        double price = readDouble();
         System.out.print("Cantidad en stock: ");
-        int quantity = Integer.parseInt(scanner.nextLine());
+        int quantity = readInt();
         System.out.print("Tipo de conexión (Inalambrico / Alambrico): ");
         String connectionType = scanner.nextLine();
 
@@ -546,11 +555,11 @@ public class ConsoleMenu {
         System.out.print("Título: ");
         String title = scanner.nextLine();
         System.out.print("Precio: ");
-        double price = Double.parseDouble(scanner.nextLine());
+        double price = readDouble();
         System.out.print("Cantidad en stock: ");
-        int quantity = Integer.parseInt(scanner.nextLine());
+        int quantity = readInt();
         System.out.print("Longitud en metros: ");
-        double lengthInMeters = Double.parseDouble(scanner.nextLine());
+        double lengthInMeters = readDouble();
         System.out.print("Tipo de conector (HDMI, USB, Óptico...): ");
         String connectorType = scanner.nextLine();
 
@@ -567,11 +576,11 @@ public class ConsoleMenu {
         System.out.print("Título: ");
         String title = scanner.nextLine();
         System.out.print("Precio: ");
-        double price = Double.parseDouble(scanner.nextLine());
+        double price = readDouble();
         System.out.print("Cantidad en stock: ");
-        int quantity = Integer.parseInt(scanner.nextLine());
+        int quantity = readInt();
         System.out.print("Capacidad en GB: ");
-        int capacityInGb = Integer.parseInt(scanner.nextLine());
+        int capacityInGb = readInt();
         System.out.print("Tipo de memoria (SD, microSD, interna...): ");
         String memoryType = scanner.nextLine();
 
@@ -772,7 +781,7 @@ public class ConsoleMenu {
             LocalDate start = readDate("Fecha de inicio (AAAA-MM-DD): ");
             LocalDate end = readDate("Fecha de fin (AAAA-MM-DD): ");
             System.out.print("Porcentaje de descuento (0-100): ");
-            double percentage = Double.parseDouble(scanner.nextLine());
+            double percentage = readDouble();
 
             promotionService.registerPercentageDiscount(id, name, start, end, percentage);
             System.out.println("Promoción registrada correctamente.");
@@ -790,7 +799,7 @@ public class ConsoleMenu {
             LocalDate start = readDate("Fecha de inicio (AAAA-MM-DD): ");
             LocalDate end = readDate("Fecha de fin (AAAA-MM-DD): ");
             System.out.print("Porcentaje de descuento (0-100): ");
-            double percentage = Double.parseDouble(scanner.nextLine());
+            double percentage = readDouble();
             String category = readPromotionCategory();
             if (category == null) {
                 System.out.println("Opción de categoría inválida.");
@@ -839,9 +848,9 @@ public class ConsoleMenu {
             LocalDate start = readDate("Fecha de inicio (AAAA-MM-DD): ");
             LocalDate end = readDate("Fecha de fin (AAAA-MM-DD): ");
             System.out.print("Cantidad mínima de productos: ");
-            int minQuantity = Integer.parseInt(scanner.nextLine());
+            int minQuantity = readInt();
             System.out.print("Porcentaje de descuento (0-100): ");
-            double percentage = Double.parseDouble(scanner.nextLine());
+            double percentage = readDouble();
 
             promotionService.registerBulkPurchaseDiscount(id, name, start, end, minQuantity, percentage);
             System.out.println("Promoción registrada correctamente.");
@@ -853,6 +862,48 @@ public class ConsoleMenu {
     private LocalDate readDate(String prompt) {
         System.out.print(prompt);
         return LocalDate.parse(scanner.nextLine().trim());
+    }
+
+    /**
+     * Reads a decimal number that is zero or positive. If the user types
+     * something invalid, the question is repeated instead of closing the
+     * application.
+     *
+     * @return the number typed by the user
+     */
+    private double readDouble() {
+        while (true) {
+            try {
+                double value = Double.parseDouble(scanner.nextLine().trim());
+                if (value >= 0) {
+                    return value;
+                }
+                System.out.print("El valor no puede ser negativo. Intente de nuevo: ");
+            } catch (NumberFormatException e) {
+                System.out.print("Valor inválido, ingrese un número: ");
+            }
+        }
+    }
+
+    /**
+     * Reads an integer that is zero or positive. If the user types
+     * something invalid, the question is repeated instead of closing the
+     * application.
+     *
+     * @return the number typed by the user
+     */
+    private int readInt() {
+        while (true) {
+            try {
+                int value = Integer.parseInt(scanner.nextLine().trim());
+                if (value >= 0) {
+                    return value;
+                }
+                System.out.print("El valor no puede ser negativo. Intente de nuevo: ");
+            } catch (NumberFormatException e) {
+                System.out.print("Valor inválido, ingrese un número entero: ");
+            }
+        }
     }
 
     /**
