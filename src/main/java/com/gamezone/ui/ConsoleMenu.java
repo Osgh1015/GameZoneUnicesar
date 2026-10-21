@@ -283,13 +283,11 @@ public class ConsoleMenu {
         System.out.print("Correo electrónico: ");
         String email = scanner.nextLine();
 
-        try {
-            Client client = new Client(id, name, phone, email);
-            personService.registerClient(client);
-            System.out.println("Cliente registrado correctamente.");
-        } catch (IllegalArgumentException e) {
-            System.out.println("Error: " + e.getMessage());
-        }
+        // Validation errors are thrown as custom exceptions and handled by
+        // the differentiated catch blocks of start().
+        Client client = new Client(id, name, phone, email);
+        personService.registerClient(client);
+        System.out.println("Cliente registrado correctamente.");
     }
 
     private void salesMenu() {
