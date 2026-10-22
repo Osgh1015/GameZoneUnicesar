@@ -1,5 +1,6 @@
 package com.gamezone;
 
+import com.gamezone.exceptions.PersistenceException;
 import com.gamezone.persistence.AccessoryRepository;
 import com.gamezone.persistence.PromotionRepository;
 import com.gamezone.persistence.ReturnRepository;
@@ -18,13 +19,40 @@ import com.gamezone.ui.ConsoleMenu;
  * Application entry point. Wires together the modules (products, people,
  * sales, accessories, promotions, warranties and returns), loads initial
  * data and starts the console interface.
+ * <p>
+ * The services load their data files when they are created, so a damaged
+ * or unreadable file is detected here, before the menu starts. In that case
+ * the user receives a clear message instead of a stack trace.
  *
  * Responsabilidad: Líder Técnico.
  */
 public class Main {
 
+    /**
+     * Starts the application.
+     *
+     * @param args command line arguments (not used)
+     */
     public static void main(String[] args) {
+        try {
+            ConsoleMenu menu = buildApplication();
+            menu.start();
+        } catch (PersistenceException e) {
+            System.out.println("Ocurrió un problema al acceder a los datos del sistema. "
+                    + "Contacte al administrador.");
+        } catch (RuntimeException e) {
+            System.out.println("No fue posible iniciar el sistema. Contacte al administrador.");
+        }
+    }
 
+    /**
+     * Creates every repository and service, injecting the dependencies by
+     * constructor, and returns the console menu ready to start.
+     *
+     * @return the console menu of the application
+     * @throws PersistenceException if a data file cannot be read
+     */
+    private static ConsoleMenu buildApplication() {
         ProductService productService = new ProductService();
         PersonService personService = new PersonService();
 
@@ -52,8 +80,7 @@ public class Main {
         ReturnService returnService = new ReturnService(
                 returnRepository, saleService, productService, accessoryService, warrantyService);
 
-        ConsoleMenu menu = new ConsoleMenu(productService, personService, saleService,
+        return new ConsoleMenu(productService, personService, saleService,
                 accessoryService, returnService, promotionService, warrantyService);
-        menu.start();
     }
 }

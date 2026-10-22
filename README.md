@@ -23,11 +23,13 @@ com.gamezone
 ├── model         # Clases del dominio del negocio
 ├── persistence   # Guardado y recuperación de información desde archivos
 ├── service       # Reglas de negocio
+├── validation    # Validadores de datos y reglas, uno por módulo (Requerimiento 6)
+├── exceptions    # Jerarquía de excepciones personalizadas, capa transversal (Requerimiento 6)
 ├── ui            # Interfaz de usuario (menú de consola)
 └── Main.java     # Clase principal que arranca la aplicación
 ```
 
-Dependencias permitidas entre capas: `ui → service → persistence → model`. El modelo no depende de ninguna otra capa.
+Dependencias permitidas entre capas: `ui → service → persistence → model`. El modelo no depende de ninguna otra capa. La capa `validation` se ubica entre `service` y `model`: los servicios invocan a los validadores y los validadores solo usan clases del modelo y excepciones. La capa `exceptions` es transversal: cualquier capa puede lanzar o capturar sus clases.
 
 Diagramas de diseño disponibles en la carpeta [`docs/`](./docs):
 - [`docs/analysis.md`](./docs/analysis.md) — Preguntas orientadoras del análisis
@@ -44,6 +46,29 @@ Diagramas de diseño disponibles en la carpeta [`docs/`](./docs):
 - [`docs/return-class-diagram.md`](./docs/return-class-diagram.md) — Diagrama de clases del módulo de devoluciones
 - [`docs/integration-analysis.md`](./docs/integration-analysis.md) — Análisis de la integración (ajustes A1–A7 e incidente del PR #11)
 - [`docs/integrated-class-diagram.md`](./docs/integrated-class-diagram.md) — Diagrama de clases único del sistema integrado
+- [`docs/exception-analysis.md`](./docs/exception-analysis.md) — Análisis de la capa de validaciones y excepciones (Requerimiento 6)
+- [`docs/exception-class-diagram.md`](./docs/exception-class-diagram.md) — Diagrama de clases de las excepciones y los validadores
+
+## Validaciones y manejo de errores (Requerimiento 6)
+
+El sistema distingue el tipo de cada error para que el vendedor sepa si el problema es un dato mal ingresado, una regla del negocio (por ejemplo, stock agotado) o una falla técnica.
+
+**Capa de excepciones (`com.gamezone.exceptions`).** `GameZoneException` es la clase raíz, abstracta y *unchecked* (extiende `RuntimeException`), con un código de error. De ella se derivan cuatro excepciones:
+
+| Excepción | Cuándo se lanza | Mensaje que ve el usuario |
+|---|---|---|
+| `ResourceNotFoundException` | Se busca un producto, cliente, vendedor o venta que no existe | "No se encontró el recurso solicitado: …" |
+| `BusinessRuleException` | Se viola una regla del negocio: stock insuficiente, cliente o producto duplicado, venta sin productos | "No se puede completar la operación: …" |
+| `InvalidDataException` | Un dato no cumple el formato o el rango: precio no positivo, stock negativo, campo vacío, email inválido | "Los datos ingresados no son válidos: …" |
+| `PersistenceException` | Falla la lectura o escritura de un archivo de `data/`, o un archivo está dañado | "Ocurrió un problema al acceder a los datos del sistema. Contacte al administrador." |
+
+**Capa de validadores (`com.gamezone.validation`).** `ProductValidator`, `PersonValidator` y `SaleValidator` concentran las verificaciones de cada módulo en métodos estáticos. Los servicios (`ProductService`, `PersonService`, `SaleService`) los invocan antes de ejecutar cualquier operación, de modo que una operación rechazada no deja datos a medias.
+
+**Repositorios.** `ProductRepository`, `PersonRepository` y `SalePersistence` capturan la `IOException` y la relanzan como `PersistenceException`, indicando el archivo y la operación (lectura o escritura). Si un archivo de datos no existe todavía, el sistema inicia con la lista vacía, como antes.
+
+**Interfaz de usuario.** `ConsoleMenu` captura cada tipo de excepción en un bloque `catch` distinto y muestra el mensaje correspondiente; un `catch` final evita que cualquier error inesperado cierre la aplicación. `Main` muestra un mensaje claro si algún archivo no se puede leer al arrancar. El usuario nunca ve una traza de error.
+
+Las diez operaciones del menú funcionan igual que antes del cambio; la evidencia está en la sección 4 de [`docs/exception-analysis.md`](./docs/exception-analysis.md).
 
 ## Requisitos previos
 

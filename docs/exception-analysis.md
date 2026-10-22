@@ -111,25 +111,34 @@ the refactor, including the error cases.
 
 | # | Operation | Input | Result before | Result after |
 |---|---|---|---|---|
-| 1 | Register video game | Valid data | | |
-| 2 | Register console | Valid data | | |
-| 3 | List products | - | | |
-| 4 | Register client | Valid data | | |
-| 5 | List clients | - | | |
-| 6 | List sellers | - | | |
-| 7 | Register sale | Client, seller and items | | |
-| 8 | Sales history | - | | |
-| 9 | Purchase history of a client | Client id | | |
-| 10 | Sales attended by a seller | Seller id | | |
-| E1 | Register sale | No items | | |
-| E2 | Register sale | Quantity above the stock | | |
-| E3 | Register sale | Item id that does not exist | | |
-| E4 | Register client | Id that already exists | | |
-| E5 | Register client | Empty name / invalid email | | |
-| E6 | Register product | Price of zero | | |
+| 1 | Register video game | Valid data | "Videojuego registrado correctamente." | "Videojuego registrado correctamente." |
+| 2 | Register console | Valid data | "Consola registrada correctamente." | "Consola registrada correctamente." |
+| 3 | List products | - | Every product listed | Every product listed (same list) |
+| 4 | Register client | Valid data | "Cliente registrado correctamente." | "Cliente registrado correctamente." |
+| 5 | List clients | - | Every client listed | Every client listed (same list) |
+| 6 | List sellers | - | 3 sellers listed | 3 sellers listed |
+| 7 | Register sale | Client, seller and items | "Venta registrada correctamente." + receipt | "Venta registrada correctamente." + receipt |
+| 8 | Sales history | - | Every sale listed | Every sale listed (same list) |
+| 9 | Purchase history of a client | Client id `111` | Sales of the client listed | Sales of the client listed (same list) |
+| 10 | Sales attended by a seller | Seller id `V001` | Sales of the seller listed | Sales of the seller listed (same list) |
+| E1 | Register sale | No items | "Una venta debe contener al menos un producto." / "No se pudo registrar la venta." | "No se puede completar la operación: Una venta debe contener al menos un producto." |
+| E2 | Register sale | Quantity above the stock | "Stock insuficiente para uno o más productos." / "No se pudo registrar la venta." | "No se puede completar la operación: Stock insuficiente para 'PlayStation 5' (P002): disponible 5, solicitado 6." |
+| E3 | Register sale | Item id that does not exist | "Producto no encontrado: ZZZ" / "No se pudo registrar la venta." | "No se encontró el recurso solicitado: El producto con identificador ZZZ no existe en el sistema." |
+| E4 | Register client | Id that already exists | Accepted (duplicated client) | "No se puede completar la operación: Ya existe una persona registrada con el identificador 111." |
+| E5 | Register client | Empty name / invalid email | "Error: El nombre del cliente no puede estar vacío." / invalid email accepted | "Los datos ingresados no son válidos: El campo 'nombre' no puede estar vacío." / "...El campo 'correo electrónico' debe tener un formato válido..." |
+| E6 | Register product | Price of zero | Accepted (product with price 0) | "Los datos ingresados no son válidos: El campo 'precio' debe ser mayor que cero." |
 
+Operations 1 to 10 give exactly the same result before and after the refactor. In the
+error cases E1, E2 and E3 the same condition still causes an error, but the message now
+tells the category of the problem. Cases E4, E5 (invalid email) and E6 were accepted
+before and are now rejected: they are the new validations required by Requirement 6
+(`validateUniquePerson`, the email format of `validatePersonData` and the positive price
+of `validateProductData`).
 The "before" and "after" columns are filled with the output of the console, and
 screenshots of both runs are added to this document.
+
+**Screenshots after the refactor:** see the folder [`docs/evidence/after/`](./evidence/after/).
+
 5. How ConsoleMenu catches the exceptions
    The team uses a single `try` block with multiple `catch` blocks, placed in `start()`
    around the main menu `switch`, ordered from the most specific exception to the most
