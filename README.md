@@ -186,6 +186,8 @@ repositorio/
 │                   ├── model/
 │                   ├── persistence/
 │                   ├── service/
+│                   ├── validation/
+│                   ├── exceptions/
 │                   ├── ui/
 │                   └── Main.java
 ├── data/
@@ -205,6 +207,8 @@ repositorio/
     ├── return-class-diagram.md
     ├── integration-analysis.md
     ├── integrated-class-diagram.md
+    ├── exception-analysis.md
+    ├── exception-class-diagram.md
     └── ai-usage/
         ├── leader-ai-log.md
         ├── developer1-ai-log.md
