@@ -1,9 +1,6 @@
 package com.gamezone.persistence;
 
 import com.gamezone.model.*;
-import com.gamezone.service.AccessoryService;
-import com.gamezone.service.ProductService;
-import com.gamezone.service.SaleService;
 
 import java.io.*;
 import java.time.LocalDate;
@@ -37,21 +34,6 @@ public class ReturnRepository {
         this.filePath = filePath;
     }
 
-    /**
-     * Creates the repository ignoring the services it used to receive.
-     *
-     * @param filePath         path of the returns file
-     * @param saleService      no longer used
-     * @param productService   no longer used
-     * @param accessoryService no longer used
-     * @deprecated use {@link #ReturnRepository(String)}; kept only until
-     *             {@code Main} stops passing services (V-10)
-     */
-    @Deprecated
-    public ReturnRepository(String filePath, SaleService saleService,
-                            ProductService productService, AccessoryService accessoryService) {
-        this(filePath);
-    }
 
     public void saveAll(List<Return> returns) {
         try (FileWriter writer = new FileWriter(filePath)) {

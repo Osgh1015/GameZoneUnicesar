@@ -23,27 +23,6 @@ public class ReturnService {
     private final List<Return> returns;
 
     /**
-     * Creates the return service building its own item catalog.
-     *
-     * @param repository       repository used to persist returns
-     * @param saleService      service used to find the original sales
-     * @param productService   service that owns video games and consoles
-     * @param accessoryService service that owns the accessories
-     * @param warrantyService  service used to cancel the warranties of
-     *                         returned items
-     * @deprecated use {@link #ReturnService(ReturnRepository, SaleService,
-     *             ItemCatalog, WarrantyService)}; kept only until {@code Main}
-     *             injects the catalog (V-11)
-     */
-    @Deprecated
-    public ReturnService(ReturnRepository repository, SaleService saleService,
-                         ProductService productService, AccessoryService accessoryService,
-                         WarrantyService warrantyService) {
-        this(repository, saleService, new ItemCatalog(productService, accessoryService),
-                warrantyService);
-    }
-
-    /**
      * Creates the return service with its collaborators, injected by
      * constructor from {@code Main}.
      *

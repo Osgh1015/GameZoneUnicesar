@@ -35,18 +35,6 @@ public class PersonRepository {
     private final String vendorsFile;
 
     /**
-     * Creates the repository that stores the people in
-     * {@code data/clients.txt} and {@code data/vendors.txt}.
-     *
-     * @deprecated use {@link #PersonRepository(String, String)}; kept only
-     *             until {@code Main} passes the file paths (V-05)
-     */
-    @Deprecated
-    public PersonRepository() {
-        this("data/clients.txt", "data/vendors.txt");
-    }
-
-    /**
      * Creates the repository that stores the people in the given files.
      *
      * @param clientsFile path of the clients file

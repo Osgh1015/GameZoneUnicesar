@@ -30,18 +30,6 @@ public class PersonService {
     private List<Seller> vendors;
 
     /**
-     * Creates the service with its own repository.
-     *
-     * @throws PersistenceException if a data file cannot be read
-     * @deprecated use {@link #PersonService(PersonRepository)}; kept only
-     *             until {@code Main} injects the repository (V-05)
-     */
-    @Deprecated
-    public PersonService() {
-        this(new PersonRepository());
-    }
-
-    /**
      * Creates the service, loading clients and vendors already stored by
      * the given repository.
      *
