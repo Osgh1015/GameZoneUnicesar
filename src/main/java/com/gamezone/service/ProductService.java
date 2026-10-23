@@ -157,7 +157,7 @@ public class ProductService {
         if (amount <= 0) {
             throw new InvalidDataException("cantidad", "debe ser mayor que cero.");
         }
-        product.setQuantity(product.getQuantity() + amount);
+        product.increaseStock(amount);
         repository.save(products);
     }
 
