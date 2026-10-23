@@ -15,12 +15,15 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 | Module (requirement) | Classes and methods audited |
 |---|---|
 | Sales (Taller 1), promotions (Requerimiento 2), warranties (Requerimiento 4) | `Sale` (every method except `canBeReturned`, Developer 1), including the discount, the warranty cost and `generateReceipt`, and the GRASP additions `findProduct`, `countUnitsOf`, `belongsToClient`, `wasAttendedBy` |
+| Sales (Taller 1) | `SalePersistence` (statement: `SaleRepository`) and its `SaleRecord` (GRASP V-19) |
 
 ## Single Responsibility Principle (SRP)
 
 **Verdict:** _pending — audit in progress._
 
 - **Sale — Violation (V-01).** `Sale` also lays out its receipt. The GRASP additions (`findProduct`, `countUnitsOf`, `belongsToClient`, `wasAttendedBy`) answer questions with the sale's own data, which is correct.
+
+- **SalePersistence — Correct.** It only reads and writes `data/sales.txt` and returns `SaleRecord` objects.
 
 ### V-01
 
