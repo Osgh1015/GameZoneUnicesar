@@ -208,10 +208,7 @@ public class WarrantyService {
 
         for (Warranty warranty : warranties) {
 
-            boolean sameProduct = warranty.getProduct().getId().equals(productId);
-            boolean sameSale = warranty.getSale().getId().equals(saleId);
-
-            if (sameProduct && sameSale) {
+            if (warranty.covers(productId, saleId)) {
                 if (warranty instanceof ExtendedWarranty) {
                     return warranty;
                 }
@@ -267,10 +264,7 @@ public class WarrantyService {
 
         for (Warranty warranty : warranties) {
 
-            boolean sameProduct = warranty.getProduct().getId().equals(productId);
-            boolean sameSale = warranty.getSale().getId().equals(saleId);
-
-            if (!sameProduct || !sameSale) {
+            if (!warranty.covers(productId, saleId)) {
                 continue;
             }
 
@@ -317,7 +311,7 @@ public class WarrantyService {
 
         for (Warranty warranty : warranties) {
 
-            if (warranty.getSale().getId().equals(saleId)) {
+            if (warranty.belongsToSale(saleId)) {
                 total += warranty.getAdditionalCost();
             }
         }

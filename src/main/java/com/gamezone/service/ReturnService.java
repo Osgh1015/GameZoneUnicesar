@@ -2,6 +2,7 @@ package com.gamezone.service;
 
 import com.gamezone.model.*;
 import com.gamezone.persistence.ReturnRepository;
+import com.gamezone.persistence.ReturnRepository.ReturnRecord;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -17,8 +18,7 @@ public class ReturnService {
 
     private final ReturnRepository repository;
     private final SaleService saleService;
-    private final ProductService productService;
-    private final AccessoryService accessoryService;
+    private final ItemCatalog itemCatalog;
     private final WarrantyService warrantyService;
     private final List<Return> returns;
 
@@ -26,22 +26,52 @@ public class ReturnService {
      * Creates the return service with its collaborators, injected by
      * constructor from {@code Main}.
      *
-     * @param repository       repository used to persist returns
-     * @param saleService      service used to find the original sales
-     * @param productService   service used to restore the stock of products
-     * @param accessoryService service used to restore the stock of accessories
-     * @param warrantyService  service used to cancel the warranties of
-     *                         returned consoles
+     * @param repository      repository used to persist returns
+     * @param saleService     service used to find the original sales
+     * @param itemCatalog     intermediary used to restore the stock of the
+     *                        returned items
+     * @param warrantyService service used to cancel the warranties of
+     *                        returned items
      */
     public ReturnService(ReturnRepository repository, SaleService saleService,
-                         ProductService productService, AccessoryService accessoryService,
-                         WarrantyService warrantyService) {
+                         ItemCatalog itemCatalog, WarrantyService warrantyService) {
         this.repository = repository;
         this.saleService = saleService;
-        this.productService = productService;
-        this.accessoryService = accessoryService;
+        this.itemCatalog = itemCatalog;
         this.warrantyService = warrantyService;
-        this.returns = repository.loadAll();
+        this.returns = loadReturns();
+    }
+
+    /**
+     * Loads the stored return records and resolves their sale and items.
+     * Records whose sale no longer exists are skipped, and so are items
+     * that no catalog has any more.
+     *
+     * @return the returns rebuilt from persistence
+     */
+    private List<Return> loadReturns() {
+        List<Return> result = new ArrayList<>();
+        for (ReturnRecord record : repository.loadAll()) {
+            Sale originalSale = saleService.findById(record.saleId());
+            if (originalSale == null) {
+                continue;
+            }
+            List<Product> returnedProducts = new ArrayList<>();
+            for (String productId : record.productIds()) {
+                Product product = itemCatalog.findItem(productId);
+                if (product != null) {
+                    returnedProducts.add(product);
+                }
+            }
+            Return r = new Return(record.id(), record.date(), originalSale,
+                    returnedProducts, record.reason());
+            if (record.warrantyRefund() != null) {
+                r.setWarrantyRefund(record.warrantyRefund());
+            }
+            r.calculateRefundAmount();
+            result.add(r);
+        }
+        return result;
     }
 
     /**
@@ -75,13 +105,7 @@ public class ReturnService {
 
         List<Product> productsToReturn = new ArrayList<>();
         for (String productId : productIds) {
-            Product match = null;
-            for (Product p : sale.getProducts()) {
-                if (p.getId().equals(productId)) {
-                    match = p;
-                    break;
-                }
-            }
+            Product match = sale.findProduct(productId);
             if (match == null) {
                 throw new IllegalArgumentException(
                         "El producto " + productId + " no pertenece a la venta indicada.");
@@ -94,23 +118,18 @@ public class ReturnService {
         String newId = UUID.randomUUID().toString();
         Return newReturn = new Return(newId, LocalDate.now(), sale, productsToReturn, reason);
 
-        // A returned console cannot keep a valid warranty: cancel its
-        // warranties and refund the cost of the extended one (if any).
+        // A returned item cannot keep a valid warranty: the warranty service,
+        // which knows which items have one, cancels them and answers the
+        // refundable cost (zero for items without warranty).
         double warrantyRefund = 0.0;
         for (Product p : productsToReturn) {
-            if (p instanceof Console) {
-                warrantyRefund += warrantyService.cancelWarranties(p.getId(), sale.getId());
-            }
+            warrantyRefund += warrantyService.cancelWarranties(p.getId(), sale.getId());
         }
         newReturn.setWarrantyRefund(Math.round(warrantyRefund * 100.0) / 100.0);
         newReturn.calculateRefundAmount();
 
         for (Product p : productsToReturn) {
-            if (p instanceof Accessory) {
-                accessoryService.restoreStock(p.getId(), 1);
-            } else {
-                productService.restoreStock(p.getId(), 1);
-            }
+            itemCatalog.restoreStock(p, 1);
         }
 
         returns.add(newReturn);
@@ -130,30 +149,13 @@ public class ReturnService {
     private void validateReturnableUnits(Sale sale, List<String> productIds) {
         for (String productId : new LinkedHashSet<>(productIds)) {
             int requested = Collections.frequency(productIds, productId);
-            int available = countSoldUnits(sale, productId)
+            int available = sale.countUnitsOf(productId)
                     - countReturnedUnits(sale.getId(), productId);
             if (requested > available) {
                 throw new IllegalArgumentException("Solo se pueden devolver " + available
                         + " unidad(es) del producto " + productId + " en esta venta.");
             }
         }
-    }
-
-    /**
-     * Counts how many units of a product were sold in a sale.
-     *
-     * @param sale      the sale
-     * @param productId id of the product
-     * @return number of units sold
-     */
-    private int countSoldUnits(Sale sale, String productId) {
-        int count = 0;
-        for (Product product : sale.getProducts()) {
-            if (product.getId().equals(productId)) {
-                count++;
-            }
-        }
-        return count;
     }
 
     /**
@@ -187,7 +189,7 @@ public class ReturnService {
     public List<Return> viewReturnsByCustomer(String customerId) {
         List<Return> result = new ArrayList<>();
         for (Return r : returns) {
-            if (r.getOriginalSale().getClient().getId().equals(customerId)) {
+            if (r.belongsToClient(customerId)) {
                 result.add(r);
             }
         }
@@ -201,7 +203,7 @@ public class ReturnService {
     public List<Return> viewReturnsBySale(String saleId) {
         List<Return> result = new ArrayList<>();
         for (Return r : returns) {
-            if (r.getOriginalSale().getId().equals(saleId)) {
+            if (r.belongsToSale(saleId)) {
                 result.add(r);
             }
         }

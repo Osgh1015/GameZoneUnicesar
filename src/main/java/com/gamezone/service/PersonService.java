@@ -30,13 +30,14 @@ public class PersonService {
     private List<Seller> vendors;
 
     /**
-     * Creates the service, loading clients and vendors already stored
-     * on disk.
+     * Creates the service, loading clients and vendors already stored by
+     * the given repository.
      *
+     * @param repository repository that stores clients and vendors
      * @throws PersistenceException if a data file cannot be read
      */
-    public PersonService() {
-        this.repository = new PersonRepository();
+    public PersonService(PersonRepository repository) {
+        this.repository = repository;
         this.clients = repository.loadClients();
         this.vendors = repository.loadVendors();
     }

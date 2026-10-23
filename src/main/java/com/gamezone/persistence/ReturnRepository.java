@@ -1,9 +1,6 @@
 package com.gamezone.persistence;
 
 import com.gamezone.model.*;
-import com.gamezone.service.SaleService;
-import com.gamezone.service.ProductService;
-import com.gamezone.service.AccessoryService;
 
 import java.io.*;
 import java.time.LocalDate;
@@ -17,24 +14,26 @@ import java.util.*;
  * when loading, so files written before it existed still load correctly.
  *
  * This class contains no business rules, only file reading/writing,
- * respecting the layer separation required by the workshop.
+ * respecting the layer separation required by the workshop. When loading
+ * it returns only the stored identifiers ({@link ReturnRecord}); the
+ * return service resolves them into sales and products, so the
+ * persistence layer does not depend on any service.
  */
 public class ReturnRepository {
 
     private static final String SEPARATOR = ";";
     private static final String PRODUCTS_SEPARATOR = "\\|";
     private final String filePath;
-    private final SaleService saleService;
-    private final ProductService productService;
-    private final AccessoryService accessoryService;
 
-    public ReturnRepository(String filePath, SaleService saleService,
-                            ProductService productService, AccessoryService accessoryService) {
+    /**
+     * Creates the repository using the file where returns are stored.
+     *
+     * @param filePath path of the returns file
+     */
+    public ReturnRepository(String filePath) {
         this.filePath = filePath;
-        this.saleService = saleService;
-        this.productService = productService;
-        this.accessoryService = accessoryService;
     }
+
 
     public void saveAll(List<Return> returns) {
         try (FileWriter writer = new FileWriter(filePath)) {
@@ -47,8 +46,8 @@ public class ReturnRepository {
         }
     }
 
-    public List<Return> loadAll() {
-        List<Return> returns = new ArrayList<>();
+    public List<ReturnRecord> loadAll() {
+        List<ReturnRecord> returns = new ArrayList<>();
         File file = new File(filePath);
         if (!file.exists()) {
             return returns;
@@ -57,7 +56,7 @@ public class ReturnRepository {
             String line;
             while ((line = reader.readLine()) != null) {
                 if (!line.trim().isEmpty()) {
-                    Return r = fromLine(line);
+                    ReturnRecord r = fromLine(line);
                     if (r != null) {
                         returns.add(r);
                     }
@@ -87,41 +86,43 @@ public class ReturnRepository {
                 + r.getWarrantyRefund();
     }
 
-    private Return fromLine(String line) {
+    private ReturnRecord fromLine(String line) {
         String[] parts = line.split(SEPARATOR, -1);
         if (parts.length < 6) {
             return null;
         }
         String id = parts[0];
         LocalDate date = LocalDate.parse(parts[1]);
-        Sale originalSale = saleService.findById(parts[2]);
-        if (originalSale == null) {
-            return null;
-        }
-        List<Product> returnedProducts = new ArrayList<>();
+        List<String> productIds = new ArrayList<>();
         if (!parts[3].isEmpty()) {
-            for (String productId : parts[3].split(PRODUCTS_SEPARATOR)) {
-                Product product = resolveProduct(productId);
-                if (product != null) {
-                    returnedProducts.add(product);
-                }
-            }
+            productIds.addAll(Arrays.asList(parts[3].split(PRODUCTS_SEPARATOR)));
         }
         String reason = parts[4];
-
-        Return r = new Return(id, date, originalSale, returnedProducts, reason);
+        Double warrantyRefund = null;
         if (parts.length >= 7 && !parts[6].isEmpty()) {
-            r.setWarrantyRefund(Double.parseDouble(parts[6]));
+            warrantyRefund = Double.parseDouble(parts[6]);
         }
-        r.calculateRefundAmount();
-        return r;
+        return new ReturnRecord(id, date, parts[2], productIds, reason, warrantyRefund);
     }
 
-    private Product resolveProduct(String productId) {
-        Product product = productService.findById(productId);
-        if (product != null) {
-            return product;
-        }
-        return accessoryService.findById(productId);
+    /**
+     * Raw persistence representation of a return: only identifiers and
+     * primitive values, resolved later by the return service.
+     *
+     * @param id             return identifier
+     * @param date           date of the return
+     * @param saleId         identifier of the original sale
+     * @param productIds     identifiers of the returned items
+     * @param reason         reason for the return
+     * @param warrantyRefund refunded warranty cost, or {@code null} when the
+     *                       line was written before that field existed
+     */
+    public record ReturnRecord(
+            String id,
+            LocalDate date,
+            String saleId,
+            List<String> productIds,
+            String reason,
+            Double warrantyRefund) {
     }
 }

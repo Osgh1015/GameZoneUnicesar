@@ -67,4 +67,12 @@ public class Cable extends Accessory {
         return String.format("Cable: %s | Longitud: %.2f m | Conector: %s | Precio: %.2f | Stock: %d | Compatible con: %s",
                 getTitle(), lengthInMeters, connectorType, getPrice(), getQuantity(), formatCompatibility());
     }
+
+    /**
+     * @return "CABLE", the type code of every cable
+     */
+    @Override
+    public String getAccessoryType() {
+        return "CABLE";
+    }
 }

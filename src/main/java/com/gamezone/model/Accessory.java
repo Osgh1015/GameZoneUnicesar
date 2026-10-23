@@ -109,10 +109,16 @@ public abstract class Accessory extends Product {
      * @param category category name
      * @return true if the category is "ACCESSORY", ignoring case
      */
-
     @Override
     public boolean belongsToCategory(String category) {
         return "ACCESSORY".equalsIgnoreCase(category);
     }
-}
 
+    /**
+     * Declares the type code of this accessory, used to filter the
+     * catalogue by type. Each subclass answers for itself.
+     *
+     * @return "CONTROLLER", "CABLE" or "MEMORY"
+     */
+    public abstract String getAccessoryType();
+}
