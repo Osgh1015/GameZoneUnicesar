@@ -150,7 +150,7 @@ public class AccessoryService {
         if (accessory.getQuantity() < amount) {
             throw new IllegalStateException("Insufficient stock for accessory: " + accessoryId);
         }
-        accessory.setQuantity(accessory.getQuantity() - amount);
+        accessory.decreaseStock(amount);
         repository.saveAll(accessories);
     }
 
@@ -183,7 +183,7 @@ public class AccessoryService {
         if (accessory == null) {
             throw new NoSuchElementException("Accessory not found: " + accessoryId);
         }
-        accessory.setQuantity(accessory.getQuantity() + amount);
+        accessory.increaseStock(amount);
         repository.saveAll(accessories);
     }
 
