@@ -18,6 +18,7 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 | Accessories (Requerimiento 1) | `AccessoryRepository`, `AccessoryService` |
 | Promotions (Requerimiento 2) | `PromotionRepository`, `PromotionService` |
 | Returns (Requerimiento 3) | `ReturnRepository` (with `ReturnRecord`), `ReturnService` (including the monthly balance) |
+| Warranties (Requerimiento 4) | `WarrantyRepository` (with `WarrantyRecord`), `WarrantyService` |
 
 ## Single Responsibility Principle (SRP)
 
@@ -30,6 +31,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 - **Promotions — Correct.** `PromotionService` registers, validates and selects promotions — all promotion rules; `PromotionRepository` only handles its file.
 
 - **Returns — Violation (V-03).** `ReturnService` also produces the monthly balance. `ReturnRepository` only handles `data/returns.txt` and returns `ReturnRecord` objects.
+
+- **Warranties — Correct.** `WarrantyService` assigns, queries and cancels warranties and rebuilds them from their records; `WarrantyRepository` only handles its file.
 
 ### V-03
 
@@ -56,6 +59,21 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 - **Returns — Correct.** The return rules do not depend on the kind of item (since GRASP V-11).
 
+- **Warranties — Violation (V-04).** The kinds of warranty are decided with tags and `instanceof` in the repository and in three methods of the service.
+
+### V-04
+
+| Field | Content |
+|---|---|
+| ID | V-04 |
+| Principle | OCP |
+| Module | Warranties (Requerimiento 4) and integration adjustments A2 and A7 (Requerimiento 5) |
+| Evidence | `WarrantyRepository.toLine`, `WarrantyRepository.java:126-128`: `warranty instanceof ExtendedWarranty ? EXTENDED_TYPE : BASIC_TYPE`; `WarrantyService.loadWarranties`, `WarrantyService.java:86-87`: `case "BASIC" -> new BasicWarranty(...)`, `case "EXTENDED" -> new ExtendedWarranty(...)`; `WarrantyService.findWarrantyByProduct` (`:217`) and `cancelWarranties` (`:276`): `instanceof ExtendedWarranty`. |
+| Explanation | The kinds of warranty are known in four places of two classes: the type tag, the construction from the tag and two business rules (the preferred coverage, one cancellation per kind). Unlike the other repositories, the decision is not only about the file format: the service also takes business decisions by asking the concrete class. |
+| Consequence | A new kind of warranty (for example, a premium coverage) forces editing the repository and three methods of the service, and missing one of them gives a silent error (the new kind is never cancelled or never chosen). |
+| Proposed solution | A `WarrantyKind` enum in the model (`BASIC`, `EXTENDED`) that knows how to build its warranty and whether it is the preferred coverage, and each warranty reporting its kind (`getKind()`); the repository writes `getKind().name()` and the service builds and chooses through the kind. |
+| Other role's code involved | Yes — the warranty hierarchy is Developer 1's code; Developer 1 must add `getKind()` to `Warranty`, `BasicWarranty` and `ExtendedWarranty`. |
+
 ## Liskov Substitution Principle (LSP)
 
 **Verdict:** _pending — audit in progress._
@@ -71,6 +89,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 - **People — Correct.** `PersonService` uses all the operations of `PersonRepository`.
 
 - **Returns — Violation (V-02).** `ReturnService` depends on the whole `SaleService` to use two read operations. Its dependency on `WarrantyService` (only `cancelWarranties`) was examined: both services are Developer 2's code in the same group of modules, they change together, and `WarrantyService` has no other role's operations behind it; it is not counted.
+
+- **Warranties — Correct.** `WarrantyService` depends on `SaleAssembler` (only `loadSales`, its single operation) and on `ProductService` for `findById`, the product lookup it needs.
 
 ### V-02
 
@@ -96,6 +116,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 - **Promotions — Violation (V-01).** Same for `PromotionService`.
 
 - **Returns — Violation (V-01, V-02).** `ReturnService` depends on the concrete `ReturnRepository` and on the concrete `SaleService`.
+
+- **Warranties — Violation (V-01).** `WarrantyService` depends on the concrete `WarrantyRepository`.
 
 ### V-01
 
