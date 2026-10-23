@@ -68,32 +68,11 @@ public class CategoryDiscount extends Promotion {
     public double calculateDiscount(Sale sale) {
         double categoryTotal = 0.0;
         for (Product product : sale.getProducts()) {
-            if (belongsToCategory(product)) {
+            if (product.belongsToCategory(targetCategory)) {
                 categoryTotal += product.getPrice();
             }
         }
         return categoryTotal * percentage / 100.0;
-    }
-
-    /**
-     * Checks whether a product belongs to the target category of this
-     * promotion. Any instance of {@link Accessory} is recognized as part
-     * of the "ACCESSORY" category, regardless of its concrete subclass.
-     *
-     * @param product product to check
-     * @return true if the product belongs to the target category
-     */
-    private boolean belongsToCategory(Product product) {
-        if (VIDEOGAME.equalsIgnoreCase(targetCategory)) {
-            return product instanceof VideoGame;
-        }
-        if (CONSOLE.equalsIgnoreCase(targetCategory)) {
-            return product instanceof Console;
-        }
-        if (ACCESSORY.equalsIgnoreCase(targetCategory)) {
-            return product instanceof Accessory;
-        }
-        return false;
     }
 
     @Override
