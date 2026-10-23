@@ -16,6 +16,7 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 |---|---|
 | Sales (Taller 1) and promotions (Requerimiento 2) | `Sale`, including the applied discount, the extended warranty cost and the breakdown of `generateReceipt` (every method except `canBeReturned`, which belongs to Developer 1) |
 | Sales (Taller 1) | `SalePersistence` (the statement calls it `SaleRepository`) |
+| Sales and integrations (Taller 1, Requerimientos 1, 2, 4 and 5) | `SaleService`, including the accessory integration, the application of the best promotion in `registerSale` and the assignment of warranties and extended warranty cost |
 
 ## Information Expert
 
@@ -25,11 +26,28 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 - **SalePersistence — Correct.** It writes each sale from the data the sale exposes and does not compute anything about it.
 
+- **SaleService — Mixed.** The best promotion is asked to `PromotionService` (`SaleService.java:208`), the stock check to `ProductValidator` (`:293`) and the warranty cost to the warranty (`:245`), which is correct; the history queries navigate the sale (V-03).
+
+### V-03
+
+| Field | Content |
+|---|---|
+| ID | V-03 |
+| Pattern | Information Expert |
+| Module | Sales (Taller 1) and integration adjustment A3 (Requerimiento 5) |
+| Evidence | `SaleService.getSalesByClient(String)`, `SaleService.java:312`: `sale.getClient().getId().equals(clientId)`; `SaleService.getSalesBySeller(String)`, `:330`: `sale.getSeller().getId().equals(sellerId)`; `ConsoleMenu.showWarrantiesOfSale(Sale)`, `ConsoleMenu.java:462`: `warranty.getSale().getId().equals(sale.getId())` |
+| Explanation | The service and the menu navigate getter chains to answer questions about a sale and a warranty. The sale holds its client and its seller, and the warranty holds its sale; they are the experts. |
+| Consequence | The service and the menu know the internal structure of `Sale` and `Warranty`; a change in those associations breaks them. |
+| Proposed solution | Ask the sale with `Sale.belongsToClient(clientId)` and `Sale.wasAttendedBy(sellerId)`, and ask the warranty with `Warranty.belongsToSale(saleId)`. Pattern applied: Information Expert. |
+| Other role's code involved | Yes for the menu: `Warranty` is Developer 1's code; `belongsToSale` is the method Developer 1 adds for the same problem in `WarrantyService` (developer2-audit V-08). `Sale` is the Technical Lead's own code. |
+
 ## Creator
 
 **Verdict:** _pending — audit in progress._
 
 - **SalePersistence — Correct.** `fromLine` creates each `Sale` from the record it reads.
+
+- **SaleService — Correct.** `createSale` (`SaleService.java:192`) creates the `Sale` it registers and aggregates, with the client, seller and items it has just validated.
 
 ## Controller
 
@@ -42,6 +60,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **Sale — Correct except for V-01.** `Sale` depends on `Client`, `Seller` and `Product`, which it needs; `describeItemType` additionally ties it to the concrete product classes (part of V-01).
 
 - **SalePersistence — Violation (V-02).** It depends on three services.
+
+- **SaleService — Correct.** It receives its six collaborators by constructor from `Main` (`SaleService.java:61-74`).
 
 ### V-02
 
@@ -64,6 +84,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 - **SalePersistence — Correct.** Its only purpose is the sales file (resolving references is recorded under Low Coupling, V-02).
 
+- **SaleService — Correct.** `registerSale` is split into private steps (`resolveItems`, `createSale`, `applyBestPromotion`, `generateWarranties`, `updateInventory`), each with one purpose; the queries are all about sales.
+
 ## Polymorphism
 
 **Verdict:** _pending — audit in progress._
@@ -71,6 +93,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **Sale — Violation (V-01).** The receipt decides the label of each item with `instanceof`.
 
 - **SalePersistence — Correct.** It writes only ids; no type tags are needed.
+
+- **SaleService — Violation (V-04, and V-05 for the stock dispatch).** The promotions are asked polymorphically (`calculateDiscount`), but warranty eligibility and the catalog of each item are decided with `instanceof`.
 
 ### V-01
 
@@ -85,15 +109,45 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 | Proposed solution | Let each product give the label of its type with an abstract `getTypeLabel()` in `Product`, implemented by `VideoGame` ("Videojuego"), `Console` ("Consola") and `Accessory` ("Accesorio"), and print `product.getTypeLabel()`. Patterns applied: Polymorphism and Protected Variations. |
 | Other role's code involved | Yes — the product and accessory hierarchies are Developer 1's code; Developer 1 must add `getTypeLabel()`. |
 
+### V-04
+
+| Field | Content |
+|---|---|
+| ID | V-04 |
+| Pattern | Polymorphism (also recorded under Protected Variations) |
+| Module | Warranties (Requerimiento 4) and integration adjustment A3 (Requerimiento 5) |
+| Evidence | `SaleService.generateWarranties`, `SaleService.java:236`: `if (!(item instanceof Console)) { continue; }`; `ConsoleMenu.askForExtendedWarranty`, `ConsoleMenu.java:434`: `if (!(product instanceof Console)) { return; }`; `ConsoleMenu.printSellableItems`, `ConsoleMenu.java:398`: `product instanceof Console ? "Consola - admite garantía extendida" : "Videojuego"` |
+| Explanation | Whether a product admits a warranty is decided with a type check in three places of two layers. It is a property of each product type. |
+| Consequence | If another product type starts admitting warranties, the three places must be found and edited; the service and the menu are coupled to `Console`. |
+| Proposed solution | Let each product answer `isWarrantyEligible()` (false in `Product`, true in `Console`) and ask it in the three places; the listing builds its label with `getTypeLabel()` (V-01). Patterns applied: Polymorphism and Protected Variations. |
+| Other role's code involved | Yes — `Product` and `Console` are Developer 1's code; Developer 1 must add `isWarrantyEligible()`. |
+
 ## Pure Fabrication
 
 **Verdict:** _pending — audit in progress._
 
 - **SalePersistence — Correct.** It keeps file access out of `Sale` (its dependency on services is recorded under Low Coupling, V-02).
 
+- **SaleService — Correct.** The checks are delegated to `SaleValidator`, `PersonValidator` and `ProductValidator` (`SaleService.java:115`, `:124`, `:176`, `:293`); identifiers are generated with the JDK fabrication `UUID` (`:192`).
+
 ## Indirection
 
 **Verdict:** _pending — audit in progress._
+
+- **SaleService — Violation (V-05).** There is no intermediary between the sales module and the two catalogs of sellable items.
+
+### V-05
+
+| Field | Content |
+|---|---|
+| ID | V-05 |
+| Pattern | Indirection (also recorded under Polymorphism) |
+| Module | Accessories integration (Requerimiento 1) and integration adjustment A3 (Requerimiento 5) |
+| Evidence | `SaleService.findSellableItem(String)`, `SaleService.java:274-280` (`productService.findById`, then `accessoryService.findById`), `SaleService.updateInventory(List)`, `:256-264` (`if (item instanceof Accessory) { accessoryService.decreaseStock(...) } else { productService.reduceStock(...) }`) and `SalePersistence.resolveItem`, `SalePersistence.java:192-198` (same lookup order). |
+| Explanation | Two catalogs of sellable items (products and accessories) must collaborate with every class that handles an item, but there is no intermediary, so the sales module talks to both, repeats the lookup order and decides with a type check which catalog owns the stock. |
+| Consequence | The same lookup and dispatch exist in the returns module (developer2-audit V-07); a third catalog would require editing every copy. |
+| Proposed solution | Use the intermediary proposed for the returns module (`ItemCatalog`, developer2-audit V-07) with `findItem(id)` and a new `decreaseStock(item, amount)`, from `SaleService` and from the sale loading. Patterns applied: Indirection and Pure Fabrication. |
+| Other role's code involved | Yes — `ItemCatalog` is created by Developer 2 for developer2-audit V-07; Developer 2 must add `decreaseStock`. `Main` (Technical Lead) injects it. |
 
 ## Protected Variations
 
@@ -102,3 +156,5 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **Sale — Violation (V-01).** The list of product types is hard-coded in the receipt.
 
 - **SalePersistence — Correct.** A change of the file format is confined to this class, and file errors are translated into `PersistenceException` (`SalePersistence.java:67`, `:102`, `:124`).
+
+- **SaleService — Violation (V-04).** Warranty eligibility is not protected from a new product type.
