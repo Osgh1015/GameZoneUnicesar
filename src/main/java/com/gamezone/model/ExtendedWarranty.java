@@ -60,6 +60,16 @@ public class ExtendedWarranty extends Warranty {
     }
 
     /**
+     * {@inheritDoc}
+     *
+     * @return {@link WarrantyKind#EXTENDED}
+     */
+    @Override
+    public WarrantyKind getKind() {
+        return WarrantyKind.EXTENDED;
+    }
+
+    /**
      * Calculates, before rounding, the cost of the extended coverage for a
      * product: ten percent of its price. It is used to offer the coverage
      * before the warranty exists.

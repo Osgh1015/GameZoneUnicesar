@@ -1,6 +1,7 @@
 package com.gamezone.ui;
 
 import com.gamezone.model.Return;
+import com.gamezone.service.MonthlyBalanceService;
 import com.gamezone.service.ReturnService;
 
 import java.util.ArrayList;
@@ -18,18 +19,22 @@ public class ReturnMenu {
 
     private final ConsoleInput userInput;
     private final ReturnService returnService;
+    private final MonthlyBalanceService monthlyBalanceService;
 
     /**
      * Creates the submenu.
      *
      * @param userInput shared reader of the console input
      * @param returnService ReturnService used by this submenu
+     * @param monthlyBalanceService service that calculates the monthly balance
      */
     public ReturnMenu(
             ConsoleInput userInput,
-            ReturnService returnService) {
+            ReturnService returnService,
+            MonthlyBalanceService monthlyBalanceService) {
         this.userInput = userInput;
         this.returnService = returnService;
+        this.monthlyBalanceService = monthlyBalanceService;
     }
 
     /**
@@ -109,9 +114,9 @@ public class ReturnMenu {
             return;
         }
 
-        double totalSales = returnService.calculateMonthlySales(month, year);
-        double totalReturns = returnService.calculateMonthlyReturns(month, year);
-        double balance = returnService.generateMonthlyBalance(month, year);
+        double totalSales = monthlyBalanceService.calculateMonthlySales(month, year);
+        double totalReturns = monthlyBalanceService.calculateMonthlyReturns(month, year);
+        double balance = monthlyBalanceService.generateMonthlyBalance(month, year);
 
         System.out.printf("--- Balance mensual %02d/%d ---%n", month, year);
         System.out.printf("Total de ventas:       $%.2f%n", totalSales);

@@ -166,4 +166,21 @@ Developer 2 (Pablo Andres Amaya Pabon) was responsible for the people module and
 
 **Related commits:** `<hash commit 1>` … `<hash commit 8>` (PR #<n>)
 
+## Requirement 8 — Phase 2: Correction
+
+## Entry 13
+
+**Date:** 2026-10-23 **Tool used:** Claude
+
+**Reason for use:** Correct the SOLID violations assigned to Developer 2 without changing what the user sees, including the small changes they needed in classes of other roles.
+
+**Problem faced:** Several corrections needed a change in another role's class (`ProductService` implementing `ItemSource`, the warranty hierarchy reporting its kind, `SaleService` implementing `SaleLookup`, and the returns menu asking for the balance); the team agreed that I would make those commits too, in the order that keeps every commit compiling. The warranty rules had to keep exactly the same choices (the extended coverage first, one cancellation per kind, unknown tags skipped), and `Main` should not change.
+
+**Prompt used:** cómo introducir las interfaces de mis repositorios y servicios sin cambiar Main, y cómo quitar los instanceof de ItemCatalog y de las garantías sin cambiar los resultados
+
+**Solution obtained and decision taken:** Created `PersonStore`, `AccessoryStore`, `PromotionStore`, `ReturnStore` and `WarrantyStore` implemented by the repositories; the services depend on them and `Main` passes the same objects. Created `ItemSource` (implemented by `ProductService` and `AccessoryService`) and made `ItemCatalog` ask its sources in the same order. Created `WarrantyKind`, used by the repository and the service, with an `EnumMap` that keeps the old order of cancellation. Created `SaleLookup` and `MonthlyBalanceService`, and removed the balance from `ReturnService`. Every commit compiles and the scripted run of the menu gave the same output and data files after each one.
+
+**Related commits:** `<hash A>` … `<hash Q>` (PR #<n>)
+
+
 

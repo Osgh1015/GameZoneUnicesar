@@ -35,7 +35,7 @@ import java.util.UUID;
  *
  * Responsabilidad: Líder Técnico - Módulo de Ventas.
  */
-public class SaleService {
+public class SaleService implements SaleLookup {
 
     private List<Sale> sales;
     private SalePersistence salePersistence;
@@ -271,7 +271,12 @@ public class SaleService {
         }
     }
 
-    /** @return the full history of registered sales */
+    /**
+     * {@inheritDoc}
+     *
+     * @return the full history of registered sales
+     */
+    @Override
     public List<Sale> getSalesHistory() {
         return new ArrayList<>(sales);
     }
@@ -317,6 +322,7 @@ public class SaleService {
      * @param saleId the id of the sale to search for
      * @return the matching sale, or {@code null} if not found
      */
+    @Override
     public Sale findById(String saleId) {
         for (Sale sale : sales) {
             if (sale.getId().equals(saleId)) {

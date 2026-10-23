@@ -20,7 +20,7 @@ import java.util.List;
  * the custom exceptions of the system, so this class only contains the
  * business logic: registering products and updating their stock.
  */
-public class ProductService {
+public class ProductService implements ItemSource {
 
     private final ProductStore repository;
     private final List<Product> products;
@@ -169,5 +169,49 @@ public class ProductService {
      */
     public List<Product> listAll() {
         return listProducts();
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @param id identifier of the product
+     * @return the product, or {@code null} if this catalog does not have it
+     */
+    @Override
+    public Product findItem(String id) {
+        return findById(id);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @param item item to check
+     * @return true if the item is one of the products of this catalog
+     */
+    @Override
+    public boolean owns(Product item) {
+        return findById(item.getId()) == item;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @param item   product sold
+     * @param amount number of units to take
+     */
+    @Override
+    public void takeStock(Product item, int amount) {
+        reduceStock(item.getId(), amount);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @param item   product returned
+     * @param amount number of units to add back
+     */
+    @Override
+    public void returnStock(Product item, int amount) {
+        restoreStock(item.getId(), amount);
     }
 }

@@ -1,48 +1,46 @@
 package com.gamezone.service;
 
-import com.gamezone.model.Accessory;
 import com.gamezone.model.Product;
 
+import java.util.List;
+
 /**
- * Single entry point to the two catalogs of sellable items: the products
- * (video games and consoles) and the accessories.
+ * Single entry point to the catalogs of sellable items (today, the products
+ * and the accessories).
  * <p>
- * Each catalog is kept by its own service and persisted in its own file, so
- * a class that receives an item id does not know which service owns it.
- * Instead of letting every client talk to both services and repeat the
- * lookup order and the stock dispatch, they ask this intermediary
- * (Indirection, Pure Fabrication). The only place that decides which
- * catalog an item belongs to is this class.
+ * Each catalog is an {@link ItemSource} that answers for its own items, so
+ * this class looks up an item and updates its stock without knowing which
+ * kinds of item exist: a new catalog is added by implementing
+ * {@link ItemSource} and passing it here, without changing this class.
+ * The sources are asked in the order they are given.
  */
 public class ItemCatalog {
 
-    private final ProductService productService;
-    private final AccessoryService accessoryService;
+    private final List<ItemSource> sources;
 
     /**
-     * Creates the catalog over the two services that own the items.
+     * Creates the catalog over the given sources, asked in this order.
      *
-     * @param productService   service that owns video games and consoles
-     * @param accessoryService service that owns the accessories
+     * @param sources the catalogs of sellable items
      */
-    public ItemCatalog(ProductService productService, AccessoryService accessoryService) {
-        this.productService = productService;
-        this.accessoryService = accessoryService;
+    public ItemCatalog(ItemSource... sources) {
+        this.sources = List.of(sources);
     }
 
     /**
-     * Finds a sellable item by its id, looking first among the products and
-     * then among the accessories.
+     * Finds a sellable item by its id, asking each catalog in order.
      *
      * @param id identifier of the item
      * @return the item, or {@code null} if no catalog has it
      */
     public Product findItem(String id) {
-        Product product = productService.findById(id);
-        if (product != null) {
-            return product;
+        for (ItemSource source : sources) {
+            Product item = source.findItem(id);
+            if (item != null) {
+                return item;
+            }
         }
-        return accessoryService.findById(id);
+        return null;
     }
 
     /**
@@ -53,11 +51,7 @@ public class ItemCatalog {
      * @param amount number of units to take
      */
     public void decreaseStock(Product item, int amount) {
-        if (item instanceof Accessory) {
-            accessoryService.decreaseStock(item.getId(), amount);
-        } else {
-            productService.reduceStock(item.getId(), amount);
-        }
+        ownerOf(item).takeStock(item, amount);
     }
 
     /**
@@ -68,10 +62,23 @@ public class ItemCatalog {
      * @param amount number of units to add back
      */
     public void restoreStock(Product item, int amount) {
-        if (item instanceof Accessory) {
-            accessoryService.restoreStock(item.getId(), amount);
-        } else {
-            productService.restoreStock(item.getId(), amount);
+        ownerOf(item).returnStock(item, amount);
+    }
+
+    /**
+     * Finds the catalog that owns an item. Every item handled by the system
+     * was obtained from one of the catalogs, so one of them owns it; if none
+     * does, the first catalog is used, as the products catalog was before.
+     *
+     * @param item item of a sale or a return
+     * @return the catalog that keeps the item and its stock
+     */
+    private ItemSource ownerOf(Product item) {
+        for (ItemSource source : sources) {
+            if (source.owns(item)) {
+                return source;
+            }
         }
+        return sources.get(0);
     }
 }
