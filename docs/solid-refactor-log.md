@@ -28,3 +28,9 @@ When it runs: on `develop` before the first correction (baseline), on the branch
 
 | Class | Change | Violation ID | Principle applied | Commit / PR | Owner |
 |---|---|---|---|---|---|
+| `ReturnReceipt` (new) | Layout of the return receipt moved out of `Return`, unchanged text | V-01 | SRP | `<hash A>` / PR #<n> | Developer 1 |
+| `Return` | `generateReturnReceipt()` delegates to `ReturnReceipt`; kept because Requerimiento 3 defines it | V-01 | SRP | `<hash B>` / PR #<n> | Developer 1 |
+| `WarrantyCertificate` (new) | Layout of the warranty certificate moved out of `Warranty`, unchanged text | V-02 | SRP | `<hash C>` / PR #<n> | Developer 1 |
+| `Warranty` | `generateWarrantyCertificate()` delegates to `WarrantyCertificate`; kept because Requerimiento 4 defines it | V-02 | SRP | `<hash D>` / PR #<n> | Developer 1 |
+| `ProductStore` (new), `ProductRepository` | New interface `ProductStore` (`save`, `load`) in the persistence package, implemented by `ProductRepository` | V-03 | DIP | `<hash E>` / PR #<n> | Developer 1 |
+| `ProductService` | Depends on `ProductStore` instead of the concrete repository; `Main` unchanged | V-03 | DIP | `<hash F>` / PR #<n> | Developer 1 |
