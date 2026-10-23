@@ -48,6 +48,10 @@ Diagramas de diseño disponibles en la carpeta [`docs/`](./docs):
 - [`docs/integrated-class-diagram.md`](./docs/integrated-class-diagram.md) — Diagrama de clases único del sistema integrado
 - [`docs/exception-analysis.md`](./docs/exception-analysis.md) — Análisis de la capa de validaciones y excepciones (Requerimiento 6)
 - [`docs/exception-class-diagram.md`](./docs/exception-class-diagram.md) — Diagrama de clases de las excepciones y los validadores
+- [`docs/grasp-audit/consolidated-audit.md`](./docs/grasp-audit/consolidated-audit.md) — Auditoría GRASP consolidada (Requerimiento 7); los informes individuales están en la misma carpeta
+- [`docs/grasp-analysis.md`](./docs/grasp-analysis.md) — Preguntas orientadoras de la auditoría GRASP
+- [`docs/grasp-refactor-log.md`](./docs/grasp-refactor-log.md) — Bitácora de cambios y evidencia de no regresión
+- [`docs/grasp-class-diagram.md`](./docs/grasp-class-diagram.md) — Diagrama de clases antes/después de la corrección GRASP
 
 ## Validaciones y manejo de errores (Requerimiento 6)
 
@@ -69,6 +73,22 @@ El sistema distingue el tipo de cada error para que el vendedor sepa si el probl
 **Interfaz de usuario.** `ConsoleMenu` captura cada tipo de excepción en un bloque `catch` distinto y muestra el mensaje correspondiente; un `catch` final evita que cualquier error inesperado cierre la aplicación. `Main` muestra un mensaje claro si algún archivo no se puede leer al arrancar. El usuario nunca ve una traza de error.
 
 Las diez operaciones del menú funcionan igual que antes del cambio; la evidencia está en la sección 4 de [`docs/exception-analysis.md`](./docs/exception-analysis.md).
+
+## Auditoría y corrección GRASP (Requerimiento 7)
+
+El equipo auditó todo el código del sistema contra los nueve patrones GRASP (Information Expert, Creator, Controller, Low Coupling, High Cohesion, Polymorphism, Pure Fabrication, Indirection y Protected Variations) y corrigió las violaciones encontradas **sin cambiar el comportamiento**: el menú muestra los mismos mensajes y los archivos de `data/` quedan con el mismo contenido.
+
+**Fase 1 — Auditoría.** Cada integrante auditó su propio código (`docs/grasp-audit/leader-audit.md`, `developer1-audit.md`, `developer2-audit.md`) y el Líder Técnico consolidó los tres informes en `docs/grasp-audit/consolidated-audit.md`: 20 violaciones (V-01 a V-20), su responsable, los hallazgos de frontera y los hallazgos fuera de alcance. Las respuestas a las preguntas orientadoras están en `docs/grasp-analysis.md`.
+
+**Fase 2 — Corrección.** Cada corrección está en `docs/grasp-refactor-log.md` con su commit, su patrón y su responsable. Los diagramas antes/después están en `docs/grasp-class-diagram.md`. Principales cambios de diseño:
+
+- **Information Expert:** cada objeto responde con sus propios datos. `Product.decreaseStock`/`increaseStock` reemplazan el cálculo de stock en los servicios; `Sale`, `Return` y `Warranty` responden a quién pertenecen (`belongsToClient`, `belongsToSale`, `covers`…); `Return` le pide el subtotal a la venta; `ExtendedWarranty.quoteFor` calcula el precio que ofrece el menú.
+- **Polymorphism:** se eliminaron las cadenas de `instanceof` de las reglas de negocio. Cada producto responde su categoría (`belongsToCategory`), si admite garantía (`isWarrantyEligible`) y su etiqueta (`getTypeLabel`); cada accesorio responde su tipo (`getAccessoryType`).
+- **Low Coupling / Protected Variations:** `ProductService` y `PersonService` reciben su repositorio desde `Main`, con la ruta de sus archivos. Ningún repositorio depende de un servicio: `ReturnRepository` y `SalePersistence` devuelven registros con identificadores (`ReturnRecord`, `SaleRecord`), como ya hacía `WarrantyRepository`.
+- **Indirection / Pure Fabrication:** `ItemCatalog` es el único punto que sabe si un artículo es un producto o un accesorio; `SaleAssembler` reconstruye las ventas guardadas para `SaleService` y `WarrantyService`.
+- **High Cohesion:** `ConsoleMenu` quedó solo con el menú principal y el manejo de excepciones; cada módulo tiene su submenú (`ProductMenu`, `PersonMenu`, `SaleMenu`, `AccessoryMenu`, `ReturnMenu`, `PromotionMenu`, `WarrantyMenu`) y todos comparten `ConsoleInput`.
+
+**No regresión.** Un guion fijo de 308 entradas recorre todas las operaciones del menú sobre una copia de los datos. El resultado normalizado (1676 líneas, incluidos los archivos de datos) es idéntico antes y después de la corrección.
 
 ## Requisitos previos
 
@@ -209,6 +229,14 @@ repositorio/
     ├── integrated-class-diagram.md
     ├── exception-analysis.md
     ├── exception-class-diagram.md
+    ├── grasp-analysis.md
+    ├── grasp-class-diagram.md
+    ├── grasp-refactor-log.md
+    ├── grasp-audit/
+    │   ├── leader-audit.md
+    │   ├── developer1-audit.md
+    │   ├── developer2-audit.md
+    │   └── consolidated-audit.md
     └── ai-usage/
         ├── leader-ai-log.md
         ├── developer1-ai-log.md
