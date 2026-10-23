@@ -29,9 +29,33 @@ import java.util.List;
  */
 public class PersonRepository {
 
-    private static final String CLIENTS_FILE = "data/clients.txt";
-    private static final String VENDORS_FILE = "data/vendors.txt";
     private static final String DELIMITER = ";";
+
+    private final String clientsFile;
+    private final String vendorsFile;
+
+    /**
+     * Creates the repository that stores the people in
+     * {@code data/clients.txt} and {@code data/vendors.txt}.
+     *
+     * @deprecated use {@link #PersonRepository(String, String)}; kept only
+     *             until {@code Main} passes the file paths (V-05)
+     */
+    @Deprecated
+    public PersonRepository() {
+        this("data/clients.txt", "data/vendors.txt");
+    }
+
+    /**
+     * Creates the repository that stores the people in the given files.
+     *
+     * @param clientsFile path of the clients file
+     * @param vendorsFile path of the vendors file
+     */
+    public PersonRepository(String clientsFile, String vendorsFile) {
+        this.clientsFile = clientsFile;
+        this.vendorsFile = vendorsFile;
+    }
 
     /**
      * Saves the given list of clients to the clients data file,
@@ -41,14 +65,14 @@ public class PersonRepository {
      * @throws PersistenceException if the file cannot be written
      */
     public void saveClients(List<Client> clients) {
-        try (PrintWriter writer = new PrintWriter(new FileWriter(CLIENTS_FILE))) {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(clientsFile))) {
             for (Client c : clients) {
                 writer.println(c.getId() + DELIMITER + c.getName() + DELIMITER
                         + c.getPhone() + DELIMITER + c.getEmail());
             }
         } catch (IOException e) {
             throw new PersistenceException(
-                    "Error de escritura en el archivo " + CLIENTS_FILE + " al guardar los clientes.", e);
+                    "Error de escritura en el archivo " + clientsFile + " al guardar los clientes.", e);
         }
     }
 
@@ -62,7 +86,7 @@ public class PersonRepository {
      */
     public List<Client> loadClients() {
         List<Client> clients = new ArrayList<>();
-        File file = new File(CLIENTS_FILE);
+        File file = new File(clientsFile);
         if (!file.exists()) {
             return clients;
         }
@@ -76,13 +100,13 @@ public class PersonRepository {
                 }
                 String[] parts = line.split(DELIMITER);
                 if (parts.length < 4) {
-                    throw corruptedLine(CLIENTS_FILE, lineNumber, "clientes");
+                    throw corruptedLine(clientsFile, lineNumber, "clientes");
                 }
                 clients.add(new Client(parts[0], parts[1], parts[2], parts[3]));
             }
         } catch (IOException e) {
             throw new PersistenceException(
-                    "Error de lectura en el archivo " + CLIENTS_FILE + " al cargar los clientes.", e);
+                    "Error de lectura en el archivo " + clientsFile + " al cargar los clientes.", e);
         }
         return clients;
     }
@@ -97,7 +121,7 @@ public class PersonRepository {
      */
     public List<Seller> loadVendors() {
         List<Seller> vendors = new ArrayList<>();
-        File file = new File(VENDORS_FILE);
+        File file = new File(vendorsFile);
         if (!file.exists()) {
             return vendors;
         }
@@ -111,13 +135,13 @@ public class PersonRepository {
                 }
                 String[] parts = line.split(DELIMITER);
                 if (parts.length < 5) {
-                    throw corruptedLine(VENDORS_FILE, lineNumber, "vendedores");
+                    throw corruptedLine(vendorsFile, lineNumber, "vendedores");
                 }
                 vendors.add(new Seller(parts[0], parts[1], parts[2], parts[3], parts[4]));
             }
         } catch (IOException e) {
             throw new PersistenceException(
-                    "Error de lectura en el archivo " + VENDORS_FILE + " al cargar los vendedores.", e);
+                    "Error de lectura en el archivo " + vendorsFile + " al cargar los vendedores.", e);
         }
         return vendors;
     }
