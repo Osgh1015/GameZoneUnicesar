@@ -23,7 +23,7 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 ## Information Expert
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Violation — see V-02, V-04, V-05 and V-08.
 
 - **People — Correct.** `Client.getDescription()` and `Seller.getDescription()` build the description from their own fields; `PersonService.findClientById` and `findVendorById` (`PersonService.java:88`, `:103`) search the lists the service owns.
 
@@ -91,7 +91,7 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 ## Creator
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Correct — objects are created by the class that holds their initializing data or aggregates them.
 
 - **People — Correct.** `PersonRepository.loadClients` and `loadVendors` (`PersonRepository.java:81`, `:116`) create `Client` and `Seller` objects from the records they read. The `Client` registered through the menu is created by `ConsoleMenu` (Technical Lead), reported in the developer1 audit.
 
@@ -105,11 +105,13 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 ## Controller
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Not applicable — no class in scope receives system events.
+
+- **All modules — Not applicable.** None of the classes in scope receives a system event from the user; menu events are received by `ConsoleMenu` (Technical Lead), which calls the services audited here.
 
 ## Low Coupling
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Violation — see V-01 and V-06 (and V-03 for the coupling of `AccessoryService` to the accessory subclasses).
 
 - **People — Violation (V-01).** `Person`, `Client` and `Seller` import nothing outside the model, and `PersonRepository` depends only on the model and the exceptions, which is correct; `PersonService` is tied to the concrete `PersonRepository` and to its files because it creates it.
 
@@ -151,7 +153,7 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 ## High Cohesion
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Correct — each class in scope has one focused purpose.
 
 - **People — Correct.** `PersonRepository` only reads and writes the two people files; `PersonService` only registers and looks up people. It keeps two pairs of equivalent methods (`findVendorById`/`findSellerById`, `PersonService.java:103`, `:112`; `listVendors`/`listSellers`, `:78`, `:121`) because other modules call both names; they do the same job, so the class is still focused.
 
@@ -165,7 +167,7 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 ## Polymorphism
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Violation — see V-03 and V-07.
 
 - **People — Correct.** `Person.getDescription()` is abstract and `Client`/`Seller` override it; no code in scope asks a person for its concrete type.
 
@@ -205,7 +207,7 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 ## Pure Fabrication
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Correct — the fabrications in scope keep technical responsibilities out of the domain classes.
 
 - **People — Correct.** `PersonRepository` is the artificial class that keeps file access out of `Client` and `Seller`.
 
@@ -221,7 +223,7 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 ## Indirection
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Violation — see V-07 (recorded once, under Polymorphism).
 
 - **People — Correct.** `PersonService` sits between `ConsoleMenu` and `PersonRepository`; the menu never touches the repository.
 
@@ -237,7 +239,7 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 ## Protected Variations
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Violation — see V-01 and V-03 (recorded once under their main pattern).
 
 - **People — Violation (V-01).** A change of the file format is confined to `PersonRepository`, which is correct, but the file locations are fixed inside the repository and the service creates its own repository, so a change of location is not protected.
 
@@ -248,3 +250,28 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **Warranties — Correct.** A new warranty type changes `WarrantyRepository` and `loadWarranties` only, and the costs keep being asked polymorphically.
 
 - **Exceptions and validation — Correct.** `PersonRepository` translates every `IOException` into `PersistenceException` (`PersonRepository.java:50`, `:84`, `:119`), so the services and the menu are protected from file errors; `PersonService` is protected from changes in the rules by `PersonValidator`.
+
+## Summary of verdicts
+
+| Pattern | Verdict | Violations |
+|---|---|---|
+| Information Expert | Violation | V-02, V-04, V-05, V-08 |
+| Creator | Correct | — |
+| Controller | Not applicable | — |
+| Low Coupling | Violation | V-01, V-03, V-06 |
+| High Cohesion | Correct | — |
+| Polymorphism | Violation | V-03, V-07 |
+| Pure Fabrication | Correct | — |
+| Indirection | Violation | V-07 |
+| Protected Variations | Violation | V-01, V-03 |
+
+Distinct violations: 8 (V-01 to V-08). V-01, V-03 and V-07 appear under more than one pattern but are recorded only once, under the pattern that best describes their root cause.
+
+## Notes
+
+- Fragments that were examined and judged **not** to be violations are recorded above with their justification (the type tags of `AccessoryRepository`, `PromotionRepository` and `WarrantyRepository`, the equivalent method pairs of `PersonService`, the distinction between basic and extended warranty in `WarrantyService`), so that the consolidation can see why they were discarded.
+- Corrections that need code of another role: V-03, V-04 and V-08 need methods in Developer 1's model classes; V-05 needs two methods in `Sale` (Technical Lead); V-01, V-06 and V-07 need the wiring in `Main` (Technical Lead). V-02 depends on the stock methods that Developer 1 adds to `Product` for developer1-audit V-01.
+- Reported to the Technical Lead (problems whose origin is in another role's code, not audited here):
+    - `SaleService.registerSale` and `SalePersistence` repeat the same item lookup and stock dispatch of V-07; they can use the `ItemCatalog` proposed in V-07.
+    - `WarrantyService` depends on `SalePersistence` and on `PersonService` only because `SalePersistence.loadAll` needs both services and `Main` builds the warranty module before `SaleService`; the warranty module keeps its own copy of the sales.
+- Candidate out-of-scope findings reported to the Technical Lead (not GRASP violations; correcting them would change what the user sees): `AccessoryRepository`, `PromotionRepository`, `ReturnRepository` and `WarrantyRepository` print file errors to the console instead of throwing `PersistenceException`, and `AccessoryService`, `PromotionService` and `ReturnService` still throw `IllegalArgumentException`, `IllegalStateException` and `NoSuchElementException` (some with messages in English). Requerimiento 6 left these modules out of its refactor on purpose (`docs/exception-analysis.md`, section 6).
