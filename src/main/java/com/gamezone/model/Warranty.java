@@ -78,6 +78,27 @@ public abstract class Warranty {
     }
 
     /**
+     * Tells whether this warranty covers the given product in the given sale.
+     *
+     * @param productId identifier of the product
+     * @param saleId    identifier of the sale
+     * @return true if both identifiers match this warranty
+     */
+    public boolean covers(String productId, String saleId) {
+        return product.getId().equals(productId) && sale.getId().equals(saleId);
+    }
+
+    /**
+     * Tells whether this warranty was granted in the given sale.
+     *
+     * @param saleId identifier of the sale
+     * @return true if the warranty belongs to that sale
+     */
+    public boolean belongsToSale(String saleId) {
+        return sale.getId().equals(saleId);
+    }
+
+    /**
      * Declares how many months the coverage lasts. Each concrete
      * warranty type defines its own duration.
      *
