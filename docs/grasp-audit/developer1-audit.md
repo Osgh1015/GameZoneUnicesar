@@ -19,6 +19,7 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 | Promotions (Requerimiento 2) | `Promotion`, `PercentageDiscount`, `CategoryDiscount`, `BulkPurchaseDiscount` |
 | Returns (Requerimiento 3) | `Return`, `Sale.canBeReturned` |
 | Warranties (Requerimiento 4) | `Warranty`, `BasicWarranty`, `ExtendedWarranty` |
+| Exceptions and validation (Requerimiento 6) | `GameZoneException`, `ResourceNotFoundException`, `BusinessRuleException`, `InvalidDataException`, `PersistenceException`, `ProductValidator`, `PersonValidator`, `SaleValidator` |
 
 ## Information Expert
 
@@ -33,6 +34,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **Returns — Violation (V-04).** `Return.calculateRefundAmount()` (`Return.java:141`) and `generateReturnReceipt()` (`Return.java:159`) use the data of the return, and `Sale.canBeReturned()` (`Sale.java:221-223`) decides the 30-day rule from the sale's own date, which is correct; but `calculatePaidRatio()` recalculates the subtotal of the sale instead of asking the sale.
 
 - **Warranties — Correct.** `Warranty` derives `endDate` from `getDurationInMonths()` in its constructor (`Warranty.java:42`); `isActive(LocalDate)` (`Warranty.java:113`) uses its own dates; `ExtendedWarranty.getAdditionalCost()` (`ExtendedWarranty.java:58`) uses the price of the product it covers.
+
+- **Exceptions and validation — Correct.** Each exception builds its message from the data it receives (`ResourceNotFoundException.java:21`). Each validator checks only the data passed by the service; `ProductValidator.validateStockAvailability` (`ProductValidator.java:60`) reads the stock of the product it receives, which is acceptable for a fabrication whose only job is to check rules.
 
 ### V-01
 
@@ -68,6 +71,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 - **Accessories, promotions, returns and warranties — Correct.** The model classes in scope do not create other domain objects; their instances are created by the repositories and services that aggregate them (Developer 2 and Technical Lead code).
 
+- **Exceptions and validation — Correct.** Each validator creates the exception it throws at the point where it has the field name, the identifier or the rule that the message needs (`ProductValidator.java:35-86`).
+
 ## Controller
 
 **Verdict:** _pending — audit in progress._
@@ -85,6 +90,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **Returns — Correct.** `Return` depends only on `Sale` and `Product`, the objects it describes.
 
 - **Warranties — Correct.** The hierarchy depends only on `Product` and `Sale`.
+
+- **Exceptions and validation — Correct.** The exceptions depend on nothing in the system; the validators depend only on the model and on the exceptions, never on services or repositories, as the Requerimiento 6 layer rule requires.
 
 ### V-02
 
@@ -113,6 +120,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 - **Warranties — Correct.** Each subclass contributes only its duration, its type and its cost.
 
+- **Exceptions and validation — Correct.** One exception per category of error and one validator per module (products, people, sales).
+
 ## Polymorphism
 
 **Verdict:** _pending — audit in progress._
@@ -124,6 +133,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **Promotions — Mixed.** `Promotion.calculateDiscount(Sale)` (`Promotion.java:84`) is abstract and overridden by the three subclasses, which is correct use of Polymorphism. Inside `CategoryDiscount`, however, the category of each product is resolved with conditionals on the concrete type (V-03).
 
 - **Warranties — Correct.** `getDurationInMonths()`, `getWarrantyType()` and `getAdditionalCost()` (`Warranty.java:86-102`) are abstract and overridden by `BasicWarranty` and `ExtendedWarranty`; `generateWarrantyCertificate()` (`Warranty.java:123`) is written once on the base class and uses those polymorphic facts.
+
+- **Exceptions — Correct.** The four exceptions extend `GameZoneException` (`GameZoneException.java:13`), so the menu can handle each category by its type without asking for codes or messages.
 
 ### V-03
 
@@ -144,11 +155,15 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 - **Products — Correct.** `ProductRepository` is an artificial class that owns file access so that `Product` stays free of I/O.
 
+- **Validation — Correct.** `ProductValidator`, `PersonValidator` and `SaleValidator` are artificial classes, with static methods and a private constructor, that concentrate the checks of each module so that services keep only business logic.
+
 ## Indirection
 
 **Verdict:** _pending — audit in progress._
 
 - **Products — Correct.** `ProductService` sits between `ConsoleMenu` and `ProductRepository`; the menu never touches the repository.
+
+- **Validation — Correct.** Services reach the rules through the validators, so a rule changes in one place without touching the services that use it.
 
 ## Protected Variations
 
@@ -159,3 +174,5 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **Promotions — Violation (V-03).** The mapping between category names and product classes is hard-coded inside `CategoryDiscount`, so the discount is not protected from a new product type. The full analysis is recorded once, under Polymorphism.
 
 - **Warranties — Correct.** A new warranty type is added as a subclass without touching `Warranty` or the existing subclasses.
+
+- **Exceptions — Correct.** A new category of error is added as a new subclass of `GameZoneException` without changing the existing exceptions; the validators protect the services from changes in the rules.
