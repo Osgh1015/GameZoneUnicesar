@@ -54,4 +54,16 @@ When it runs: on `develop` before the first correction (baseline), on the branch
 | `MonthlyBalanceService` (new) | Monthly balance moved out of `ReturnService`, same calculation | V-08 | SRP | `<hash N>` / PR #<n> | Developer 2 |
 | `ReturnMenu`, `ConsoleMenu` | The returns menu asks `MonthlyBalanceService` for the balance | V-08 | SRP | `<hash O2>` / PR #<n> | Developer 2 |
 | `ReturnService` | Removed the monthly balance; the service only handles returns | V-08 | SRP | `<hash Q>` / PR #<n> | Developer 2 |
-    
+| `SaleReceipt` (new) | Layout of the sale receipt moved out of `Sale`, unchanged text | V-09 | SRP | `<hash A>` / PR #<n> | Technical Lead |
+| `Sale` | `generateReceipt()` delegates to `SaleReceipt`; kept because the sales module defines it and `SaleMenu` calls it | V-09 | SRP | `<hash B>` / PR #<n> | Technical Lead |
+| `SaleStore` (new), `SalePersistence` | New interface `SaleStore` (`saveAll`, `loadAll`, `damagedLine`) in the persistence package, implemented by `SalePersistence` | V-10 | DIP | `<hash C>` / PR #<n> | Technical Lead |
+| `SaleService`, `SaleAssembler` | Depend on `SaleStore` instead of the concrete `SalePersistence`; `Main` unchanged | V-10 | DIP | `<hash D>` / PR #<n> | Technical Lead |
+| `PersonLookup`, `PromotionSelector`, `WarrantyAssigner` (new) | Narrow interfaces of the service layer defined by the sale registration | V-11 | ISP, DIP | `<hash T1>` / PR #<n> | Technical Lead |
+| `PersonService` | Implements `PersonLookup` | V-11 | ISP | `<hash U1>` / PR #<n> | Technical Lead |
+| `PromotionService` | Implements `PromotionSelector` | V-11 | ISP | `<hash U2>` / PR #<n> | Technical Lead |
+| `WarrantyService` | Implements `WarrantyAssigner` | V-11 | ISP | `<hash U3>` / PR #<n> | Technical Lead |
+| `SaleService`, `SaleAssembler` | Depend on `PersonLookup`, `PromotionSelector` and `WarrantyAssigner`; `Main` unchanged | V-11 | ISP, DIP | `<hash F>` / PR #<n> | Technical Lead |
+| `MenuOption` (new) | Interface of an option of the main menu (`getTitle`, `show`) | V-12 | OCP | `<hash G>` / PR #<n> | Technical Lead |
+| `ProductMenu`, `PersonMenu`, `SaleMenu`, `AccessoryMenu`, `ReturnMenu`, `PromotionMenu`, `WarrantyMenu` | Implement `MenuOption`; each one gives the title it had in the main menu | V-12 | OCP | `<hash H>` / PR #<n> | Technical Lead |
+| `ConsoleMenu` | Prints and runs a list of `MenuOption` (number = position + 1); no `switch` per module | V-12 | OCP | `<hash I>` / PR #<n> | Technical Lead |
+| `Main`, `ConsoleMenu` | `Main` composes the seven menus and passes them to `ConsoleMenu`; a new module is added in `Main` only | V-12 | OCP | `<hash J>` / PR #<n> | Technical Lead |
