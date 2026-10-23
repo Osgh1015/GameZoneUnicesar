@@ -7,7 +7,7 @@ import com.gamezone.exceptions.ResourceNotFoundException;
 import com.gamezone.model.Console;
 import com.gamezone.model.Product;
 import com.gamezone.model.VideoGame;
-import com.gamezone.persistence.ProductRepository;
+import com.gamezone.persistence.ProductStore;
 import com.gamezone.validation.ProductValidator;
 
 import java.util.Collections;
@@ -22,17 +22,18 @@ import java.util.List;
  */
 public class ProductService {
 
-    private final ProductRepository repository;
+    private final ProductStore repository;
     private final List<Product> products;
 
     /**
      * Creates the service and loads the products already stored by the
      * given repository.
      *
-     * @param repository repository that stores the products
-     * @throws PersistenceException if the products file cannot be read
+     * @param repository store that keeps the products (in production,
+     *                   the file repository created by {@code Main})
+     * @throws PersistenceException if the products cannot be read
      */
-    public ProductService(ProductRepository repository) {
+    public ProductService(ProductStore repository) {
         this.repository = repository;
         this.products = repository.load();
     }

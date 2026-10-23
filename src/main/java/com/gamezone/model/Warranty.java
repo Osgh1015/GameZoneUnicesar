@@ -137,31 +137,14 @@ public abstract class Warranty {
 
     /**
      * Builds a readable certificate of the warranty, written in Spanish
-     * because it is a message shown to the user of the store.
+     * because it is a message shown to the user of the store. The layout
+     * lives in {@link WarrantyCertificate}; this method is kept because
+     * Requerimiento 4 defines it as part of the warranty.
      *
      * @return a formatted description of the warranty
      */
     public String generateWarrantyCertificate() {
-        return String.format(
-                "CERTIFICADO DE GARANTÍA%n"
-                        + "Identificador: %s%n"
-                        + "Tipo: %s%n"
-                        + "Producto: %s (ID: %s)%n"
-                        + "Venta asociada: %s%n"
-                        + "Fecha de inicio: %s%n"
-                        + "Fecha de vencimiento: %s%n"
-                        + "Duración: %d meses%n"
-                        + "Costo adicional: %.2f%n"
-                        + "Estado a la fecha actual: %s",
-                id,
-                getWarrantyType(),
-                product.getTitle(), product.getId(),
-                sale.getId(),
-                startDate,
-                endDate,
-                getDurationInMonths(),
-                getAdditionalCost(),
-                isActive(LocalDate.now()) ? "VIGENTE" : "VENCIDA");
+        return new WarrantyCertificate(this).format();
     }
 
     @Override
