@@ -133,3 +133,20 @@ Developer 2 (Pablo Andres Amaya Pabon) was responsible for the people module and
 **Solution obtained and decision taken:** Reviewed each class and method in scope with the tool and recorded eight violations with class, method and line range on the audited commit: V-01 (Low Coupling, `PersonService` creates its own repository with fixed files), V-02 (Information Expert, stock arithmetic in `AccessoryService`), V-03 (Polymorphism, `AccessoryService.matchesType`), V-04 and V-05 (Information Expert, `ReturnService` navigates `Return` and searches the products of the sale), V-06 (Low Coupling, `ReturnRepository` depends on services), V-07 (Polymorphism, type dispatch in `registerReturn`) and V-08 (Information Expert, `WarrantyService` navigates the warranty associations). The type tags of the repositories were recorded as correct. The same dispatch in `SaleService` and the dependency of `WarrantyService` on `SalePersistence` were reported to the Technical Lead. Also wrote the answer to question 4 of the GRASP analysis.
 
 **Related commits:** `<hash commit 1>` … `<hash commit 8>` (PR #<n>)
+
+## Requirement 7 — Phase 2: Correction
+
+## Entry 11
+
+**Date:** 2026-10-23 **Tool used:** Claude
+
+**Reason for use:** Correct the violations assigned to Developer 2 in the consolidated audit without changing what the user sees.
+
+**Problem faced:** Five of the eight corrections needed code of other roles (methods in `Accessory`, `Return` and `Warranty` from Developer 1, two methods in `Sale` and the wiring in `Main` from the Technical Lead), and `Main` still created `PersonService`, `ReturnRepository` and `ReturnService` with their old constructors, so removing them at once would have left the project without compiling. The returns also had to keep exactly the same refunds, stock and warranty cancellations.
+
+**Prompt used:** en qué orden hacer las correcciones del desarrollador 2 que dependen de métodos del modelo y de Main para que cada commit compile y el menú no cambie
+
+**Solution obtained and decision taken:** The model methods of the other roles were added first by their owners (`getAccessoryType`, `belongsToClient`/`belongsToSale`, `covers`/`belongsToSale`, `findProduct`/`countUnitsOf`), then each service was changed to ask them: `AccessoryService` uses the stock methods of `Product` and the accessory type, `ReturnService` and `WarrantyService` ask the return, the sale and the warranty. Created `ItemCatalog` as the single intermediary between the returns and the two catalogs, and let `WarrantyService` decide which items have warranties. `ReturnRepository` now loads `ReturnRecord` objects like `WarrantyRepository`, and `PersonRepository`/`PersonService` receive their files and repository by constructor. The old constructors were kept as `@Deprecated` until the Technical Lead rewired `Main`, and then removed, so every commit compiles. The same scripted run of the menu was executed after every commit and the output and the data files were identical to the baseline.
+
+**Related commits:** `<hash A>` … `<hash J>` (PR #<n>)
+
