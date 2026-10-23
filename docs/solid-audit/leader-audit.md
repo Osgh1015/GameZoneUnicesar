@@ -18,10 +18,11 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 | Sales (Taller 1) | `SalePersistence` (statement: `SaleRepository`) and its `SaleRecord` (GRASP V-19) |
 | Sales and integrations (Taller 1, Requerimientos 1, 2, 4 and 5) | `SaleService`, including the accessories, promotions and warranties in `registerSale`; `SaleAssembler` (GRASP V-19) |
 | User interface (Taller 1 to Requerimiento 6) | `ConsoleMenu`, including the differentiated handling of exceptions; `ConsoleInput` and the submenus `ProductMenu`, `PersonMenu`, `SaleMenu`, `AccessoryMenu`, `ReturnMenu`, `PromotionMenu`, `WarrantyMenu` (GRASP V-20) |
+| Start-up and returns (Taller 1, Requerimiento 3) | `Main`, `ProductService.restoreStock` |
 
 ## Single Responsibility Principle (SRP)
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Violation — see V-01.
 
 - **Sale — Violation (V-01).** `Sale` also lays out its receipt. The GRASP additions (`findProduct`, `countUnitsOf`, `belongsToClient`, `wasAttendedBy`) answer questions with the sale's own data, which is correct.
 
@@ -30,6 +31,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 - **SaleService — Correct.** `registerSale` is split into private steps with one purpose each, and the queries are all about sales. **SaleAssembler — Correct.** It only rebuilds the stored sales.
 
 - **User interface — Correct.** Since the GRASP correction each submenu handles one module and `ConsoleInput` only reads the input; `ConsoleMenu` keeps the main loop and the exception handling.
+
+- **Main — Correct.** It only composes the application. **ProductService.restoreStock — Correct.** It only returns units to the stock and persists the change.
 
 ### V-01
 
@@ -46,7 +49,7 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 ## Open/Closed Principle (OCP)
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Violation — see V-04.
 
 - **Sale — Correct.** The receipt asks each product for its label (`getTypeLabel`, GRASP V-17); a new product type does not change `Sale`.
 
@@ -69,13 +72,13 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 ## Liskov Substitution Principle (LSP)
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Not applicable — the classes in scope have no subclasses and extend no class of the system.
 
 - **Sale, SalePersistence, SaleService, SaleAssembler, the user interface and Main — Not applicable.** None of them takes part in an inheritance hierarchy of the system; the hierarchies they use (`Product`, `Promotion`, `Warranty`) are audited by Developer 1.
 
 ## Interface Segregation Principle (ISP)
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Violation — see V-03.
 
 - **SaleService and SaleAssembler — Violation (V-03).** They depend on three complete services of Developer 2 to use one or two operations of each. Their dependency on `ItemCatalog` was examined: it is the intermediary created for the sales and returns modules and every operation it has is used by them; it is not counted.
 
@@ -96,11 +99,13 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 ## Dependency Inversion Principle (DIP)
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Violation — see V-02 (and V-03).
 
 - **SaleService and SaleAssembler — Violation (V-02, V-03).** They depend on the concrete `SalePersistence` and on concrete services of another role.
 
 - **User interface — Correct, examined.** The submenus depend on the services of the application, which are the entry points of the use cases; the user interface is the outermost layer and no abstraction is gained by hiding them. `ConsoleMenu` depending on concrete submenus is recorded under OCP (V-04).
+
+- **Main — Correct.** It is the composition root; creating every concrete class is its purpose.
 
 ### V-02
 
@@ -114,3 +119,27 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 | Consequence | Changing how sales are stored requires editing `SaleService` and `SaleAssembler`. |
 | Proposed solution | A `SaleStore` interface in the persistence package (`saveAll`, `loadAll`, `damagedLine`) implemented by `SalePersistence`; both classes depend on it. `Main` keeps passing the same `SalePersistence`. |
 | Other role's code involved | No. |
+
+## GRASP additions (Requerimiento 7)
+
+- **`SaleAssembler`** — recorded under V-02 and V-03 (it depends on the concrete `SalePersistence` and on the whole `PersonService`).
+- **`SaleRecord`, `Sale.findProduct`/`countUnitsOf`/`belongsToClient`/`wasAttendedBy`** — correct under the five principles.
+- **`ConsoleInput` and the seven submenus** — correct for SRP (the GRASP High Cohesion correction also solved the SRP problem of `ConsoleMenu`); the way `ConsoleMenu` creates and dispatches them is V-04.
+
+## Summary of verdicts
+
+| Principle | Verdict | Violations |
+|---|---|---|
+| Single Responsibility Principle (SRP) | Violation | V-01 |
+| Open/Closed Principle (OCP) | Violation | V-04 |
+| Liskov Substitution Principle (LSP) | Not applicable | — |
+| Interface Segregation Principle (ISP) | Violation | V-03 |
+| Dependency Inversion Principle (DIP) | Violation | V-02, V-03 |
+
+Distinct violations: 4 (V-01 to V-04). V-03 appears under two principles but is recorded once.
+
+## Notes
+
+- **Examined and accepted (not counted):** the dependency of the sales module on `ItemCatalog` (ISP); the dependency of the submenus on the services of their module (DIP); `Main` as the composition root.
+- **Relation with GRASP:** the GRASP split of `ConsoleMenu` solved its SRP problem but not its OCP problem (V-04); `SaleAssembler`, created by GRASP, still depends on concrete classes (V-02, V-03).
+- **Corrections that need code of another role:** V-03 (`PersonService`, `PromotionService` and `WarrantyService` implement the new interfaces, Developer 2).
