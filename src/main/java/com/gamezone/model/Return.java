@@ -166,39 +166,14 @@ public class Return {
     }
 
     /**
-     * Generates the formatted receipt (in Spanish) of this return. For
-     * every returned item it shows the list price, the proportional
-     * discount and the refunded amount; then the refund of the cancelled
-     * extended warranties (if any) and the total refund.
+     * Generates the formatted receipt (in Spanish) of this return. The
+     * layout lives in {@link ReturnReceipt}; this method is kept because
+     * Requerimiento 3 defines it as part of the return.
      *
      * @return the formatted receipt text
      */
     public String generateReturnReceipt() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("--- Recibo de Devolución ---\n");
-        sb.append("ID Devolución: ").append(id).append("\n");
-        sb.append("Fecha: ").append(date).append("\n");
-        sb.append("Venta original: ").append(originalSale.getId()).append("\n");
-        if (originalSale.getAppliedPromotionName() != null
-                && originalSale.getDiscountAmount() > 0) {
-            sb.append("Promoción de la venta: ")
-                    .append(originalSale.getAppliedPromotionName()).append("\n");
-        }
-        sb.append("Productos devueltos:\n");
-        for (Product product : returnedProducts) {
-            sb.append("  - ").append(product.getTitle()).append("\n");
-            sb.append(String.format("      Precio de lista:        $%.2f%n", product.getPrice()));
-            sb.append(String.format("      Descuento proporcional: -$%.2f%n",
-                    calculateItemDiscount(product)));
-            sb.append(String.format("      Monto reembolsado:      $%.2f%n",
-                    calculateItemRefund(product)));
-        }
-        if (warrantyRefund > 0) {
-            sb.append(String.format("Garantías extendidas anuladas: +$%.2f%n", warrantyRefund));
-        }
-        sb.append("Motivo: ").append(reason).append("\n");
-        sb.append(String.format("Total reembolsado: $%.2f%n", refundAmount));
-        return sb.toString();
+        return new ReturnReceipt(this).format();
     }
 
     /**
