@@ -31,7 +31,7 @@ import java.util.List;
  * Nota: esta clase NO contiene reglas de negocio, solo lectura/escritura
  * de archivos, respetando la separación de capas exigida por el taller.
  */
-public class SalePersistence {
+public class SalePersistence implements SaleStore {
 
     private static final String SEPARATOR = ";";
     private static final String PRODUCTS_SEPARATOR = "\\|";
@@ -53,6 +53,7 @@ public class SalePersistence {
      * @param sales list of sales to persist
      * @throws PersistenceException if the file cannot be written
      */
+    @Override
     public void saveAll(List<Sale> sales) {
         try (FileWriter writer = new FileWriter(filePath)) {
             for (Sale sale : sales) {
@@ -73,6 +74,7 @@ public class SalePersistence {
      * @throws PersistenceException if the file cannot be read or the date of
      *                              one of its lines is corrupted
      */
+    @Override
     public List<SaleRecord> loadAll() {
         List<SaleRecord> records = new ArrayList<>();
         File file = new File(filePath);
@@ -105,6 +107,7 @@ public class SalePersistence {
      * @param cause      error found while reading the line
      * @return the exception to throw
      */
+    @Override
     public PersistenceException damagedLine(int lineNumber, RuntimeException cause) {
         return new PersistenceException("El archivo " + filePath + " está dañado en la línea "
                 + lineNumber + " (lectura de ventas).", cause);
