@@ -34,3 +34,24 @@ When it runs: on `develop` before the first correction (baseline), on the branch
 | `Warranty` | `generateWarrantyCertificate()` delegates to `WarrantyCertificate`; kept because Requerimiento 4 defines it | V-02 | SRP | `<hash D>` / PR #<n> | Developer 1 |
 | `ProductStore` (new), `ProductRepository` | New interface `ProductStore` (`save`, `load`) in the persistence package, implemented by `ProductRepository` | V-03 | DIP | `<hash E>` / PR #<n> | Developer 1 |
 | `ProductService` | Depends on `ProductStore` instead of the concrete repository; `Main` unchanged | V-03 | DIP | `<hash F>` / PR #<n> | Developer 1 |
+
+| `PersonStore` (new), `PersonRepository`, `PersonService` | New interface implemented by the repository; the service depends on it; `Main` unchanged | V-04 | DIP | `<hash A>` / PR #<n> | Developer 2 |
+| `AccessoryStore` (new), `AccessoryRepository`, `AccessoryService` | Same for accessories | V-04 | DIP | `<hash B>` / PR #<n> | Developer 2 |
+| `PromotionStore` (new), `PromotionRepository`, `PromotionService` | Same for promotions | V-04 | DIP | `<hash C>` / PR #<n> | Developer 2 |
+| `ReturnStore` (new), `ReturnRepository`, `ReturnService` | Same for returns | V-04 | DIP | `<hash D>` / PR #<n> | Developer 2 |
+| `WarrantyStore` (new), `WarrantyRepository`, `WarrantyService` | Same for warranties | V-04 | DIP | `<hash E>` / PR #<n> | Developer 2 |
+| `ItemSource` (new) | Interface of a catalog of sellable items (`findItem`, `owns`, `takeStock`, `returnStock`) | V-05 | OCP, DIP | `<hash F>` / PR #<n> | Developer 2 |
+| `ProductService` | Implements `ItemSource` (`findItem`, `owns`, `takeStock`, `returnStock`) | V-05 | OCP, DIP | `<hash S1>` / PR #<n> | Developer 2 |
+| `AccessoryService` | Implements `ItemSource` | V-05 | OCP, DIP | `<hash G>` / PR #<n> | Developer 2 |
+| `ItemCatalog` | Receives its `ItemSource`s and asks them in order; no `instanceof`; `Main` unchanged | V-05 | OCP, DIP | `<hash H>` / PR #<n> | Developer 2 |
+| `WarrantyKind` (new) | Enum of the kinds of warranty: builds each warranty and tells the preferred coverage | V-06 | OCP | `<hash I>` / PR #<n> | Developer 2 |
+| `Warranty`, `BasicWarranty`, `ExtendedWarranty` | Added `getKind()` to the warranty hierarchy | V-06 | OCP | `<hash S2>` / PR #<n> | Developer 2 |
+| `WarrantyRepository` | Writes `getKind().name()` (same text) instead of `instanceof ExtendedWarranty` | V-06 | OCP | `<hash J>` / PR #<n> | Developer 2 |
+| `WarrantyService` | Builds warranties through `WarrantyKind`, chooses with `isPreferredCoverage()`, cancels one per kind; no `instanceof` | V-06 | OCP | `<hash K>` / PR #<n> | Developer 2 |
+| `SaleLookup` (new) | Read-only view of the sales (`findById`, `getSalesHistory`) | V-07 | ISP, DIP | `<hash L>` / PR #<n> | Developer 2 |
+| `SaleService` | Declares `implements SaleLookup` | V-07 | ISP | `<hash O1>` / PR #<n> | Developer 2 |
+| `ReturnService` | Depends on `SaleLookup` instead of `SaleService`; `Main` unchanged | V-07 | ISP, DIP | `<hash M>` / PR #<n> | Developer 2 |
+| `MonthlyBalanceService` (new) | Monthly balance moved out of `ReturnService`, same calculation | V-08 | SRP | `<hash N>` / PR #<n> | Developer 2 |
+| `ReturnMenu`, `ConsoleMenu` | The returns menu asks `MonthlyBalanceService` for the balance | V-08 | SRP | `<hash O2>` / PR #<n> | Developer 2 |
+| `ReturnService` | Removed the monthly balance; the service only handles returns | V-08 | SRP | `<hash Q>` / PR #<n> | Developer 2 |
+    
