@@ -45,6 +45,7 @@ public class ConsoleMenu {
 
     private final ConsoleInput userInput = new ConsoleInput(new Scanner(System.in));
     private final ProductMenu productMenu;
+    private final PersonMenu personMenu;
     private ProductService productService;
     private PersonService personService;
     private SaleService saleService;
@@ -77,6 +78,7 @@ public class ConsoleMenu {
         this.warrantyService = warrantyService;
         // submenus
         this.productMenu = new ProductMenu(userInput, productService);
+        this.personMenu = new PersonMenu(userInput, personService);
     }
 
     /**
@@ -111,7 +113,7 @@ public class ConsoleMenu {
                         break;
 
                     case "2":
-                        peopleMenu();
+                        personMenu.show();
                         break;
 
                     case "3":
@@ -157,58 +159,6 @@ public class ConsoleMenu {
                 System.out.println("Ocurrió un error inesperado. Intente de nuevo.");
             }
         }
-    }
-
-    private void peopleMenu() {
-        System.out.println("\n-- Menú de personas --");
-        System.out.println("1. Registrar cliente");
-        System.out.println("2. Listar clientes");
-        System.out.println("3. Listar vendedores");
-        System.out.println("0. Volver");
-        System.out.print("Seleccione una opción: ");
-
-        String option = userInput.nextLine();
-
-        switch (option) {
-            case "1":
-                registerClientFlow();
-                break;
-
-            case "2":
-                for (Client c : personService.listClients()) {
-                    System.out.println(c.getDescription());
-                }
-                break;
-
-            case "3":
-                for (Seller s : personService.listSellers()) {
-                    System.out.println(s.getDescription());
-                }
-                break;
-
-            case "0":
-                break;
-
-            default:
-                System.out.println("Opción inválida.");
-        }
-    }
-
-    private void registerClientFlow() {
-        System.out.print("ID del cliente: ");
-        String id = userInput.nextLine();
-        System.out.print("Nombre completo: ");
-        String name = userInput.nextLine();
-        System.out.print("Teléfono: ");
-        String phone = userInput.nextLine();
-        System.out.print("Correo electrónico: ");
-        String email = userInput.nextLine();
-
-        // Validation errors are thrown as custom exceptions and handled by
-        // the differentiated catch blocks of start().
-        Client client = new Client(id, name, phone, email);
-        personService.registerClient(client);
-        System.out.println("Cliente registrado correctamente.");
     }
 
     private void salesMenu() {
