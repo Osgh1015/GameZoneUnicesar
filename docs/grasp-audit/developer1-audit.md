@@ -16,6 +16,7 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 |---|---|
 | Products (Taller 1) | `Product`, `VideoGame`, `Console`, `ProductRepository`, `ProductService` (every method except `restoreStock`, which belongs to the Technical Lead; the calls to validators and `PersistenceException` added in Requerimiento 6 belong to Developer 2) |
 | Accessories (Requerimiento 1) | `Accessory`, `Controller`, `Cable`, `Memory` |
+| Promotions (Requerimiento 2) | `Promotion`, `PercentageDiscount`, `CategoryDiscount`, `BulkPurchaseDiscount` |
 
 ## Information Expert
 
@@ -24,6 +25,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **Products — Violation (V-01).** `VideoGame.getDescription` and `Console.getDescription` (`VideoGame.java:45`, `Console.java:45`) build the description from their own fields, which is correct, but `ProductService.decreaseStock` computes the new stock itself instead of asking the product to update it.
 
 - **Accessories — Correct.** `Accessory.isCompatibleWith(String)` (`Accessory.java:76`) answers with the list of compatible consoles it owns; each subclass describes itself from its own attributes.
+
+- **Promotions — Correct.** `Promotion.isActive(LocalDate)` (`Promotion.java:72`) uses its own start and end dates; each subclass computes its own discount for the sale it receives (`PercentageDiscount.java:42`, `BulkPurchaseDiscount.java:55`).
 
 ### V-01
 
@@ -58,6 +61,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 - **Accessories — Correct.** The accessory hierarchy depends only on `Product`.
 
+- **Promotions — Correct except for V-03.** `Promotion` and its subclasses depend on `Sale` and `Product`, which they need to compute a discount; `CategoryDiscount` additionally depends on the concrete classes `VideoGame`, `Console` and `Accessory` (part of V-03).
+
 ### V-02
 
 | Field | Content |
@@ -79,6 +84,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 - **Accessories — Correct.** Each subclass adds only its own attributes and its description.
 
+- **Promotions — Correct.** Each promotion class holds only its parameters and its calculation.
+
 ## Polymorphism
 
 **Verdict:** _pending — audit in progress._
@@ -86,6 +93,21 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **Products — Correct.** `Product.getDescription()` (`Product.java:68`) is abstract and `VideoGame`/`Console` override it. `ProductRepository.toLine`/`fromLine` (`ProductRepository.java:105-129`) branch on the concrete type and on a type tag; this is **not** treated as a violation: the repository is a Pure Fabrication whose job is to keep the file format out of the model, and moving serialization into the hierarchy would put persistence knowledge inside the domain classes, which Taller 1 forbids.
 
 - **Accessories — Correct.** `Controller`, `Cable` and `Memory` override `getDescription()` (`Controller.java:49`, `Cable.java:66`, `Memory.java:65`); no code in scope asks an accessory for its concrete type.
+
+- **Promotions — Mixed.** `Promotion.calculateDiscount(Sale)` (`Promotion.java:84`) is abstract and overridden by the three subclasses, which is correct use of Polymorphism. Inside `CategoryDiscount`, however, the category of each product is resolved with conditionals on the concrete type (V-03).
+
+### V-03
+
+| Field | Content |
+|---|---|
+| ID | V-03 |
+| Pattern | Polymorphism (also recorded under Low Coupling and Protected Variations) |
+| Module | Promotions (Requerimiento 2) and integration adjustment A1 (Requerimiento 5) |
+| Evidence | `CategoryDiscount.belongsToCategory(Product)`, `CategoryDiscount.java:86-97`: `if (VIDEOGAME.equalsIgnoreCase(targetCategory)) { return product instanceof VideoGame; } if (CONSOLE.equalsIgnoreCase(targetCategory)) { return product instanceof Console; } if (ACCESSORY.equalsIgnoreCase(targetCategory)) { return product instanceof Accessory; }`, called from `calculateDiscount(Sale)`, `CategoryDiscount.java:68` |
+| Explanation | The discount asks every product for its concrete class and maps a category string to that class itself. The category a product belongs to varies with the product type, so it is a responsibility of each product type, not a chain of conditionals inside the promotion. |
+| Consequence | Adjustment A1 already had to edit `CategoryDiscount` to add accessories; any new product type gets no category discount until someone remembers to edit this class again. `CategoryDiscount` is coupled to three concrete classes of the product hierarchy. |
+| Proposed solution | Add an abstract `belongsToCategory(String category)` to `Product`, implemented by `VideoGame` (`"VIDEOGAME"`), `Console` (`"CONSOLE"`) and `Accessory` (`"ACCESSORY"`), ignoring case as today, and make `CategoryDiscount` sum the products for which `product.belongsToCategory(targetCategory)` is true. Patterns applied: Polymorphism and Protected Variations. |
+| Other role's code involved | No — the product hierarchy, the accessory hierarchy and `CategoryDiscount` are all Developer 1's code. |
 
 ## Pure Fabrication
 
@@ -105,3 +127,4 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 - **Products — Violation (V-02).** A change of storage format is confined to `ProductRepository`, which is correct, but the file location is fixed inside the repository and the service creates its own repository, so a change of location is not protected.
 
+- **Promotions — Violation (V-03).** The mapping between category names and product classes is hard-coded inside `CategoryDiscount`, so the discount is not protected from a new product type. The full analysis is recorded once, under Polymorphism.
