@@ -1,6 +1,5 @@
 package com.gamezone.persistence;
 
-import com.gamezone.model.ExtendedWarranty;
 import com.gamezone.model.Warranty;
 
 import java.io.BufferedReader;
@@ -31,8 +30,6 @@ import java.util.List;
 public class WarrantyRepository implements WarrantyStore {
 
     private static final String DELIMITER = ";";
-    private static final String BASIC_TYPE = "BASIC";
-    private static final String EXTENDED_TYPE = "EXTENDED";
 
     private final String filePath;
 
@@ -124,14 +121,9 @@ public class WarrantyRepository implements WarrantyStore {
      */
     private String toLine(Warranty warranty) {
 
-        String type =
-                warranty instanceof ExtendedWarranty
-                        ? EXTENDED_TYPE
-                        : BASIC_TYPE;
-
         return String.join(
                 DELIMITER,
-                type,
+                warranty.getKind().name(),
                 warranty.getId(),
                 warranty.getProduct().getId(),
                 warranty.getSale().getId(),
