@@ -17,6 +17,7 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 | Products (Taller 1) | `Product`, `VideoGame`, `Console`, `ProductRepository`, `ProductService` (every method except `restoreStock`, which belongs to the Technical Lead; the calls to validators and `PersistenceException` added in Requerimiento 6 belong to Developer 2) |
 | Accessories (Requerimiento 1) | `Accessory`, `Controller`, `Cable`, `Memory` |
 | Promotions (Requerimiento 2) | `Promotion`, `PercentageDiscount`, `CategoryDiscount`, `BulkPurchaseDiscount` |
+| Returns (Requerimiento 3) | `Return`, `Sale.canBeReturned` |
 
 ## Information Expert
 
@@ -27,6 +28,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **Accessories — Correct.** `Accessory.isCompatibleWith(String)` (`Accessory.java:76`) answers with the list of compatible consoles it owns; each subclass describes itself from its own attributes.
 
 - **Promotions — Correct.** `Promotion.isActive(LocalDate)` (`Promotion.java:72`) uses its own start and end dates; each subclass computes its own discount for the sale it receives (`PercentageDiscount.java:42`, `BulkPurchaseDiscount.java:55`).
+
+- **Returns — Violation (V-04).** `Return.calculateRefundAmount()` (`Return.java:141`) and `generateReturnReceipt()` (`Return.java:159`) use the data of the return, and `Sale.canBeReturned()` (`Sale.java:221-223`) decides the 30-day rule from the sale's own date, which is correct; but `calculatePaidRatio()` recalculates the subtotal of the sale instead of asking the sale.
 
 ### V-01
 
@@ -40,6 +43,19 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 | Consequence | Every class that changes a stock repeats the same read-compute-write sequence (the same fragment exists in `ProductService.restoreStock` and in `AccessoryService`); a new rule on stock (for example, never below zero) would have to be added in every copy. |
 | Proposed solution | Add `decreaseStock(int)` and `increaseStock(int)` to `Product`, so the product updates its own stock, and make `ProductService.decreaseStock` delegate to it. Pattern applied: Information Expert. |
 | Other role's code involved | No for the correction of Developer 1's method. The same fragment in `ProductService.restoreStock` (Technical Lead) and in `AccessoryService` (Developer 2) was reported to the Technical Lead as a possible boundary finding. |
+
+### V-04
+
+| Field | Content |
+|---|---|
+| ID | V-04 |
+| Pattern | Information Expert |
+| Module | Returns (Requerimiento 3) and integration adjustment A5 (Requerimiento 5) |
+| Evidence | `Return.calculatePaidRatio()`, `Return.java:100-108`: `double itemsSubtotal = 0.0; for (Product product : originalSale.getProducts()) { itemsSubtotal += product.getPrice(); }` |
+| Explanation | The subtotal of the items of a sale is information that `Sale` already owns and calculates in `Sale.calculateTotal()`. `Return` reaches into the products of the sale and recalculates it on its own. |
+| Consequence | The subtotal rule exists in two places; if the way a sale computes its subtotal changes, the refund would silently use a different value from the one shown on the sale receipt. |
+| Proposed solution | `calculatePaidRatio()` asks the sale for its subtotal with `originalSale.calculateTotal()` and keeps the rest of the formula. Pattern applied: Information Expert. |
+| Other role's code involved | No — `Sale.calculateTotal()` already exists and is only called, not changed. |
 
 ## Creator
 
@@ -63,6 +79,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 - **Promotions — Correct except for V-03.** `Promotion` and its subclasses depend on `Sale` and `Product`, which they need to compute a discount; `CategoryDiscount` additionally depends on the concrete classes `VideoGame`, `Console` and `Accessory` (part of V-03).
 
+- **Returns — Correct.** `Return` depends only on `Sale` and `Product`, the objects it describes.
+
 ### V-02
 
 | Field | Content |
@@ -85,6 +103,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **Accessories — Correct.** Each subclass adds only its own attributes and its description.
 
 - **Promotions — Correct.** Each promotion class holds only its parameters and its calculation.
+
+- **Returns — Correct.** `Return` holds only the data of the return, its refund calculation and its receipt.
 
 ## Polymorphism
 
