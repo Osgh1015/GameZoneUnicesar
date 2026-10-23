@@ -5,7 +5,6 @@ import com.gamezone.exceptions.InvalidDataException;
 import com.gamezone.exceptions.PersistenceException;
 import com.gamezone.model.Client;
 import com.gamezone.model.Seller;
-import com.gamezone.persistence.PersonRepository;
 import com.gamezone.persistence.PersonStore;
 import com.gamezone.validation.PersonValidator;
 
@@ -14,8 +13,6 @@ import java.util.List;
 /**
  * Contains the business rules related to clients and vendors, and is the
  * only class in this module authorized to call the persistence layer.
- * <p>
- * The user interface never talks to {@link PersonRepository} directly:
  * every operation on people (registering a client, listing clients or
  * vendors) goes through this service, which loads data on startup and
  * saves it after every change, keeping the in-memory lists and the
@@ -24,7 +21,7 @@ import java.util.List;
  * The validations are delegated to {@link PersonValidator}, which throws
  * the custom exceptions of the system.
  */
-public class PersonService {
+public class PersonService implements PersonLookup {
 
     private final PersonStore repository;
     private List<Client> clients;
@@ -87,6 +84,7 @@ public class PersonService {
      * @param id the client id to search for
      * @return the matching client, or {@code null} if not found
      */
+    @Override
     public Client findClientById(String id) {
         for (Client c : clients) {
             if (c.getId().equals(id)) {
@@ -111,6 +109,7 @@ public class PersonService {
         return null;
     }
 
+    @Override
     public Seller findSellerById(String id) {
         for (Seller v : vendors) {
             if (v.getId().equals(id)) {
