@@ -17,6 +17,7 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 | Products (Taller 1) | `Product`, `VideoGame`, `Console`, `ProductRepository`, `ProductService` (every method except `restoreStock`, which belongs to the Technical Lead) |
 | Accessories (Requerimiento 1) | `Accessory`, `Controller`, `Cable`, `Memory` |
 | Promotions (Requerimiento 2) | `Promotion`, `PercentageDiscount`, `CategoryDiscount`, `BulkPurchaseDiscount` |
+| Returns (Requerimiento 3) | `Return`, `Sale.canBeReturned` |
 
 ## Single Responsibility Principle (SRP)
 
@@ -28,6 +29,21 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 - **Promotions — Correct.** Each promotion holds its parameters and its discount calculation; `Promotion.isActive` (`Promotion.java:72`) only uses its own dates.
 
+- **Returns — Violation (V-01).** `Return` calculates the refund and also lays out the Spanish receipt. `Sale.canBeReturned` (`Sale.java:253`) only applies the 30-day rule, which is correct.
+
+### V-01
+
+| Field | Content |
+|---|---|
+| ID | V-01 |
+| Principle | SRP |
+| Module | Returns (Requerimiento 3) and integration adjustments A5 and A7 (Requerimiento 5) |
+| Evidence | `Return.generateReturnReceipt()`, `Return.java:176-201`: builds the Spanish receipt line by line — title `--- Recibo de Devolución ---`, labels (`Precio de lista:`, `Descuento proporcional:`, `Motivo:`), the money format `$%.2f` and the column alignment. |
+| Explanation | `Return` has two reasons to change: its business rules (the proportional refund of each item, the refund of cancelled warranties, the total) and the layout of the document the seller reads. Presentation is a different concern from the refund rule. |
+| Consequence | A change in the receipt (a new label, another currency format, a different alignment) forces editing the domain class that calculates refunds, with the risk of touching the calculation. |
+| Proposed solution | Move the layout into its own class `ReturnReceipt` (model package, it reads the return through its getters) and keep `generateReturnReceipt()` as a one-line delegation, because Requerimiento 3 defines it as part of the return and `ReturnMenu` calls it. |
+| Other role's code involved | No. |
+
 ## Open/Closed Principle (OCP)
 
 **Verdict:** _pending — audit in progress._
@@ -37,6 +53,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 - **Accessories — Correct.** A new accessory is a new subclass that implements `getDescription` and `getAccessoryType` (`Accessory.java:123`).
 
 - **Promotions — Correct.** A new promotion is a subclass of `Promotion` that implements `calculateDiscount` (`Promotion.java:84`). Since the GRASP correction, `CategoryDiscount.calculateDiscount` (`CategoryDiscount.java:68`) asks `product.belongsToCategory`, so it no longer changes for a new product type.
+
+- **Returns — Correct.** The refund rule does not depend on the kind of item returned.
 
 ## Liskov Substitution Principle (LSP)
 
@@ -48,6 +66,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 - **Promotions — Correct.** The three subclasses return a non-negative discount for any sale and never throw (`PercentageDiscount.java:42`, `CategoryDiscount.java:68`, `BulkPurchaseDiscount.java:55`), which is what `PromotionService.findBestPromotionFor` expects from any `Promotion`.
 
+- **Returns — Not applicable.** `Return` has no subclasses and no base class besides `Object`.
+
 ## Interface Segregation Principle (ISP)
 
 **Verdict:** _pending — audit in progress._
@@ -55,6 +75,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 - **Products — Correct.** `ProductService` uses every operation of `ProductRepository` (`save`, `load`). Developer 1's classes are mostly providers; how other roles' classes use `ProductService` is audited by them.
 
 - **Promotions — Correct.** The promotions depend on `Sale`, the domain object they evaluate, and use its products and subtotal; they do not depend on any service.
+
+- **Returns — Correct.** `Return` uses the products, the subtotal, the discount and the promotion of its original sale.
 
 ## Dependency Inversion Principle (DIP)
 
