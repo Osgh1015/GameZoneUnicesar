@@ -17,29 +17,47 @@ public class ReturnService {
 
     private final ReturnRepository repository;
     private final SaleService saleService;
-    private final ProductService productService;
-    private final AccessoryService accessoryService;
+    private final ItemCatalog itemCatalog;
     private final WarrantyService warrantyService;
     private final List<Return> returns;
+
+    /**
+     * Creates the return service building its own item catalog.
+     *
+     * @param repository       repository used to persist returns
+     * @param saleService      service used to find the original sales
+     * @param productService   service that owns video games and consoles
+     * @param accessoryService service that owns the accessories
+     * @param warrantyService  service used to cancel the warranties of
+     *                         returned items
+     * @deprecated use {@link #ReturnService(ReturnRepository, SaleService,
+     *             ItemCatalog, WarrantyService)}; kept only until {@code Main}
+     *             injects the catalog (V-11)
+     */
+    @Deprecated
+    public ReturnService(ReturnRepository repository, SaleService saleService,
+                         ProductService productService, AccessoryService accessoryService,
+                         WarrantyService warrantyService) {
+        this(repository, saleService, new ItemCatalog(productService, accessoryService),
+                warrantyService);
+    }
 
     /**
      * Creates the return service with its collaborators, injected by
      * constructor from {@code Main}.
      *
-     * @param repository       repository used to persist returns
-     * @param saleService      service used to find the original sales
-     * @param productService   service used to restore the stock of products
-     * @param accessoryService service used to restore the stock of accessories
-     * @param warrantyService  service used to cancel the warranties of
-     *                         returned consoles
+     * @param repository      repository used to persist returns
+     * @param saleService     service used to find the original sales
+     * @param itemCatalog     intermediary used to restore the stock of the
+     *                        returned items
+     * @param warrantyService service used to cancel the warranties of
+     *                        returned items
      */
     public ReturnService(ReturnRepository repository, SaleService saleService,
-                         ProductService productService, AccessoryService accessoryService,
-                         WarrantyService warrantyService) {
+                         ItemCatalog itemCatalog, WarrantyService warrantyService) {
         this.repository = repository;
         this.saleService = saleService;
-        this.productService = productService;
-        this.accessoryService = accessoryService;
+        this.itemCatalog = itemCatalog;
         this.warrantyService = warrantyService;
         this.returns = repository.loadAll();
     }
@@ -88,23 +106,18 @@ public class ReturnService {
         String newId = UUID.randomUUID().toString();
         Return newReturn = new Return(newId, LocalDate.now(), sale, productsToReturn, reason);
 
-        // A returned console cannot keep a valid warranty: cancel its
-        // warranties and refund the cost of the extended one (if any).
+        // A returned item cannot keep a valid warranty: the warranty service,
+        // which knows which items have one, cancels them and answers the
+        // refundable cost (zero for items without warranty).
         double warrantyRefund = 0.0;
         for (Product p : productsToReturn) {
-            if (p instanceof Console) {
-                warrantyRefund += warrantyService.cancelWarranties(p.getId(), sale.getId());
-            }
+            warrantyRefund += warrantyService.cancelWarranties(p.getId(), sale.getId());
         }
         newReturn.setWarrantyRefund(Math.round(warrantyRefund * 100.0) / 100.0);
         newReturn.calculateRefundAmount();
 
         for (Product p : productsToReturn) {
-            if (p instanceof Accessory) {
-                accessoryService.restoreStock(p.getId(), 1);
-            } else {
-                productService.restoreStock(p.getId(), 1);
-            }
+            itemCatalog.restoreStock(p, 1);
         }
 
         returns.add(newReturn);
