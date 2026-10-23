@@ -18,7 +18,17 @@ Minimum evidence accepted in the consolidation for each verdict:
 
 ## Q2. Boundary findings
 
-*To be written by the Technical Lead.*
+*Written by the Technical Lead.*
+
+Boundary findings appeared in three ways, and all of them are listed with their split in the "Boundary findings" table of `consolidated-audit.md`:
+
+- **A violation in one role's code whose correction needs a class of another role.** The most frequent case is the wiring in `Main`: `ProductService` (V-02, Developer 1) and `PersonService` (V-05, Developer 2) create their own repositories, and `ReturnRepository` (V-10) receives services; the violations belong to the developers, but `Main`, which must create and inject the objects, belongs to the Technical Lead. The same happens with model methods: Developer 2's services must ask `Return`, `Warranty` and the accessories (V-07, V-08, V-12), which are Developer 1's classes, and `Sale` (V-09), which is the Technical Lead's; the Technical Lead's code must ask `Product`, `Console` and `ExtendedWarranty` (V-15, V-16, V-17), which are Developer 1's.
+- **A violation whose correction crosses a layer of another role.** `SalePersistence` depends on services (V-19, Technical Lead); its correction removes `PersonService` and `SalePersistence` from `WarrantyService`, which is Developer 2's.
+- **The same problem seen from several sides.** The read-compute-write stock sequence appears in three methods of three owners (V-01, V-06, V-14), and the lookup of an item in two catalogs appears in the returns and in the sales modules (V-11, V-18).
+
+Each boundary finding was registered once, with a single identifier, in the report of the role whose code holds the violation, and the part that touches another role's class is written in its "Other role's code involved" field. The correction is split by owner: whoever is responsible for the code that changes makes that change, as the statement requires. Model methods that another role needs are added first by their owner, as purely additive commits; when a constructor changes, the owner keeps the old one `@Deprecated` until the Technical Lead rewires `Main`, and then removes it.
+
+The related findings that look alike were **not** merged when each fragment can be corrected completely by its owner (V-01, V-06 and V-14 are three methods in three classes); they share the solution instead, which is written once (`Product.decreaseStock`/`increaseStock` in V-01, `ItemCatalog` in V-11).
 
 ## Q3. Fragments that break more than one pattern
 
@@ -53,4 +63,16 @@ The evidence shown at the end is recorded in `docs/grasp-refactor-log.md`: the c
 
 ## Q5. Order of the corrections and coordination
 
-*To be written by the Technical Lead.*
+*Written by the Technical Lead.*
+
+The order follows the dependencies between corrections, from the classes other corrections need to the classes that use them:
+
+1. **Developer 1 — model first (V-01 to V-04).** The new methods of the model (`Product.decreaseStock`/`increaseStock`, `Product.belongsToCategory`) are purely additive, so they can go first and the other roles build on them. V-02 needs `Main`, so the Technical Lead's commit in `Main` goes inside Developer 1's group.
+2. **Developer 2 — repositories and services of the extension modules (V-05 to V-12).** The group starts with the boundary commits that add the model methods it needs (Developer 1: `Accessory.getAccessoryType`, `Return.belongsToClient`/`belongsToSale`, `Warranty.covers`/`belongsToSale`; Technical Lead: `Sale.findProduct`/`countUnitsOf`). Then Developer 2 corrects the services, creates `ItemCatalog` (V-11) and changes the repositories and constructors; the Technical Lead rewires `Main` once for V-05, V-10 and V-11.
+3. **Technical Lead — sales and user interface last (V-13 to V-20).** `Sale`, `SaleService`, `SalePersistence`, `ConsoleMenu` and `Main` use the services of the other roles, so they are corrected when those services already have their final API. The group starts with the boundary commits of Developer 1 (`Product.isWarrantyEligible`, `Product.getTypeLabel`, `ExtendedWarranty.quoteFor`) and of Developer 2 (`ItemCatalog.decreaseStock`); `WarrantyService` changes inside this group for V-19. The extraction of the submenus of `ConsoleMenu` (V-20) goes at the very end, so that it moves code that is already corrected.
+
+Coordination rules on the shared branch `feature/grasp-refactor`:
+
+- Only one task group works on the branch at a time. Each group starts with `git pull`, and it ends with the project compiling, its non-regression run and its Pull Request merged; only then does the next group start.
+- Every commit must compile. When a change in one role's class would break another role's class (for example, a new constructor of `ProductService` that `Main` must use), it is done in three steps: the owner adds the new code and marks the old one `@Deprecated`; the owner of the other class adapts it in a commit inside the same task group; the owner removes the deprecated code.
+- Commits that correct a violation mention its definitive identifier, for example `refactor(model): ... (V-03)`, and each correction is logged in `docs/grasp-refactor-log.md` by its author, including the boundary commits made by another role.
