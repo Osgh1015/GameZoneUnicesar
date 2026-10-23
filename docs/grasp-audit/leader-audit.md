@@ -18,10 +18,11 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 | Sales (Taller 1) | `SalePersistence` (the statement calls it `SaleRepository`) |
 | Sales and integrations (Taller 1, Requerimientos 1, 2, 4 and 5) | `SaleService`, including the accessory integration, the application of the best promotion in `registerSale` and the assignment of warranties and extended warranty cost |
 | User interface (Taller 1 to Requerimiento 6) | `ConsoleMenu`, including the submenus of every module and the differentiated handling of exceptions (Requerimiento 6) |
+| Start-up and returns (Taller 1, Requerimiento 3) | `Main` and `ProductService.restoreStock` |
 
 ## Information Expert
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Violation — see V-03, V-06 and V-08.
 
 - **Sale — Correct.** `Sale.calculateTotal()` (`Sale.java:114`) and `calculateFinalTotal()` (`:158`) use the items, the discount and the warranty cost the sale owns; `generateReceipt()` (`:169`) prints the sale's own data; `isValid()` (`:104`) checks its own items.
 
@@ -30,6 +31,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **SaleService — Mixed.** The best promotion is asked to `PromotionService` (`SaleService.java:208`), the stock check to `ProductValidator` (`:293`) and the warranty cost to the warranty (`:245`), which is correct; the history queries navigate the sale (V-03).
 
 - **ConsoleMenu — Violation (V-03, V-06).** `showWarrantiesOfSale` navigates the warranty to find its sale (part of V-03), and `askForExtendedWarranty` calculates the extended warranty price by itself (V-06).
+
+- **ProductService.restoreStock — Violation (V-08).** It computes the new stock instead of asking the product.
 
 ### V-03
 
@@ -57,9 +60,22 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 | Proposed solution | Let `ExtendedWarranty` quote its cost for a product (`ExtendedWarranty.quoteFor(product)`, used also by `getAdditionalCost()`) and print that value. Patterns applied: Information Expert and Protected Variations. |
 | Other role's code involved | Yes — `ExtendedWarranty` is Developer 1's code; Developer 1 must add `quoteFor`. |
 
+### V-08
+
+| Field | Content |
+|---|---|
+| ID | V-08 |
+| Pattern | Information Expert |
+| Module | Returns (Requerimiento 3) |
+| Evidence | `ProductService.restoreStock(String, int)`, `ProductService.java:158`: `product.setQuantity(product.getQuantity() + amount);` |
+| Explanation | The product owns its stock, but the method reads the quantity, computes the new value and writes it back through the setter. |
+| Consequence | The same read-compute-write sequence exists in the methods of Developer 1 and Developer 2 that change stock; a new stock rule would have to be repeated in every copy. |
+| Proposed solution | Ask the product: `product.increaseStock(amount)`, the method Developer 1 adds to `Product` for developer1-audit V-01. Pattern applied: Information Expert. |
+| Other role's code involved | No for the change in `restoreStock`. It depends on the methods that Developer 1 adds to `Product` for developer1-audit V-01. |
+
 ## Creator
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Correct — objects are created by the class that holds their initializing data or aggregates them.
 
 - **SalePersistence — Correct.** `fromLine` creates each `Sale` from the record it reads.
 
@@ -67,15 +83,19 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 - **ConsoleMenu — Correct, examined.** The menu creates `VideoGame`, `Console`, `Client` and the accessories (`ConsoleMenu.java:215`, `:236`, `:288`, `:560`, `:581`, `:602`) from the data the user has just typed, so it holds the initializing data. This was reported by Developer 1 and is **not** recorded as a violation: the services of the three roles receive complete objects since Taller 1, and moving the creation would change their public signatures without improving any responsibility.
 
+- **Main — Correct.** `Main.buildApplication` (`Main.java:55-85`) creates every repository and service and injects them; it is the only place that knows the concrete wiring.
+
 ## Controller
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Correct — system events are received by `ConsoleMenu` and delegated to the services.
 
 - **ConsoleMenu — Correct.** Every menu option reads the input and calls one operation of a service; the menu does not apply business rules except for the decisions recorded in V-04 and V-06, which are corrected by asking the model.
 
+- **Main — Not applicable.** `Main` only builds the application; it receives no event.
+
 ## Low Coupling
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Violation — see V-02.
 
 - **Sale — Correct except for V-01.** `Sale` depends on `Client`, `Seller` and `Product`, which it needs; `describeItemType` additionally ties it to the concrete product classes (part of V-01).
 
@@ -84,6 +104,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **SaleService — Correct.** It receives its six collaborators by constructor from `Main` (`SaleService.java:61-74`).
 
 - **ConsoleMenu — Correct.** It depends only on services and model classes, never on persistence; its seven service dependencies come from holding seven modules (recorded under High Cohesion, V-07).
+
+- **Main — Correct.** It is the composition root; depending on every concrete class is its purpose.
 
 ### V-02
 
@@ -100,7 +122,7 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 ## High Cohesion
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Violation — see V-07.
 
 - **Sale — Correct.** It holds the data of the sale, its totals and its receipt.
 
@@ -109,6 +131,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **SaleService — Correct.** `registerSale` is split into private steps (`resolveItems`, `createSale`, `applyBestPromotion`, `generateWarranties`, `updateInventory`), each with one purpose; the queries are all about sales.
 
 - **ConsoleMenu — Violation (V-07).** One class holds the user interface of seven modules.
+
+- **Main — Correct.** It only builds the application and turns a start-up failure into a message.
 
 ### V-07
 
@@ -125,7 +149,7 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 ## Polymorphism
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Violation — see V-01 and V-04.
 
 - **Sale — Violation (V-01).** The receipt decides the label of each item with `instanceof`.
 
@@ -163,7 +187,7 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 ## Pure Fabrication
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Correct — the fabrications in scope keep technical responsibilities out of the domain classes.
 
 - **SalePersistence — Correct.** It keeps file access out of `Sale` (its dependency on services is recorded under Low Coupling, V-02).
 
@@ -173,11 +197,13 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 ## Indirection
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Violation — see V-05.
 
 - **SaleService — Violation (V-05).** There is no intermediary between the sales module and the two catalogs of sellable items.
 
 - **ConsoleMenu — Correct.** The menu reaches persistence only through the services.
+
+- **ProductService.restoreStock — Correct.** The returns module restores the stock of products through this service, never through the repository.
 
 ### V-05
 
@@ -194,7 +220,7 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 ## Protected Variations
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Violation — see V-01, V-04 and V-06 (recorded once under their main pattern).
 
 - **Sale — Violation (V-01).** The list of product types is hard-coded in the receipt.
 
@@ -203,3 +229,27 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **SaleService — Violation (V-04).** Warranty eligibility is not protected from a new product type.
 
 - **ConsoleMenu — Violation (V-04, V-06).** Warranty eligibility and the warranty rate are hard-coded in the menu. The handling of exceptions is correct: one `catch` per category in a single place (`ConsoleMenu.java:141-153`), so the services are free to change which exception they throw inside each category.
+
+- **Main — Correct.** A start-up failure is translated into a user message (`Main.java:40-45`).
+
+## Summary of verdicts
+
+| Pattern | Verdict | Violations |
+|---|---|---|
+| Information Expert | Violation | V-03, V-06, V-08 |
+| Creator | Correct | — |
+| Controller | Correct | — |
+| Low Coupling | Violation | V-02 |
+| High Cohesion | Violation | V-07 |
+| Polymorphism | Violation | V-01, V-04, V-05 |
+| Pure Fabrication | Correct | — |
+| Indirection | Violation | V-05 |
+| Protected Variations | Violation | V-01, V-04, V-06 |
+
+Distinct violations: 8 (V-01 to V-08). V-01, V-04, V-05 and V-06 appear under more than one pattern but are recorded only once, under the pattern that best describes their root cause.
+
+## Notes
+
+- Fragments examined and judged **not** to be violations are recorded above with their justification: the creation of domain objects in `ConsoleMenu` (reported by Developer 1), the use of `UUID` for identifiers, the six constructor parameters of `SaleService`.
+- Corrections that need code of another role: V-01, V-03 (menu part), V-04 and V-06 need methods in Developer 1's model classes; V-02 needs a change in `WarrantyService` and V-05 a method in `ItemCatalog` (Developer 2). V-08 depends on the stock methods that Developer 1 adds for developer1-audit V-01.
+- Candidate out-of-scope finding: the extended warranty question is asked even when the console has no stock left for another unit; the sale is then rejected by the stock check. It is functional behavior, not a GRASP violation, and it is left as it is.
