@@ -18,6 +18,7 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 | Accessories (Requerimiento 1) | `Accessory`, `Controller`, `Cable`, `Memory` |
 | Promotions (Requerimiento 2) | `Promotion`, `PercentageDiscount`, `CategoryDiscount`, `BulkPurchaseDiscount` |
 | Returns (Requerimiento 3) | `Return`, `Sale.canBeReturned` |
+| Warranties (Requerimiento 4) | `Warranty`, `BasicWarranty`, `ExtendedWarranty` |
 
 ## Single Responsibility Principle (SRP)
 
@@ -30,6 +31,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 - **Promotions — Correct.** Each promotion holds its parameters and its discount calculation; `Promotion.isActive` (`Promotion.java:72`) only uses its own dates.
 
 - **Returns — Violation (V-01).** `Return` calculates the refund and also lays out the Spanish receipt. `Sale.canBeReturned` (`Sale.java:253`) only applies the 30-day rule, which is correct.
+
+- **Warranties — Violation (V-02).** `Warranty` holds the coverage rules and also lays out the Spanish certificate. The subclasses only declare duration, type and cost.
 
 ### V-01
 
@@ -44,6 +47,19 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 | Proposed solution | Move the layout into its own class `ReturnReceipt` (model package, it reads the return through its getters) and keep `generateReturnReceipt()` as a one-line delegation, because Requerimiento 3 defines it as part of the return and `ReturnMenu` calls it. |
 | Other role's code involved | No. |
 
+### V-02
+
+| Field | Content |
+|---|---|
+| ID | V-02 |
+| Principle | SRP |
+| Module | Warranties (Requerimiento 4) |
+| Evidence | `Warranty.generateWarrantyCertificate()`, `Warranty.java:144-165`: a `String.format` with the Spanish certificate — `CERTIFICADO DE GARANTÍA`, labels (`Fecha de vencimiento:`, `Costo adicional:`), the format `%.2f` and the words `VIGENTE`/`VENCIDA`. |
+| Explanation | `Warranty` holds the coverage rules (end date, whether it is active, the cost of each kind) and also the layout of the certificate. They change for different reasons. |
+| Consequence | A change in the certificate forces editing the base class of the whole warranty hierarchy; every subclass is recompiled and put at risk for a change that is only about text. |
+| Proposed solution | Move the layout into `WarrantyCertificate` (model package, it reads the warranty through its getters) and keep `generateWarrantyCertificate()` as a one-line delegation, because Requerimiento 4 defines it and `WarrantyMenu` calls it. |
+| Other role's code involved | No. |
+
 ## Open/Closed Principle (OCP)
 
 **Verdict:** _pending — audit in progress._
@@ -56,6 +72,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 - **Returns — Correct.** The refund rule does not depend on the kind of item returned.
 
+- **Warranties — Correct for the hierarchy.** A new warranty is a subclass that implements duration, type and cost (`Warranty.java:107-123`). How each kind is stored and rebuilt is decided in `WarrantyRepository` and `WarrantyService` (Developer 2); it was reported to the Technical Lead.
+
 ## Liskov Substitution Principle (LSP)
 
 **Verdict:** _pending — audit in progress._
@@ -67,6 +85,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 - **Promotions — Correct.** The three subclasses return a non-negative discount for any sale and never throw (`PercentageDiscount.java:42`, `CategoryDiscount.java:68`, `BulkPurchaseDiscount.java:55`), which is what `PromotionService.findBestPromotionFor` expects from any `Promotion`.
 
 - **Returns — Not applicable.** `Return` has no subclasses and no base class besides `Object`.
+
+- **Warranties — Correct.** `BasicWarranty` and `ExtendedWarranty` return a positive duration, a type name and a non-negative cost; `isActive`, `covers` and the certificate behave the same for both.
 
 ## Interface Segregation Principle (ISP)
 
