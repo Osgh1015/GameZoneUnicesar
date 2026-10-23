@@ -10,6 +10,7 @@ import com.gamezone.persistence.SalePersistence;
 import com.gamezone.persistence.WarrantyRepository;
 import com.gamezone.service.AccessoryService;
 import com.gamezone.service.ItemCatalog;
+import com.gamezone.service.MonthlyBalanceService;
 import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
 import com.gamezone.service.PromotionService;
@@ -17,7 +18,19 @@ import com.gamezone.service.SaleAssembler;
 import com.gamezone.service.ReturnService;
 import com.gamezone.service.SaleService;
 import com.gamezone.service.WarrantyService;
+import com.gamezone.ui.AccessoryMenu;
+import com.gamezone.ui.ConsoleInput;
 import com.gamezone.ui.ConsoleMenu;
+import com.gamezone.ui.MenuOption;
+import com.gamezone.ui.PersonMenu;
+import com.gamezone.ui.ProductMenu;
+import com.gamezone.ui.PromotionMenu;
+import com.gamezone.ui.ReturnMenu;
+import com.gamezone.ui.SaleMenu;
+import com.gamezone.ui.WarrantyMenu;
+
+import java.util.List;
+import java.util.Scanner;
 
 /**
  * Application entry point. Wires together the modules (products, people,
@@ -51,7 +64,9 @@ public class Main {
 
     /**
      * Creates every repository and service, injecting the dependencies by
-     * constructor, and returns the console menu ready to start.
+     * constructor, composes the options of the main menu (one submenu per
+     * module, in the order they are shown) and returns the console menu
+     * ready to start.
      *
      * @return the console menu of the application
      * @throws PersistenceException if a data file cannot be read
@@ -88,7 +103,18 @@ public class Main {
         ReturnService returnService = new ReturnService(
                 returnRepository, saleService, itemCatalog, warrantyService);
 
-        return new ConsoleMenu(productService, personService, saleService,
-                accessoryService, returnService, promotionService, warrantyService);
+        ConsoleInput userInput = new ConsoleInput(new Scanner(System.in));
+        MonthlyBalanceService monthlyBalanceService =
+                new MonthlyBalanceService(saleService, returnService);
+        List<MenuOption> options = List.of(
+                new ProductMenu(userInput, productService),
+                new PersonMenu(userInput, personService),
+                new SaleMenu(userInput, productService, accessoryService, saleService, warrantyService),
+                new AccessoryMenu(userInput, accessoryService),
+                new ReturnMenu(userInput, returnService, monthlyBalanceService),
+                new PromotionMenu(userInput, promotionService),
+                new WarrantyMenu(userInput, warrantyService));
+
+        return new ConsoleMenu(userInput, options);
     }
 }

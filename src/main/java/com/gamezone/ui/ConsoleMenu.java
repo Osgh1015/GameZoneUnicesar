@@ -4,59 +4,35 @@ import com.gamezone.exceptions.BusinessRuleException;
 import com.gamezone.exceptions.InvalidDataException;
 import com.gamezone.exceptions.PersistenceException;
 import com.gamezone.exceptions.ResourceNotFoundException;
-import com.gamezone.service.AccessoryService;
-import com.gamezone.service.MonthlyBalanceService;
-import com.gamezone.service.PersonService;
-import com.gamezone.service.ProductService;
-import com.gamezone.service.PromotionService;
-import com.gamezone.service.ReturnService;
-import com.gamezone.service.SaleService;
-import com.gamezone.service.WarrantyService;
 
 import java.util.List;
-import java.util.Scanner;
 
 /**
  * Main menu of the console user interface of the GameZone system.
  * <p>
- * It shows the main options, delegates each one to the submenu of its
- * module ({@link ProductMenu}, {@link PersonMenu}, {@link SaleMenu},
- * {@link AccessoryMenu}, {@link ReturnMenu}, {@link PromotionMenu} and
- * {@link WarrantyMenu}) and handles, in a single place, the custom
- * exceptions thrown by any operation. The submenus share one
- * {@link ConsoleInput}, so all of them read from the same scanner.
+ * It prints the title of each {@link MenuOption} it receives, runs the
+ * option chosen by the user and handles, in a single place, the custom
+ * exceptions thrown by any operation. The options (one submenu per module)
+ * are composed by {@code Main}, so a new module is added without changing
+ * this class.
  *
  * Responsabilidad: Líder Técnico - integra los módulos.
  */
 public class ConsoleMenu {
 
-    private final ConsoleInput userInput = new ConsoleInput(new Scanner(System.in));
+    private final ConsoleInput userInput;
     private final List<MenuOption> options;
 
     /**
-     * Creates the console menu with the services of every module.
+     * Creates the console menu with the options of the main menu, composed
+     * by {@code Main}.
      *
-     * @param productService   service of the products module
-     * @param personService    service of the people module
-     * @param saleService      service of the sales module
-     * @param accessoryService service of the accessories module
-     * @param returnService    service of the returns module
-     * @param promotionService service of the promotions module
-     * @param warrantyService  service of the warranties module
+     * @param userInput shared reader of the console input
+     * @param options   the submenus, in the order they are shown (1, 2, ...)
      */
-    public ConsoleMenu(ProductService productService, PersonService personService,
-                       SaleService saleService, AccessoryService accessoryService,
-                       ReturnService returnService, PromotionService promotionService,
-                       WarrantyService warrantyService) {
-        this.options = List.of(
-                new ProductMenu(userInput, productService),
-                new PersonMenu(userInput, personService),
-                new SaleMenu(userInput, productService, accessoryService, saleService, warrantyService),
-                new AccessoryMenu(userInput, accessoryService),
-                new ReturnMenu(userInput, returnService,
-                        new MonthlyBalanceService(saleService, returnService)),
-                new PromotionMenu(userInput, promotionService),
-                new WarrantyMenu(userInput, warrantyService));
+    public ConsoleMenu(ConsoleInput userInput, List<MenuOption> options) {
+        this.userInput = userInput;
+        this.options = List.copyOf(options);
     }
 
     /**
