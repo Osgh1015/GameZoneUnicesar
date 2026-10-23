@@ -117,3 +117,19 @@ Developer 2 (Pablo Andres Amaya Pabon) was responsible for the people module and
 **Prompt used:** cómo cambiamos ProductService, PersonService y SaleService para que usen los validadores y lancen excepciones en vez de devolver null
 
 **Solution obtained and decision taken:** The services call ProductValidator, PersonValidator and SaleValidator and throw typed exceptions; registerSale no longer returns null and getSaleDetail was added. Kept findById returning null because other services depend on it. One commit per service; the twelve manual tests gave the expected results.
+
+## Requirement 7 — Phase 1: Audit
+
+## Entry 10
+
+**Date:** 2026-10-23 **Tool used:** Claude
+
+**Reason for use:** Audit the repositories and services under the responsibility of Developer 2 against the nine GRASP patterns and record each verdict with evidence from the repository.
+
+**Problem faced:** The scope covers the people module and the repository and service of accessories, promotions, returns and warranties, plus the use of exceptions and validators. Several fragments look alike but are not the same problem: the repositories branch on type tags to write their files, while `AccessoryService` and `ReturnService` branch on the concrete type to take business decisions; and `WarrantyRepository` already loads only identifiers while `ReturnRepository` still calls three services.
+
+**Prompt used:** cómo revisar con los patrones GRASP los repositorios y servicios de personas, accesorios, promociones, devoluciones y garantías, y cómo distinguir un instanceof de serialización de uno que es regla de negocio
+
+**Solution obtained and decision taken:** Reviewed each class and method in scope with the tool and recorded eight violations with class, method and line range on the audited commit: V-01 (Low Coupling, `PersonService` creates its own repository with fixed files), V-02 (Information Expert, stock arithmetic in `AccessoryService`), V-03 (Polymorphism, `AccessoryService.matchesType`), V-04 and V-05 (Information Expert, `ReturnService` navigates `Return` and searches the products of the sale), V-06 (Low Coupling, `ReturnRepository` depends on services), V-07 (Polymorphism, type dispatch in `registerReturn`) and V-08 (Information Expert, `WarrantyService` navigates the warranty associations). The type tags of the repositories were recorded as correct. The same dispatch in `SaleService` and the dependency of `WarrantyService` on `SalePersistence` were reported to the Technical Lead. Also wrote the answer to question 4 of the GRASP analysis.
+
+**Related commits:** `<hash commit 1>` … `<hash commit 8>` (PR #<n>)
