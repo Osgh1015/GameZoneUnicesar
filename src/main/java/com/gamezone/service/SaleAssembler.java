@@ -25,7 +25,7 @@ import java.util.List;
 public class SaleAssembler {
 
     private final SaleStore salePersistence;
-    private final PersonService personService;
+    private final PersonLookup personService;
     private final ItemCatalog itemCatalog;
 
     /**
@@ -35,7 +35,7 @@ public class SaleAssembler {
      * @param personService   service used to resolve clients and sellers
      * @param itemCatalog     intermediary used to resolve the items sold
      */
-    public SaleAssembler(SaleStore salePersistence, PersonService personService,
+    public SaleAssembler(SaleStore salePersistence, PersonLookup personService,
                          ItemCatalog itemCatalog) {
         this.salePersistence = salePersistence;
         this.personService = personService;

@@ -39,10 +39,10 @@ public class SaleService implements SaleLookup {
 
     private List<Sale> sales;
     private SaleStore salePersistence;
-    private PersonService personService;
+    private PersonLookup personService;
     private final ItemCatalog itemCatalog;
-    private final PromotionService promotionService;
-    private final WarrantyService warrantyService;
+    private final PromotionSelector promotionService;
+    private final WarrantyAssigner warrantyService;
 
     /**
      * Creates the sale service with all its collaborators, injected by
@@ -58,10 +58,10 @@ public class SaleService implements SaleLookup {
      */
     public SaleService(SaleStore salePersistence,
                        SaleAssembler saleAssembler,
-                       PersonService personService,
+                       PersonLookup personService,
                        ItemCatalog itemCatalog,
-                       PromotionService promotionService,
-                       WarrantyService warrantyService) {
+                       PromotionSelector promotionService,
+                       WarrantyAssigner warrantyService) {
         this.salePersistence = salePersistence;
         this.personService = personService;
         this.sales = saleAssembler.loadSales();
