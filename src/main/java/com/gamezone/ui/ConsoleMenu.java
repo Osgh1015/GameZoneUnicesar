@@ -5,6 +5,7 @@ import com.gamezone.exceptions.InvalidDataException;
 import com.gamezone.exceptions.PersistenceException;
 import com.gamezone.exceptions.ResourceNotFoundException;
 import com.gamezone.service.AccessoryService;
+import com.gamezone.service.MonthlyBalanceService;
 import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
 import com.gamezone.service.PromotionService;
@@ -56,7 +57,8 @@ public class ConsoleMenu {
         this.personMenu = new PersonMenu(userInput, personService);
         this.saleMenu = new SaleMenu(userInput, productService, accessoryService, saleService, warrantyService);
         this.accessoryMenu = new AccessoryMenu(userInput, accessoryService);
-        this.returnMenu = new ReturnMenu(userInput, returnService);
+        this.returnMenu = new ReturnMenu(userInput, returnService,
+                new MonthlyBalanceService(saleService, returnService));
         this.promotionMenu = new PromotionMenu(userInput, promotionService);
         this.warrantyMenu = new WarrantyMenu(userInput, warrantyService);
     }
