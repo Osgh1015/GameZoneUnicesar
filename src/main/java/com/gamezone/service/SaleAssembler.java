@@ -5,7 +5,7 @@ import com.gamezone.model.Client;
 import com.gamezone.model.Product;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Seller;
-import com.gamezone.persistence.SalePersistence;
+import com.gamezone.persistence.SaleStore;
 import com.gamezone.persistence.SalePersistence.SaleRecord;
 
 import java.util.ArrayList;
@@ -13,7 +13,7 @@ import java.util.List;
 
 /**
  * Rebuilds the stored sales from the references kept by
- * {@link SalePersistence}: it resolves the client, the seller and every
+ * {@link SaleStore}: it resolves the client, the seller and every
  * item of each record through the services that own them.
  * <p>
  * Both the sales module and the warranty module need the stored sales when
@@ -24,7 +24,7 @@ import java.util.List;
  */
 public class SaleAssembler {
 
-    private final SalePersistence salePersistence;
+    private final SaleStore salePersistence;
     private final PersonService personService;
     private final ItemCatalog itemCatalog;
 
@@ -35,7 +35,7 @@ public class SaleAssembler {
      * @param personService   service used to resolve clients and sellers
      * @param itemCatalog     intermediary used to resolve the items sold
      */
-    public SaleAssembler(SalePersistence salePersistence, PersonService personService,
+    public SaleAssembler(SaleStore salePersistence, PersonService personService,
                          ItemCatalog itemCatalog) {
         this.salePersistence = salePersistence;
         this.personService = personService;

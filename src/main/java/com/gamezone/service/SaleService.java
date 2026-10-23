@@ -9,7 +9,7 @@ import com.gamezone.model.Product;
 import com.gamezone.model.Promotion;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Seller;
-import com.gamezone.persistence.SalePersistence;
+import com.gamezone.persistence.SaleStore;
 import com.gamezone.validation.PersonValidator;
 import com.gamezone.validation.ProductValidator;
 import com.gamezone.validation.SaleValidator;
@@ -38,7 +38,7 @@ import java.util.UUID;
 public class SaleService implements SaleLookup {
 
     private List<Sale> sales;
-    private SalePersistence salePersistence;
+    private SaleStore salePersistence;
     private PersonService personService;
     private final ItemCatalog itemCatalog;
     private final PromotionService promotionService;
@@ -56,7 +56,7 @@ public class SaleService implements SaleLookup {
      * @param promotionService service used to select the best promotion
      * @param warrantyService  service used to grant warranties for the items sold
      */
-    public SaleService(SalePersistence salePersistence,
+    public SaleService(SaleStore salePersistence,
                        SaleAssembler saleAssembler,
                        PersonService personService,
                        ItemCatalog itemCatalog,
