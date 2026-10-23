@@ -49,6 +49,7 @@ public class ConsoleMenu {
     private final SaleMenu saleMenu;
     private final AccessoryMenu accessoryMenu;
     private final ReturnMenu returnMenu;
+    private final PromotionMenu promotionMenu;
     private ProductService productService;
     private PersonService personService;
     private SaleService saleService;
@@ -85,6 +86,7 @@ public class ConsoleMenu {
         this.saleMenu = new SaleMenu(userInput, productService, accessoryService, saleService, warrantyService);
         this.accessoryMenu = new AccessoryMenu(userInput, accessoryService);
         this.returnMenu = new ReturnMenu(userInput, returnService);
+        this.promotionMenu = new PromotionMenu(userInput, promotionService);
     }
 
     /**
@@ -135,7 +137,7 @@ public class ConsoleMenu {
                         break;
 
                     case "6":
-                        promotionsMenu();
+                        promotionMenu.show();
                         break;
 
                     case "7":
@@ -164,146 +166,6 @@ public class ConsoleMenu {
                 // nor show a technical message to the user.
                 System.out.println("Ocurrió un error inesperado. Intente de nuevo.");
             }
-        }
-    }
-
-    private void promotionsMenu() {
-        System.out.println("\n-- Gestión de promociones --");
-        System.out.println("1. Registrar promoción por porcentaje");
-        System.out.println("2. Registrar promoción por categoría");
-        System.out.println("3. Registrar promoción por volumen de compra");
-        System.out.println("4. Listar todas las promociones");
-        System.out.println("5. Listar promociones vigentes");
-        System.out.println("0. Volver");
-        System.out.print("Seleccione una opción: ");
-
-        String option = userInput.nextLine();
-
-        switch (option) {
-            case "1":
-                registerPercentagePromotionFlow();
-                break;
-
-            case "2":
-                registerCategoryPromotionFlow();
-                break;
-
-            case "3":
-                registerBulkPromotionFlow();
-                break;
-
-            case "4":
-                printPromotions(promotionService.listAllPromotions(),
-                        "Aún no hay promociones registradas.");
-                break;
-
-            case "5":
-                printPromotions(promotionService.listActivePromotions(),
-                        "No hay promociones vigentes hoy.");
-                break;
-
-            case "0":
-                break;
-
-            default:
-                System.out.println("Opción inválida.");
-        }
-    }
-
-    private void printPromotions(List<Promotion> promotions, String emptyMessage) {
-        if (promotions.isEmpty()) {
-            System.out.println(emptyMessage);
-            return;
-        }
-        for (Promotion promotion : promotions) {
-            System.out.println(promotion.getDescription());
-        }
-    }
-
-    private void registerPercentagePromotionFlow() {
-        try {
-            System.out.print("ID de la promoción: ");
-            String id = userInput.nextLine();
-            System.out.print("Nombre: ");
-            String name = userInput.nextLine();
-            LocalDate start = userInput.readDate("Fecha de inicio (AAAA-MM-DD): ");
-            LocalDate end = userInput.readDate("Fecha de fin (AAAA-MM-DD): ");
-            System.out.print("Porcentaje de descuento (0-100): ");
-            double percentage = userInput.readDouble();
-
-            promotionService.registerPercentageDiscount(id, name, start, end, percentage);
-            System.out.println("Promoción registrada correctamente.");
-        } catch (IllegalArgumentException | DateTimeParseException e) {
-            System.out.println("Error: " + e.getMessage());
-        }
-    }
-
-    private void registerCategoryPromotionFlow() {
-        try {
-            System.out.print("ID de la promoción: ");
-            String id = userInput.nextLine();
-            System.out.print("Nombre: ");
-            String name = userInput.nextLine();
-            LocalDate start = userInput.readDate("Fecha de inicio (AAAA-MM-DD): ");
-            LocalDate end = userInput.readDate("Fecha de fin (AAAA-MM-DD): ");
-            System.out.print("Porcentaje de descuento (0-100): ");
-            double percentage = userInput.readDouble();
-            String category = readPromotionCategory();
-            if (category == null) {
-                System.out.println("Opción de categoría inválida.");
-                return;
-            }
-
-            promotionService.registerCategoryDiscount(id, name, start, end, percentage, category);
-            System.out.println("Promoción registrada correctamente.");
-        } catch (IllegalArgumentException | DateTimeParseException e) {
-            System.out.println("Error: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Asks the user to choose the target category of a category promotion.
-     *
-     * @return "VIDEOGAME", "CONSOLE" or "ACCESSORY", or {@code null} if the
-     *         option is not valid
-     */
-    private String readPromotionCategory() {
-        System.out.println("Categoría objetivo:");
-        System.out.println("1. Videojuegos");
-        System.out.println("2. Consolas");
-        System.out.println("3. Accesorios");
-        System.out.print("Seleccione una opción: ");
-        String option = userInput.nextLine().trim();
-
-        switch (option) {
-            case "1":
-                return CategoryDiscount.VIDEOGAME;
-            case "2":
-                return CategoryDiscount.CONSOLE;
-            case "3":
-                return CategoryDiscount.ACCESSORY;
-            default:
-                return null;
-        }
-    }
-
-    private void registerBulkPromotionFlow() {
-        try {
-            System.out.print("ID de la promoción: ");
-            String id = userInput.nextLine();
-            System.out.print("Nombre: ");
-            String name = userInput.nextLine();
-            LocalDate start = userInput.readDate("Fecha de inicio (AAAA-MM-DD): ");
-            LocalDate end = userInput.readDate("Fecha de fin (AAAA-MM-DD): ");
-            System.out.print("Cantidad mínima de productos: ");
-            int minQuantity = userInput.readInt();
-            System.out.print("Porcentaje de descuento (0-100): ");
-            double percentage = userInput.readDouble();
-
-            promotionService.registerBulkPurchaseDiscount(id, name, start, end, minQuantity, percentage);
-            System.out.println("Promoción registrada correctamente.");
-        } catch (IllegalArgumentException | DateTimeParseException e) {
-            System.out.println("Error: " + e.getMessage());
         }
     }
 
