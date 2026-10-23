@@ -23,7 +23,7 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 ## Information Expert
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Violation — see V-01 and V-04.
 
 - **Products — Violation (V-01).** `VideoGame.getDescription` and `Console.getDescription` (`VideoGame.java:45`, `Console.java:45`) build the description from their own fields, which is correct, but `ProductService.decreaseStock` computes the new stock itself instead of asking the product to update it.
 
@@ -65,7 +65,7 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 ## Creator
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Correct — objects are created by the class that holds their initializing data.
 
 - **Products — Correct.** `ProductRepository.fromLine` (`ProductRepository.java:118-129`) creates `VideoGame` and `Console` objects from the records it reads, so it holds the initializing data. `ProductService.registerVideoGame`/`registerConsole` (`ProductService.java:46`, `:58`) receive the product already built by the menu; the creation of domain objects inside `ConsoleMenu` is Technical Lead code and was reported to the Technical Lead.
 
@@ -75,11 +75,13 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 ## Controller
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Not applicable — no class in scope receives system events.
+
+- **All modules — Not applicable.** None of the classes in scope receives a system event from the user; menu events are received by `ConsoleMenu` (Technical Lead) and coordinated by the services.
 
 ## Low Coupling
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Violation — see V-02 (and V-03 for the coupling of `CategoryDiscount`).
 
 - **Products — Violation (V-02).** `Product`, `VideoGame` and `Console` import nothing outside the model, and `ProductRepository` depends only on the model, which is correct; `ProductService` is tied to the concrete `ProductRepository` and to its file because it creates it.
 
@@ -108,7 +110,7 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 ## High Cohesion
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Correct — each class in scope has one focused purpose.
 
 - **Products — Correct.** `ProductRepository` only reads and writes the products file; `ProductService` only applies inventory rules. It keeps two pairs of equivalent methods (`reduceStock`/`decreaseStock`, `ProductService.java:138`; `listAll`/`listProducts`, `ProductService.java:167`) because other modules call both names; they do the same job, so the class is still focused.
 
@@ -124,7 +126,7 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 ## Polymorphism
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Violation — see V-03.
 
 - **Products — Correct.** `Product.getDescription()` (`Product.java:68`) is abstract and `VideoGame`/`Console` override it. `ProductRepository.toLine`/`fromLine` (`ProductRepository.java:105-129`) branch on the concrete type and on a type tag; this is **not** treated as a violation: the repository is a Pure Fabrication whose job is to keep the file format out of the model, and moving serialization into the hierarchy would put persistence knowledge inside the domain classes, which Taller 1 forbids.
 
@@ -151,7 +153,7 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 ## Pure Fabrication
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Correct — the fabrications in scope keep technical and rule-checking responsibilities out of the domain classes.
 
 - **Products — Correct.** `ProductRepository` is an artificial class that owns file access so that `Product` stays free of I/O.
 
@@ -159,15 +161,17 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 ## Indirection
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Correct — the intermediaries in scope decouple the classes that collaborate.
 
 - **Products — Correct.** `ProductService` sits between `ConsoleMenu` and `ProductRepository`; the menu never touches the repository.
 
 - **Validation — Correct.** Services reach the rules through the validators, so a rule changes in one place without touching the services that use it.
 
+- **Model classes — Not applicable.** The model classes have no collaborators that need an intermediary.
+
 ## Protected Variations
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Violation — see V-02 and V-03 (recorded once under their main pattern).
 
 - **Products — Violation (V-02).** A change of storage format is confined to `ProductRepository`, which is correct, but the file location is fixed inside the repository and the service creates its own repository, so a change of location is not protected.
 
@@ -176,3 +180,30 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **Warranties — Correct.** A new warranty type is added as a subclass without touching `Warranty` or the existing subclasses.
 
 - **Exceptions — Correct.** A new category of error is added as a new subclass of `GameZoneException` without changing the existing exceptions; the validators protect the services from changes in the rules.
+
+## Summary of verdicts
+
+| Pattern | Verdict | Violations |
+|---|---|---|
+| Information Expert | Violation | V-01, V-04 |
+| Creator | Correct | — |
+| Controller | Not applicable | — |
+| Low Coupling | Violation | V-02, V-03 |
+| High Cohesion | Correct | — |
+| Polymorphism | Violation | V-03 |
+| Pure Fabrication | Correct | — |
+| Indirection | Correct | — |
+| Protected Variations | Violation | V-02, V-03 |
+
+Distinct violations: 4 (V-01 to V-04). V-02 and V-03 appear under more than one pattern but are recorded only once, under the pattern that best describes their root cause.
+
+## Notes
+
+- Fragments that were examined and judged **not** to be violations are recorded above with their justification (the type tags in `ProductRepository`, the equivalent method pairs of `ProductService`, the stock check inside `ProductValidator`), so that the consolidation can see why they were discarded.
+- Reported to the Technical Lead (problems whose origin is in another role's code, not audited here):
+    - `ConsoleMenu` creates `VideoGame`, `Console`, `Client` and accessory objects before calling the services (Creator).
+    - `ProductService.restoreStock` (Technical Lead) and `AccessoryService` (Developer 2) repeat the read-compute-write stock sequence of V-01 (possible boundary finding).
+    - `PersonService` creates its own `PersonRepository` with a fixed file, as in V-02 (Developer 2).
+    - `Sale.describeItemType` decides the item label with `instanceof` (Technical Lead).
+    - The 30-day window is written as a literal both in `Sale.canBeReturned` (`Sale.java:223`) and in the error message of `ReturnService` (Developer 2).
+- Candidate out-of-scope findings reported to the Technical Lead (functional, not corrected in Requerimiento 7 because correcting them would change what the user sees): the descriptions of `VideoGame` and `Console` are printed in English while the accessory descriptions are in Spanish; the refund of a return and the cost of an extended warranty use the current price of the product, not the price it had on the day of the sale.
