@@ -4,6 +4,7 @@ import com.gamezone.model.Accessory;
 import com.gamezone.model.Cable;
 import com.gamezone.model.Controller;
 import com.gamezone.model.Memory;
+import com.gamezone.model.Product;
 import com.gamezone.persistence.AccessoryStore;
 
 import java.util.ArrayList;
@@ -16,7 +17,7 @@ import java.util.NoSuchElementException;
  * accessory types, listing and filtering the catalogue, answering
  * compatibility queries, and keeping accessory stock up to date.
  */
-public class AccessoryService {
+public class AccessoryService implements ItemSource {
 
     private final AccessoryStore repository;
     private final List<Accessory> accessories;
@@ -171,4 +172,47 @@ public class AccessoryService {
         repository.saveAll(accessories);
     }
 
+    /**
+     * {@inheritDoc}
+     *
+     * @param id identifier of the accessory
+     * @return the accessory, or {@code null} if this catalog does not have it
+     */
+    @Override
+    public Product findItem(String id) {
+        return findById(id);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @param item item to check
+     * @return true if the item is one of the accessories of this catalog
+     */
+    @Override
+    public boolean owns(Product item) {
+        return findById(item.getId()) == item;
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @param item   accessory sold
+     * @param amount number of units to take
+     */
+    @Override
+    public void takeStock(Product item, int amount) {
+        decreaseStock(item.getId(), amount);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * @param item   accessory returned
+     * @param amount number of units to add back
+     */
+    @Override
+    public void returnStock(Product item, int amount) {
+        restoreStock(item.getId(), amount);
+    }
 }
