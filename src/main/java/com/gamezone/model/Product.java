@@ -84,4 +84,13 @@ public abstract class Product {
      * @return a full description of the product
      */
     public abstract String getDescription();
+
+    /**
+     * Tells whether this product belongs to the given promotion category.
+     * Each subclass answers for its own category, ignoring case.
+     *
+     * @param category category name ("VIDEOGAME", "CONSOLE" or "ACCESSORY")
+     * @return true if this product belongs to the category
+     */
+    public abstract boolean belongsToCategory(String category);
 }

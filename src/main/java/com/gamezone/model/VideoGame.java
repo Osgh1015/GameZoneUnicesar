@@ -47,4 +47,15 @@ public class VideoGame extends Product {
                 "Video Game: %s | Platform: %s | Genre: %s | Age Rating: %s | Price: %.2f | Stock: %d",
                 getTitle(), platform, genre, ageRating, getPrice(), getQuantity());
     }
+
+    /**
+     * A video game belongs to the "VIDEOGAME" category.
+     *
+     * @param category category name
+     * @return true if the category is "VIDEOGAME", ignoring case
+     */
+    @Override
+    public boolean belongsToCategory(String category) {
+        return "VIDEOGAME".equalsIgnoreCase(category);
+    }
 }
