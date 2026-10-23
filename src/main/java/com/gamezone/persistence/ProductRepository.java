@@ -29,9 +29,22 @@ public class ProductRepository {
     /**
      * Creates the repository that stores the products in
      * {@code data/products.txt}.
+     *
+     * @deprecated use {@link #ProductRepository(String)}; kept only until
+     *             {@code Main} passes the file path (V-02)
      */
+    @Deprecated
     public ProductRepository() {
-        this.filePath = "data/products.txt";
+        this("data/products.txt");
+    }
+
+    /**
+     * Creates the repository that stores the products in the given file.
+     *
+     * @param filePath path of the products file
+     */
+    public ProductRepository(String filePath) {
+        this.filePath = filePath;
     }
 
     /**
