@@ -459,7 +459,7 @@ public class ConsoleMenu {
         List<Warranty> saleWarranties = new ArrayList<>();
 
         for (Warranty warranty : warrantyService.listAllWarranties()) {
-            if (warranty.getSale().getId().equals(sale.getId())) {
+            if (warranty.belongsToSale(sale.getId())) {
                 saleWarranties.add(warranty);
             }
         }
