@@ -17,6 +17,7 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 | Sales (Taller 1), promotions (Requerimiento 2), warranties (Requerimiento 4) | `Sale` (every method except `canBeReturned`, Developer 1), including the discount, the warranty cost and `generateReceipt`, and the GRASP additions `findProduct`, `countUnitsOf`, `belongsToClient`, `wasAttendedBy` |
 | Sales (Taller 1) | `SalePersistence` (statement: `SaleRepository`) and its `SaleRecord` (GRASP V-19) |
 | Sales and integrations (Taller 1, Requerimientos 1, 2, 4 and 5) | `SaleService`, including the accessories, promotions and warranties in `registerSale`; `SaleAssembler` (GRASP V-19) |
+| User interface (Taller 1 to Requerimiento 6) | `ConsoleMenu`, including the differentiated handling of exceptions; `ConsoleInput` and the submenus `ProductMenu`, `PersonMenu`, `SaleMenu`, `AccessoryMenu`, `ReturnMenu`, `PromotionMenu`, `WarrantyMenu` (GRASP V-20) |
 
 ## Single Responsibility Principle (SRP)
 
@@ -27,6 +28,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 - **SalePersistence — Correct.** It only reads and writes `data/sales.txt` and returns `SaleRecord` objects.
 
 - **SaleService — Correct.** `registerSale` is split into private steps with one purpose each, and the queries are all about sales. **SaleAssembler — Correct.** It only rebuilds the stored sales.
+
+- **User interface — Correct.** Since the GRASP correction each submenu handles one module and `ConsoleInput` only reads the input; `ConsoleMenu` keeps the main loop and the exception handling.
 
 ### V-01
 
@@ -49,6 +52,21 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 - **SaleService — Correct.** Warranty eligibility and the stock dispatch are asked polymorphically since the GRASP correction (`isWarrantyEligible`, `ItemCatalog`).
 
+- **ConsoleMenu — Violation (V-04).** A new module forces editing the main menu in three places.
+
+### V-04
+
+| Field | Content |
+|---|---|
+| ID | V-04 |
+| Principle | OCP |
+| Module | User interface (Taller 1 to Requerimiento 6) and GRASP correction V-20 (Requerimiento 7) |
+| Evidence | `ConsoleMenu` constructor, `ConsoleMenu.java:51-61`, creates the seven concrete submenus; `start()` prints the seven options one by one (`:77-83`) and dispatches them with a `switch` with one `case` per module (`:90-117`). |
+| Explanation | The GRASP correction moved each submenu to its own class, but the main menu still lists every module three times: in the constructor, in the printed menu and in the `switch`. |
+| Consequence | Adding a module (for example, a reports menu) forces editing `ConsoleMenu` in three places; forgetting one of them gives an option that is printed but does nothing, or the reverse. |
+| Proposed solution | A `MenuOption` interface (`getTitle`, `show`) implemented by every submenu; `ConsoleMenu` receives the list of options from `Main`, prints `number. title` for each and runs the chosen one. A new module is added in `Main` only. |
+| Other role's code involved | No. |
+
 ## Liskov Substitution Principle (LSP)
 
 **Verdict:** _pending — audit in progress._
@@ -60,6 +78,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 **Verdict:** _pending — audit in progress._
 
 - **SaleService and SaleAssembler — Violation (V-03).** They depend on three complete services of Developer 2 to use one or two operations of each. Their dependency on `ItemCatalog` was examined: it is the intermediary created for the sales and returns modules and every operation it has is used by them; it is not counted.
+
+- **Submenus — Correct, examined.** Each submenu depends on the services of its own module, whose operations are exactly the options it offers.
 
 ### V-03
 
@@ -79,6 +99,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 **Verdict:** _pending — audit in progress._
 
 - **SaleService and SaleAssembler — Violation (V-02, V-03).** They depend on the concrete `SalePersistence` and on concrete services of another role.
+
+- **User interface — Correct, examined.** The submenus depend on the services of the application, which are the entry points of the use cases; the user interface is the outermost layer and no abstraction is gained by hiding them. `ConsoleMenu` depending on concrete submenus is recorded under OCP (V-04).
 
 ### V-02
 
