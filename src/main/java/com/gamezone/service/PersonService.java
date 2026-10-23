@@ -6,6 +6,7 @@ import com.gamezone.exceptions.PersistenceException;
 import com.gamezone.model.Client;
 import com.gamezone.model.Seller;
 import com.gamezone.persistence.PersonRepository;
+import com.gamezone.persistence.PersonStore;
 import com.gamezone.validation.PersonValidator;
 
 import java.util.List;
@@ -25,7 +26,7 @@ import java.util.List;
  */
 public class PersonService {
 
-    private final PersonRepository repository;
+    private final PersonStore repository;
     private List<Client> clients;
     private List<Seller> vendors;
 
@@ -36,7 +37,7 @@ public class PersonService {
      * @param repository repository that stores clients and vendors
      * @throws PersistenceException if a data file cannot be read
      */
-    public PersonService(PersonRepository repository) {
+    public PersonService(PersonStore repository) {
         this.repository = repository;
         this.clients = repository.loadClients();
         this.vendors = repository.loadVendors();
