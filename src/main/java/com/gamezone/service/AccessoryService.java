@@ -78,9 +78,10 @@ public class AccessoryService {
      * @return the accessories matching the requested type
      */
     public List<Accessory> listAccessoriesByType(String type) {
+        String normalized = type == null ? "" : type.trim().toUpperCase();
         List<Accessory> result = new ArrayList<>();
         for (Accessory accessory : accessories) {
-            if (matchesType(accessory, type)) {
+            if (accessory.getAccessoryType().equals(normalized)) {
                 result.add(accessory);
             }
         }
@@ -152,23 +153,6 @@ public class AccessoryService {
         }
         accessory.decreaseStock(amount);
         repository.saveAll(accessories);
-    }
-
-    /**
-     * Checks whether an accessory matches the requested type name.
-     *
-     * @param accessory accessory to check
-     * @param type      requested type name
-     * @return {@code true} when the accessory is of the requested type
-     */
-    private boolean matchesType(Accessory accessory, String type) {
-        String normalized = type == null ? "" : type.trim().toUpperCase();
-        return switch (normalized) {
-            case "CONTROLLER" -> accessory instanceof Controller;
-            case "CABLE" -> accessory instanceof Cable;
-            case "MEMORY" -> accessory instanceof Memory;
-            default -> false;
-        };
     }
 
     /**
