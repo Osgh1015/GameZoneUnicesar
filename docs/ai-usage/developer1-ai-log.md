@@ -124,3 +124,20 @@ Developer 1 (Santiago Andres Herrera Acuña) was responsible for the products mo
 
 **Solution obtained and decision taken:** GameZoneException abstract and unchecked with an error code; ResourceNotFoundException, BusinessRuleException, InvalidDataException with descriptive Spanish messages; PersistenceException keeping the cause through initCause; ProductValidator, PersonValidator and SaleValidator with static methods and a private constructor. Used List<? extends Person> in validateUniquePerson. One commit per class; the code was compiled and tested with thirteen cases before pushing.
 
+
+## Requirement 7 — Phase 1: Audit
+
+## Entry 11
+
+**Date:** 2026-10-23 **Tool used:** Claude
+
+**Reason for use:** Audit the code under the responsibility of Developer 1 against the nine GRASP patterns and record each verdict with evidence from the repository.
+
+**Problem faced:** The scope covers six modules (products, accessories, promotions, returns, warranties, exceptions and validation). Some fragments show the warning sign of a pattern without being a real violation: both `CategoryDiscount` and `ProductRepository` branch on the concrete product type, but treating both the same way would have forced persistence knowledge into the model.
+
+**Prompt used:** cómo se aplican los nueve patrones GRASP al código del desarrollador 1 y qué evidencia hay que registrar para cada veredicto
+
+**Solution obtained and decision taken:** Reviewed each class and method in scope with the tool and recorded four violations with class, method and line range on the audited commit: V-01 (Information Expert, `ProductService` computes the stock instead of the product), V-02 (Low Coupling, `ProductService` creates its own repository with a fixed file), V-03 (Polymorphism, `CategoryDiscount` resolves the category with `instanceof`) and V-04 (Information Expert, `Return` recalculates the subtotal of the sale). The type checks of `ProductRepository` were recorded as correct, because the repository is a Pure Fabrication that isolates the file format. Problems whose origin is in other roles' code (`ConsoleMenu` creating domain objects, the same stock arithmetic in `restoreStock` and `AccessoryService`) were reported to the Technical Lead instead of being audited here. Also wrote the answers to questions 1 and 3 of the GRASP analysis.
+
+**Related commits:** `<hash commit 1>` … `<hash commit 8>` (PR #<n>)
+
