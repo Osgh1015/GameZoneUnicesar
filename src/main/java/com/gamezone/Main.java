@@ -2,12 +2,14 @@ package com.gamezone;
 
 import com.gamezone.exceptions.PersistenceException;
 import com.gamezone.persistence.AccessoryRepository;
+import com.gamezone.persistence.PersonRepository;
 import com.gamezone.persistence.ProductRepository;
 import com.gamezone.persistence.PromotionRepository;
 import com.gamezone.persistence.ReturnRepository;
 import com.gamezone.persistence.SalePersistence;
 import com.gamezone.persistence.WarrantyRepository;
 import com.gamezone.service.AccessoryService;
+import com.gamezone.service.ItemCatalog;
 import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
 import com.gamezone.service.PromotionService;
@@ -56,10 +58,13 @@ public class Main {
     private static ConsoleMenu buildApplication() {
         ProductRepository productRepository = new ProductRepository("data/products.txt");
         ProductService productService = new ProductService(productRepository);
-        PersonService personService = new PersonService();
+        PersonRepository personRepository = new PersonRepository(
+                "data/clients.txt", "data/vendors.txt");
+        PersonService personService = new PersonService(personRepository);
 
         AccessoryRepository accessoryRepository = new AccessoryRepository("data/accessories.csv");
         AccessoryService accessoryService = new AccessoryService(accessoryRepository);
+        ItemCatalog itemCatalog = new ItemCatalog(productService, accessoryService);
 
         PromotionRepository promotionRepository = new PromotionRepository("data/promotions.csv");
         PromotionService promotionService = new PromotionService(promotionRepository);
@@ -77,10 +82,9 @@ public class Main {
                 salePersistence, productService, personService, accessoryService,
                 promotionService, warrantyService);
 
-        ReturnRepository returnRepository = new ReturnRepository(
-                "data/returns.txt", saleService, productService, accessoryService);
+        ReturnRepository returnRepository = new ReturnRepository("data/returns.txt");
         ReturnService returnService = new ReturnService(
-                returnRepository, saleService, productService, accessoryService, warrantyService);
+                returnRepository, saleService, itemCatalog, warrantyService);
 
         return new ConsoleMenu(productService, personService, saleService,
                 accessoryService, returnService, promotionService, warrantyService);
