@@ -21,7 +21,7 @@ import java.util.List;
  * {@link PersistenceException} that names the file and the operation, so
  * the upper layers never receive a raw {@link IOException}.
  */
-public class ProductRepository {
+public class ProductRepository implements ProductStore {
 
     private static final String DELIMITER = ";";
     private final String filePath;
@@ -41,6 +41,7 @@ public class ProductRepository {
      * @param products products to persist
      * @throws PersistenceException if the file cannot be written
      */
+    @Override
     public void save(List<Product> products) {
         try (PrintWriter writer = new PrintWriter(new FileWriter(filePath))) {
             for (Product product : products) {
@@ -59,6 +60,7 @@ public class ProductRepository {
      * @throws PersistenceException if the file cannot be read or one of its
      *                              lines is corrupted
      */
+    @Override
     public List<Product> load() {
         List<Product> products = new ArrayList<>();
         File file = new File(filePath);
