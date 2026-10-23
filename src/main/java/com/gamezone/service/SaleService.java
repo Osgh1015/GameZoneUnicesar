@@ -4,7 +4,6 @@ import com.gamezone.exceptions.BusinessRuleException;
 import com.gamezone.exceptions.PersistenceException;
 import com.gamezone.exceptions.ResourceNotFoundException;
 import com.gamezone.model.Client;
-import com.gamezone.model.Console;
 import com.gamezone.model.ExtendedWarranty;
 import com.gamezone.model.Product;
 import com.gamezone.model.Promotion;
@@ -233,7 +232,7 @@ public class SaleService {
 
         for (Product item : items) {
 
-            if (!(item instanceof Console)) {
+            if (!item.isWarrantyEligible()) {
                 continue;
             }
 
