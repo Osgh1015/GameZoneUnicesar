@@ -19,6 +19,7 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 | Promotions (Requerimiento 2) | `Promotion`, `PercentageDiscount`, `CategoryDiscount`, `BulkPurchaseDiscount` |
 | Returns (Requerimiento 3) | `Return`, `Sale.canBeReturned` |
 | Warranties (Requerimiento 4) | `Warranty`, `BasicWarranty`, `ExtendedWarranty` |
+| Exceptions and validation (Requerimiento 6) | `GameZoneException`, `ResourceNotFoundException`, `BusinessRuleException`, `InvalidDataException`, `PersistenceException`, `ProductValidator`, `PersonValidator`, `SaleValidator` |
 
 ## Single Responsibility Principle (SRP)
 
@@ -33,6 +34,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 - **Returns — Violation (V-01).** `Return` calculates the refund and also lays out the Spanish receipt. `Sale.canBeReturned` (`Sale.java:253`) only applies the 30-day rule, which is correct.
 
 - **Warranties — Violation (V-02).** `Warranty` holds the coverage rules and also lays out the Spanish certificate. The subclasses only declare duration, type and cost.
+
+- **Exceptions and validation — Correct.** One exception per category of error; one validator per module, each with only the checks of that module (`ProductValidator.java:35-86`).
 
 ### V-01
 
@@ -74,6 +77,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 - **Warranties — Correct for the hierarchy.** A new warranty is a subclass that implements duration, type and cost (`Warranty.java:107-123`). How each kind is stored and rebuilt is decided in `WarrantyRepository` and `WarrantyService` (Developer 2); it was reported to the Technical Lead.
 
+- **Exceptions and validation — Correct.** A new category of error is a new subclass of `GameZoneException` (`GameZoneException.java:13`); the code that catches `GameZoneException` does not change.
+
 ## Liskov Substitution Principle (LSP)
 
 **Verdict:** _pending — audit in progress._
@@ -88,6 +93,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 - **Warranties — Correct.** `BasicWarranty` and `ExtendedWarranty` return a positive duration, a type name and a non-negative cost; `isActive`, `covers` and the certificate behave the same for both.
 
+- **Exceptions — Correct.** The four exceptions can be caught as `GameZoneException`; each keeps the message and the error code of the base class.
+
 ## Interface Segregation Principle (ISP)
 
 **Verdict:** _pending — audit in progress._
@@ -98,6 +105,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 - **Returns — Correct.** `Return` uses the products, the subtotal, the discount and the promotion of its original sale.
 
+- **Validation — Not applicable.** The validators are static functions with no interface; each service calls only the checks of its module.
+
 ## Dependency Inversion Principle (DIP)
 
 **Verdict:** _pending — audit in progress._
@@ -105,6 +114,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 - **Products — Violation (V-03).** `ProductService` depends on the concrete `ProductRepository`.
 
 - **Accessories, promotions, returns and warranties — Correct.** The model classes depend only on other model classes, never on persistence or services.
+
+- **Validation — Correct, examined.** `ProductService` calls the static methods of `ProductValidator` (`ProductService.java:70`, `:112-113`). They are stateless rule checks with no alternative implementation in the system, so depending on them is not depending on a volatile detail; this was examined and not counted.
 
 ### V-03
 
