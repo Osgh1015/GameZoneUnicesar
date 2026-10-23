@@ -17,7 +17,7 @@ import java.util.List;
  * of the best promotion for a sale (the one granting the highest monetary
  * discount; promotions are not cumulative).
  */
-public class PromotionService {
+public class PromotionService implements PromotionSelector {
 
     private final PromotionStore repository;
     private final List<Promotion> promotions;
@@ -153,6 +153,7 @@ public class PromotionService {
      * @return the best promotion, or {@code null} if none applies or the
      *         maximum discount is zero
      */
+    @Override
     public Promotion findBestPromotionFor(Sale sale) {
         Promotion best = null;
         double bestDiscount = 0.0;
