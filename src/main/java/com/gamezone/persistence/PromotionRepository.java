@@ -26,7 +26,7 @@ import java.util.List;
  * CATEGORY;id;name;start;end;percentage;category
  * BULK;id;name;start;end;minQuantity;percentage
  */
-public class PromotionRepository {
+public class PromotionRepository implements PromotionStore {
 
     private static final String DELIMITER = ";";
     private final String filePath;
@@ -45,6 +45,7 @@ public class PromotionRepository {
      *
      * @param promotions promotions to persist
      */
+    @Override
     public void saveAll(List<Promotion> promotions) {
         try (PrintWriter writer = new PrintWriter(new FileWriter(filePath))) {
             for (Promotion promotion : promotions) {
@@ -61,6 +62,7 @@ public class PromotionRepository {
      *
      * @return the promotions read from the file
      */
+    @Override
     public List<Promotion> loadAll() {
         List<Promotion> promotions = new ArrayList<>();
         File file = new File(filePath);
