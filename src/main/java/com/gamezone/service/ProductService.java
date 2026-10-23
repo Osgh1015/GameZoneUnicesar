@@ -26,18 +26,6 @@ public class ProductService {
     private final List<Product> products;
 
     /**
-     * Creates the service with its own repository.
-     *
-     * @throws PersistenceException if the products file cannot be read
-     * @deprecated use {@link #ProductService(ProductRepository)}; kept only
-     *             until {@code Main} injects the repository (V-02)
-     */
-    @Deprecated
-    public ProductService() {
-        this(new ProductRepository());
-    }
-
-    /**
      * Creates the service and loads the products already stored by the
      * given repository.
      *
