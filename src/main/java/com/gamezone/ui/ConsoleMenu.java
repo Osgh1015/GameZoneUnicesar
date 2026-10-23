@@ -10,6 +10,7 @@ import com.gamezone.model.CategoryDiscount;
 import com.gamezone.model.Client;
 import com.gamezone.model.Console;
 import com.gamezone.model.Controller;
+import com.gamezone.model.ExtendedWarranty;
 import com.gamezone.model.Memory;
 import com.gamezone.model.Product;
 import com.gamezone.model.Promotion;
@@ -438,7 +439,7 @@ public class ConsoleMenu {
         System.out.printf("La consola \"%s\" incluye garantía básica de 6 meses sin costo.%n",
                 product.getTitle());
         System.out.printf("¿Desea agregar garantía extendida de 12 meses por $%.2f? (s/n): ",
-                product.getPrice() * 0.10);
+                ExtendedWarranty.quoteFor(product));
 
         String answer = scanner.nextLine().trim();
 
