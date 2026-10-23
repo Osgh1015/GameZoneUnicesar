@@ -216,33 +216,12 @@ public class Sale {
      * every item with its type and price, and shows the full breakdown of
      * the integrated sale: subtotal of the items, discount with the name of
      * the applied promotion, cost of the extended warranties and final total.
+     * The layout lives in {@link SaleReceipt}; this method is kept because
+     * the sales module defines it and the sales menu calls it.
      * @return the formatted receipt text
      */
     public String generateReceipt() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("--- Recibo de Venta ---\n");
-        sb.append("ID Venta: ").append(id).append("\n");
-        sb.append("Fecha: ").append(date).append("\n");
-        sb.append("Cliente: ").append(client.getFullName()).append("\n");
-        sb.append("Vendedor: ").append(seller.getFullName()).append("\n");
-        sb.append("Productos:\n");
-        for (Product product : products) {
-            sb.append(String.format("  - %s [%s] ($%.2f)%n",
-                    product.getTitle(), product.getTypeLabel(), product.getPrice()));
-        }
-        sb.append(String.format("Subtotal: $%.2f%n", calculateTotal()));
-        if (appliedPromotionName != null && discountAmount > 0) {
-            sb.append(String.format("Descuento (%s): -$%.2f%n", appliedPromotionName, discountAmount));
-        } else {
-            sb.append("Descuento: $0.00 (sin promoción aplicada)\n");
-        }
-        if (warrantyCost > 0) {
-            sb.append(String.format("Garantías extendidas: +$%.2f%n", warrantyCost));
-        } else {
-            sb.append("Garantías extendidas: $0.00 (no se solicitaron)\n");
-        }
-        sb.append(String.format("Total final: $%.2f%n", calculateFinalTotal()));
-        return sb.toString();
+        return new SaleReceipt(this).format();
     }
 
     /**
