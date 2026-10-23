@@ -109,7 +109,7 @@ public class ProductService {
         Product product = findById(productId);
         ProductValidator.validateProductExists(product, productId);
         ProductValidator.validateStockAvailability(product, amount);
-        product.setQuantity(product.getQuantity() - amount);
+        product.decreaseStock(amount);
         repository.save(products);
     }
 
