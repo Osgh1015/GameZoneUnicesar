@@ -17,6 +17,7 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 | People (Taller 1) | `Person`, `Client` (statement: `Customer`), `Seller`, `PersonRepository`, `PersonService` |
 | Accessories (Requerimiento 1) | `AccessoryRepository`, `AccessoryService` |
 | Promotions (Requerimiento 2) | `PromotionRepository`, `PromotionService` |
+| Returns (Requerimiento 3) | `ReturnRepository` (with `ReturnRecord`), `ReturnService` (including the monthly balance) |
 
 ## Single Responsibility Principle (SRP)
 
@@ -28,6 +29,21 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 - **Promotions — Correct.** `PromotionService` registers, validates and selects promotions — all promotion rules; `PromotionRepository` only handles its file.
 
+- **Returns — Violation (V-03).** `ReturnService` also produces the monthly balance. `ReturnRepository` only handles `data/returns.txt` and returns `ReturnRecord` objects.
+
+### V-03
+
+| Field | Content |
+|---|---|
+| ID | V-03 |
+| Principle | SRP |
+| Module | Returns (Requerimiento 3) and integration adjustment A6 (Requerimiento 5) |
+| Evidence | `ReturnService.calculateMonthlySales` (`ReturnService.java:222`), `calculateMonthlyReturns` (`:240`), `generateMonthlyBalance` (`:258`) and the helpers `isInPeriod` (`:270`) and `round`. |
+| Explanation | `ReturnService` registers and queries returns, and it also produces an accounting report of sales and refunds. They change for different reasons: the return rules on one side, the content of the monthly balance on the other. |
+| Consequence | A change in the balance (another period, a breakdown by seller) forces editing the class that applies the 30-day rule and restores stock, with the risk of touching it; the returns service also needs the whole history of sales only because of the report. |
+| Proposed solution | Move the balance into `MonthlyBalanceService` (service layer), which reads the sales through `SaleLookup` and the returns through `ReturnService.viewAllReturns()`, and remove it from `ReturnService`. |
+| Other role's code involved | Yes — `ReturnMenu` and `ConsoleMenu` (Technical Lead) must ask `MonthlyBalanceService` for the balance. |
+
 ## Open/Closed Principle (OCP)
 
 **Verdict:** _pending — audit in progress._
@@ -37,6 +53,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 - **Accessories — Correct, examined.** A new accessory type is a new subclass that reports its type (`getAccessoryType`, GRASP V-07), so `AccessoryService.listAccessoriesByType` does not change. The type tags of `AccessoryRepository` are accepted for the reason of Q1: it is the only class that knows the file format.
 
 - **Promotions — Correct, examined.** A new promotion is a subclass of `Promotion`; `findBestPromotionFor` only calls `calculateDiscount`. `validateCategory` (`PromotionService.java:82-90`) lists the three categories through the constants of `CategoryDiscount`, the one place that defines them; it is not counted.
+
+- **Returns — Correct.** The return rules do not depend on the kind of item (since GRASP V-11).
 
 ## Liskov Substitution Principle (LSP)
 
@@ -52,6 +70,21 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 - **People — Correct.** `PersonService` uses all the operations of `PersonRepository`.
 
+- **Returns — Violation (V-02).** `ReturnService` depends on the whole `SaleService` to use two read operations. Its dependency on `WarrantyService` (only `cancelWarranties`) was examined: both services are Developer 2's code in the same group of modules, they change together, and `WarrantyService` has no other role's operations behind it; it is not counted.
+
+### V-02
+
+| Field | Content |
+|---|---|
+| ID | V-02 |
+| Principle | ISP (also recorded under DIP) |
+| Module | Returns (Requerimiento 3) |
+| Evidence | `ReturnService` field `private final SaleService saleService` (`ReturnService.java:20`), used only for `findById` (`:55`, `:93`) and `getSalesHistory` (`:224`). |
+| Explanation | The returns module depends on the whole sales service — including the registration of sales and its six collaborators — to use two read operations. It depends on operations it does not use, and on a concrete service of another role. |
+| Consequence | Any change in `SaleService` (its constructor, its registration flow) reaches `ReturnService`; the returns cannot be built or reused without the full sales module. |
+| Proposed solution | A read-only interface `SaleLookup` (`findById`, `getSalesHistory`) in the service layer, implemented by `SaleService`; `ReturnService` depends on it. `Main` keeps passing `saleService`. |
+| Other role's code involved | Yes — `SaleService` belongs to the Technical Lead, who must declare `implements SaleLookup`. |
+
 ## Dependency Inversion Principle (DIP)
 
 **Verdict:** _pending — audit in progress._
@@ -61,6 +94,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 - **Accessories — Violation (V-01).** Same for `AccessoryService`.
 
 - **Promotions — Violation (V-01).** Same for `PromotionService`.
+
+- **Returns — Violation (V-01, V-02).** `ReturnService` depends on the concrete `ReturnRepository` and on the concrete `SaleService`.
 
 ### V-01
 
