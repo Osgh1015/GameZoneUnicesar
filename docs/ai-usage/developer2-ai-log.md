@@ -150,3 +150,20 @@ Developer 2 (Pablo Andres Amaya Pabon) was responsible for the people module and
 
 **Related commits:** `<hash A>` … `<hash J>` (PR #<n>)
 
+## Requirement 8 — Phase 1: Audit
+
+## Entry 12
+
+**Date:** 2026-10-23 **Tool used:** Claude
+
+**Reason for use:** Audit the repositories and services under the responsibility of Developer 2, including what I created or changed in the GRASP correction, against the five SOLID principles.
+
+**Problem faced:** After the GRASP correction every service receives its repository from `Main`, which looks like dependency inversion but is not: the services still receive concrete classes. `ItemCatalog`, which I created in Requerimiento 7, concentrated the type check in one place but did not remove it. I also had to decide which `instanceof` and type tags are a business decision and which are only the file format.
+
+**Prompt used:** cómo revisar mis repositorios y servicios con SOLID y cómo distinguir inyección por constructor de inversión de dependencias de verdad
+
+**Solution obtained and decision taken:** Recorded five violations with evidence on the audited commit: V-01 (DIP, the five services depend on concrete repositories), V-02 (ISP, `ReturnService` depends on the whole `SaleService` for two reads), V-03 (SRP, the monthly balance inside `ReturnService`), V-04 (OCP, the kinds of warranty decided with tags and `instanceof` in the repository and the service) and V-05 (OCP, `ItemCatalog` still checks `instanceof Accessory`). The tags of the accessory and promotion repositories and the category list of `PromotionService` were examined and accepted. I reported to the Technical Lead that `SaleService` depends on my whole services for one or two operations. Also wrote the answer to question 4.
+
+**Related commits:** `<hash commit 1>` … `<hash commit 8>` (PR #<n>)
+
+
