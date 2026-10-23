@@ -18,7 +18,7 @@ public abstract class Product {
      * @param price    unit price of the product
      * @param quantity quantity currently available in inventory
      */
-    
+
     public Product(String id, String title, double price, int quantity) {
         this.id = id;
         this.title = title;
@@ -56,6 +56,24 @@ public abstract class Product {
 
     public void setQuantity(int quantity) {
         this.quantity = quantity;
+    }
+
+    /**
+     * Decreases the stock of this product by the given amount.
+     *
+     * @param amount quantity to subtract
+     */
+    public void decreaseStock(int amount) {
+        this.quantity -= amount;
+    }
+
+    /**
+     * Increases the stock of this product by the given amount.
+     *
+     * @param amount quantity to add
+     */
+    public void increaseStock(int amount) {
+        this.quantity += amount;
     }
 
     /**
