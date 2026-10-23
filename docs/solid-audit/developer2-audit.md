@@ -20,10 +20,11 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 | Returns (Requerimiento 3) | `ReturnRepository` (with `ReturnRecord`), `ReturnService` (including the monthly balance) |
 | Warranties (Requerimiento 4) | `WarrantyRepository` (with `WarrantyRecord`), `WarrantyService` |
 | Exceptions and validation (Requerimiento 6) | Use of the custom exceptions and of the validators in the services and repositories above |
+| GRASP correction (Requerimiento 7) | `ItemCatalog`; `ReturnRecord` and the loading of returns in `ReturnService`; the constructors `PersonRepository(String, String)`, `PersonService(PersonRepository)`, `ReturnRepository(String)`, `ReturnService(..., ItemCatalog, ...)`; `WarrantyService` rebuilding sales through `SaleAssembler`; `ItemCatalog.decreaseStock` |
 
 ## Single Responsibility Principle (SRP)
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Violation — see V-03.
 
 - **People — Correct.** `PersonRepository` only reads and writes the two people files; `PersonService` only registers and looks up people; `Client` and `Seller` hold their data and description.
 
@@ -52,7 +53,7 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 ## Open/Closed Principle (OCP)
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Violation — see V-04 and V-05.
 
 - **People — Correct.** A new kind of person would be a new subclass of `Person` implementing `getDescription`; the services work with the concrete lists they own.
 
@@ -79,7 +80,7 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 ## Liskov Substitution Principle (LSP)
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Correct — the only hierarchy in scope keeps the base contract.
 
 - **People — Correct.** `Client` and `Seller` implement `getDescription` without new preconditions or exceptions and keep the identity data of `Person`; any of them can be printed or validated as a `Person` (`PersonValidator.validateUniquePerson` receives `List<? extends Person>`).
 
@@ -87,7 +88,7 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 ## Interface Segregation Principle (ISP)
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Violation — see V-02.
 
 - **People — Correct.** `PersonService` uses all the operations of `PersonRepository`.
 
@@ -110,7 +111,7 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 ## Dependency Inversion Principle (DIP)
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Violation — see V-01 (and V-02, V-05).
 
 - **People — Violation (V-01).** `PersonService` depends on the concrete `PersonRepository`.
 
@@ -136,3 +137,41 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 | Consequence | Changing how one module stores its data (another format, a database, an in-memory store for a test run) requires editing its service. |
 | Proposed solution | One interface per repository in the persistence package (`PersonStore`, `AccessoryStore`, `PromotionStore`, `ReturnStore`, `WarrantyStore`) with the operations the service uses, implemented by each repository; each service depends on its interface. `Main` keeps passing the same repositories, so it does not change. |
 | Other role's code involved | No. |
+
+## GRASP additions (Requerimiento 7)
+
+- **`ItemCatalog` — Violation (V-05, OCP and DIP).** See below.
+- **`ReturnRecord`, the loading of returns and the new constructors — Correct.** `ReturnRepository` no longer depends on services (GRASP V-10), which also fixed the direction of the dependency between layers (DIP); the constructors injected from `Main` are recorded under V-01 because they receive concrete repositories.
+- **`WarrantyService` with `SaleAssembler` — Correct.** It depends on the single operation it uses.
+
+### V-05
+
+| Field | Content |
+|---|---|
+| ID | V-05 |
+| Principle | OCP (also recorded under DIP) |
+| Module | GRASP correction V-11 and V-18 (Requerimiento 7) |
+| Evidence | `ItemCatalog` fields `private final ProductService productService` and `private final AccessoryService accessoryService` (`ItemCatalog.java:19-20`) and the dispatch `if (item instanceof Accessory)` in `decreaseStock` (`:56`) and `restoreStock` (`:71`). |
+| Explanation | The GRASP correction moved the lookup and the stock dispatch to this single intermediary, but the intermediary still knows the two concrete catalogs and decides with `instanceof` which one owns an item. |
+| Consequence | A third catalog of sellable items (for example, gift cards) forces editing `ItemCatalog`; the class cannot work with a catalog other than the two concrete services. |
+| Proposed solution | An `ItemSource` interface (`findItem`, `owns`, `takeStock`, `returnStock`) implemented by `ProductService` and `AccessoryService`; `ItemCatalog` receives its sources and asks them in order, with no type check. `Main` keeps calling `new ItemCatalog(productService, accessoryService)`. |
+| Other role's code involved | Yes — `ProductService` is Developer 1's code; Developer 1 must implement `ItemSource`. |
+
+## Summary of verdicts
+
+| Principle | Verdict | Violations |
+|---|---|---|
+| Single Responsibility Principle (SRP) | Violation | V-03 |
+| Open/Closed Principle (OCP) | Violation | V-04, V-05 |
+| Liskov Substitution Principle (LSP) | Correct | — |
+| Interface Segregation Principle (ISP) | Violation | V-02 |
+| Dependency Inversion Principle (DIP) | Violation | V-01, V-02, V-05 |
+
+Distinct violations: 5 (V-01 to V-05). V-02 and V-05 appear under two principles but are recorded once.
+
+## Notes
+
+- **Examined and accepted (not counted):** the type tags of `AccessoryRepository` and `PromotionRepository` (OCP, criterion of Q1); the category list of `PromotionService.validateCategory` (OCP); the dependency of `ReturnService` on `WarrantyService` (ISP); the static validators (DIP).
+- **Relation with GRASP:** `ItemCatalog` was created by the GRASP correction and is still an OCP problem (V-05); the GRASP correction of `ReturnRepository` already fixed the direction of its dependency.
+- **Corrections that need code of another role:** V-02 (`SaleService` implements `SaleLookup`, Technical Lead), V-03 (`ReturnMenu`/`ConsoleMenu`, Technical Lead), V-04 (`getKind()` in the warranty hierarchy, Developer 1), V-05 (`ProductService` implements `ItemSource`, Developer 1).
+- **Reported to the Technical Lead:** `SaleService` depends on the whole `PersonService`, `PromotionService` and `WarrantyService` to use one or two operations of each (ISP); correcting it needs those services of Developer 2 to implement narrow interfaces.
