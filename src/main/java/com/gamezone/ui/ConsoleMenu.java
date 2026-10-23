@@ -4,42 +4,27 @@ import com.gamezone.exceptions.BusinessRuleException;
 import com.gamezone.exceptions.InvalidDataException;
 import com.gamezone.exceptions.PersistenceException;
 import com.gamezone.exceptions.ResourceNotFoundException;
-import com.gamezone.model.Accessory;
-import com.gamezone.model.Cable;
-import com.gamezone.model.CategoryDiscount;
-import com.gamezone.model.Client;
-import com.gamezone.model.Console;
-import com.gamezone.model.Controller;
-import com.gamezone.model.ExtendedWarranty;
-import com.gamezone.model.Memory;
-import com.gamezone.model.Product;
-import com.gamezone.model.Promotion;
-import com.gamezone.model.Sale;
-import com.gamezone.model.Seller;
-import com.gamezone.model.VideoGame;
-import com.gamezone.model.Warranty;
 import com.gamezone.service.AccessoryService;
 import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
 import com.gamezone.service.PromotionService;
-import com.gamezone.service.SaleService;
-import com.gamezone.model.Return;
 import com.gamezone.service.ReturnService;
+import com.gamezone.service.SaleService;
 import com.gamezone.service.WarrantyService;
 
-import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Scanner;
 
 /**
- * Console-based user interface for the GameZone system. It exposes the
- * ten functional operations required by the system, organized into
- * submenus for the products, people and sales modules. This class only
- * calls service classes; it never accesses persistence directly.
+ * Main menu of the console user interface of the GameZone system.
+ * <p>
+ * It shows the main options, delegates each one to the submenu of its
+ * module ({@link ProductMenu}, {@link PersonMenu}, {@link SaleMenu},
+ * {@link AccessoryMenu}, {@link ReturnMenu}, {@link PromotionMenu} and
+ * {@link WarrantyMenu}) and handles, in a single place, the custom
+ * exceptions thrown by any operation. The submenus share one
+ * {@link ConsoleInput}, so all of them read from the same scanner.
  *
- * Responsabilidad: Líder Técnico - integra los tres módulos.
+ * Responsabilidad: Líder Técnico - integra los módulos.
  */
 public class ConsoleMenu {
 
@@ -51,13 +36,6 @@ public class ConsoleMenu {
     private final ReturnMenu returnMenu;
     private final PromotionMenu promotionMenu;
     private final WarrantyMenu warrantyMenu;
-    private ProductService productService;
-    private PersonService personService;
-    private SaleService saleService;
-    private AccessoryService accessoryService;
-    private ReturnService returnService;
-    private PromotionService promotionService;
-    private WarrantyService warrantyService;
 
     /**
      * Creates the console menu with the services of every module.
@@ -74,14 +52,6 @@ public class ConsoleMenu {
                        SaleService saleService, AccessoryService accessoryService,
                        ReturnService returnService, PromotionService promotionService,
                        WarrantyService warrantyService) {
-        this.productService = productService;
-        this.personService = personService;
-        this.saleService = saleService;
-        this.accessoryService = accessoryService;
-        this.returnService = returnService;
-        this.promotionService = promotionService;
-        this.warrantyService = warrantyService;
-        // submenus
         this.productMenu = new ProductMenu(userInput, productService);
         this.personMenu = new PersonMenu(userInput, personService);
         this.saleMenu = new SaleMenu(userInput, productService, accessoryService, saleService, warrantyService);
