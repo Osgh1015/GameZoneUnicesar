@@ -16,6 +16,7 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 |---|---|
 | People (Taller 1) | `Person`, `Client` (statement: `Customer`), `Seller`, `PersonRepository`, `PersonService` |
 | Accessories (Requerimiento 1) | `AccessoryRepository`, `AccessoryService` |
+| Promotions (Requerimiento 2) | `PromotionRepository`, `PromotionService` |
 
 ## Single Responsibility Principle (SRP)
 
@@ -25,6 +26,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 - **Accessories — Correct.** `AccessoryRepository` only handles `data/accessories.csv`; `AccessoryService` only handles the accessory catalogue and its stock.
 
+- **Promotions — Correct.** `PromotionService` registers, validates and selects promotions — all promotion rules; `PromotionRepository` only handles its file.
+
 ## Open/Closed Principle (OCP)
 
 **Verdict:** _pending — audit in progress._
@@ -32,6 +35,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 - **People — Correct.** A new kind of person would be a new subclass of `Person` implementing `getDescription`; the services work with the concrete lists they own.
 
 - **Accessories — Correct, examined.** A new accessory type is a new subclass that reports its type (`getAccessoryType`, GRASP V-07), so `AccessoryService.listAccessoriesByType` does not change. The type tags of `AccessoryRepository` are accepted for the reason of Q1: it is the only class that knows the file format.
+
+- **Promotions — Correct, examined.** A new promotion is a subclass of `Promotion`; `findBestPromotionFor` only calls `calculateDiscount`. `validateCategory` (`PromotionService.java:82-90`) lists the three categories through the constants of `CategoryDiscount`, the one place that defines them; it is not counted.
 
 ## Liskov Substitution Principle (LSP)
 
@@ -54,6 +59,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 - **People — Violation (V-01).** `PersonService` depends on the concrete `PersonRepository`.
 
 - **Accessories — Violation (V-01).** Same for `AccessoryService`.
+
+- **Promotions — Violation (V-01).** Same for `PromotionService`.
 
 ### V-01
 
