@@ -62,3 +62,52 @@ When it runs: on `develop` before the first correction (baseline), on every Pull
 | `PersonRepository`, `PersonService` | New constructors `PersonRepository(String, String)` and `PersonService(PersonRepository)`; the old ones kept `@Deprecated` for one step | V-05 | Low Coupling, Protected Variations | `<hash I>` / PR #<n> | Developer 2 |
 | `Main` | **Boundary coordination:** the Technical Lead (owner of `Main`) creates `PersonRepository` and `ItemCatalog`, injects them, and builds `ReturnRepository` with the file path only, inside Developer 2's task group | V-05, V-10, V-11 | Low Coupling, Indirection | `<hash O2>` / PR #<n> | Technical Lead |
 | `PersonRepository`, `PersonService`, `ReturnRepository`, `ReturnService` | Removed the transitional `@Deprecated` constructors; no service creates its repository and no repository depends on a service | V-05, V-10, V-11 | Low Coupling, Protected Variations | `<hash J>` / PR #<n> | Developer 2 |
+| `Product`, `Console` | **Boundary coordination:** Developer 1 added `isWarrantyEligible()` (false in `Product`, true in `Console`) | V-16 | Polymorphism | `<hash S4>` / PR #<n> | Developer 1 |
+| `Product`, `VideoGame`, `Console`, `Accessory` | **Boundary coordination:** Developer 1 added the abstract `getTypeLabel()` and its three implementations | V-17 | Polymorphism | `<hash S5>` / PR #<n> | Developer 1 |
+| `ExtendedWarranty` | **Boundary coordination:** Developer 1 added `quoteFor(Product)`, also used by `getAdditionalCost()` | V-15 | Information Expert | `<hash S6>` / PR #<n> | Developer 1 |
+| `ItemCatalog` | **Boundary coordination:** Developer 2 added `decreaseStock(Product, int)` | V-18 | Indirection | `<hash P4>` / PR #<n> | Developer 2 |
+| `Sale` | Added `belongsToClient(String)` and `wasAttendedBy(String)` | V-13 | Information Expert | `<hash A>` / PR #<n> | Technical Lead |
+| `SaleService` | `getSalesByClient` and `getSalesBySeller` ask each sale instead of navigating its client and seller | V-13 | Information Expert | `<hash B>` / PR #<n> | Technical Lead |
+| `ConsoleMenu` | `showWarrantiesOfSale` asks `warranty.belongsToSale(saleId)` | V-13 | Information Expert | `<hash C>` / PR #<n> | Technical Lead |
+| `ProductService` | `restoreStock` asks `product.increaseStock(amount)` | V-14 | Information Expert | `<hash D>` / PR #<n> | Technical Lead |
+| `ConsoleMenu` | The extended warranty price is asked to `ExtendedWarranty.quoteFor(product)` | V-15 | Information Expert, Protected Variations | `<hash E>` / PR #<n> | Technical Lead |
+| `SaleService` | `generateWarranties` asks `item.isWarrantyEligible()` instead of `instanceof Console` | V-16 | Polymorphism | `<hash F>` / PR #<n> | Technical Lead |
+| `ConsoleMenu` | `askForExtendedWarranty` asks `product.isWarrantyEligible()` | V-16 | Polymorphism | `<hash G>` / PR #<n> | Technical Lead |
+| `Sale` | `generateReceipt` prints `product.getTypeLabel()`; `describeItemType` and its `instanceof` chain were removed | V-17 | Polymorphism, Protected Variations | `<hash H>` / PR #<n> | Technical Lead |
+| `ConsoleMenu` | `printSellableItems` builds the label with `getTypeLabel()` and `isWarrantyEligible()` | V-16, V-17 | Polymorphism | `<hash I>` / PR #<n> | Technical Lead |
+| `SalePersistence` | Loads `SaleRecord` objects (ids and stored amounts) with no service; the old service-based API kept `@Deprecated` for one step | V-19 | Low Coupling | `<hash J>` / PR #<n> | Technical Lead |
+| `SaleAssembler` (new) | Fabrication in the service layer that rebuilds the stored sales from their records for `SaleService` and `WarrantyService` | V-19 | Pure Fabrication, Low Coupling | `<hash K>` / PR #<n> | Technical Lead |
+| `SaleService` | Loads the sales through `SaleAssembler` and finds and updates the items sold through `ItemCatalog`; `findSellableItem` and `instanceof Accessory` removed; old constructor kept `@Deprecated` for one step | V-18, V-19 | Indirection, Low Coupling | `<hash L>` / PR #<n> | Technical Lead |
+| `WarrantyService` | **Boundary coordination:** Developer 2 made the service rebuild the sales through `SaleAssembler` instead of `SalePersistence` and `PersonService`; old constructor kept `@Deprecated` for one step | V-19 | Low Coupling | `<hash P5>` / PR #<n> | Developer 2 |
+| `Main` | Creates `SalePersistence` with the file path only, creates `SaleAssembler` and injects it with `ItemCatalog` into `WarrantyService` and `SaleService` | V-18, V-19 | Low Coupling | `<hash M>` / PR #<n> | Technical Lead |
+| `WarrantyService` | **Boundary coordination:** Developer 2 removed the deprecated constructor | V-19 | Low Coupling | `<hash P6>` / PR #<n> | Developer 2 |
+| `SalePersistence`, `SaleService` | Removed the deprecated service-based loading and constructor; the persistence layer imports no service | V-18, V-19 | Low Coupling | `<hash N>` / PR #<n> | Technical Lead |
+| `ConsoleInput` (new) | Single scanner and the numeric and date readers, moved unchanged from `ConsoleMenu` | V-20 | Pure Fabrication, High Cohesion | `<hash O>` / PR #<n> | Technical Lead |
+| `ProductMenu` (new) | Products submenu moved out of `ConsoleMenu` | V-20 | High Cohesion | `<hash P>` / PR #<n> | Technical Lead |
+| `PersonMenu` (new) | People submenu moved out of `ConsoleMenu` | V-20 | High Cohesion | `<hash Q>` / PR #<n> | Technical Lead |
+| `SaleMenu` (new) | Sales submenu moved out of `ConsoleMenu` | V-20 | High Cohesion | `<hash R>` / PR #<n> | Technical Lead |
+| `AccessoryMenu` (new) | Accessories submenu moved out of `ConsoleMenu` | V-20 | High Cohesion | `<hash S>` / PR #<n> | Technical Lead |
+| `ReturnMenu` (new) | Returns submenu (including the monthly balance) moved out of `ConsoleMenu` | V-20 | High Cohesion | `<hash T>` / PR #<n> | Technical Lead |
+| `PromotionMenu` (new) | Promotions submenu moved out of `ConsoleMenu` | V-20 | High Cohesion | `<hash U>` / PR #<n> | Technical Lead |
+| `WarrantyMenu` (new) | Warranties submenu moved out of `ConsoleMenu` | V-20 | High Cohesion | `<hash V>` / PR #<n> | Technical Lead |
+| `ConsoleMenu` | Keeps only the main loop, the exception handling and the creation of the submenus; its constructor did not change, so `Main` did not change | V-20 | High Cohesion | `<hash W>` / PR #<n> | Technical Lead |
+
+## Design decisions and trade-offs
+
+- **`instanceof` inside `ItemCatalog` (V-11, V-18).** The products and the accessories are kept by two services and persisted in two files, so something has to decide which catalog owns an item. The decision was moved from four places (`ReturnService`, `ReturnRepository`, `SaleService`, `SalePersistence`) to one intermediary. No pattern was sacrificed: the use cases no longer check types, and the single remaining check is protected behind `ItemCatalog`.
+- **`ConsoleMenu` creates its submenus (V-20).** The submenus are created in the constructor of `ConsoleMenu` with the services it already received, so `Main` and its wiring did not change. `ConsoleMenu` holds the initializing data of the submenus (Creator).
+- **Records with raw amounts (V-19).** `SaleRecord` keeps the discount and the warranty cost as they were written, and `SaleAssembler` parses them after checking the client and the seller, as the old code did. This keeps the same behavior with damaged files: a damaged line is still reported with the same `PersistenceException`, and a line whose client no longer exists is still skipped.
+- **Out-of-scope defects untouched.** OS-01 to OS-04 of the consolidated audit were not corrected, even where a correction touched the same code (for example, `ExtendedWarranty.getAdditionalCost` still uses the current price, OS-02).
+
+## Final verification
+
+| Item | Value |
+|---|---|
+| Commit | `<hash final de feature/grasp-refactor>` |
+| Date | 2026-10-23 |
+| Input script | the same 308 entries of the baseline |
+| Normalized result | 1676 lines |
+| Comparison with the baseline | **No differences** (`diff` empty) |
+| Compilation | `mvn clean compile`: BUILD SUCCESS |
+
+Intermediate runs: the script was also run after the Pull Request of each role (Developer 1, Developer 2) over the full menu, with no differences.

@@ -4,14 +4,12 @@ import com.gamezone.exceptions.BusinessRuleException;
 import com.gamezone.exceptions.PersistenceException;
 import com.gamezone.exceptions.ResourceNotFoundException;
 import com.gamezone.model.Client;
-import com.gamezone.model.Console;
 import com.gamezone.model.ExtendedWarranty;
 import com.gamezone.model.Product;
 import com.gamezone.model.Promotion;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Seller;
 import com.gamezone.persistence.SalePersistence;
-import com.gamezone.model.Accessory;
 import com.gamezone.validation.PersonValidator;
 import com.gamezone.validation.ProductValidator;
 import com.gamezone.validation.SaleValidator;
@@ -41,9 +39,8 @@ public class SaleService {
 
     private List<Sale> sales;
     private SalePersistence salePersistence;
-    private ProductService productService;
     private PersonService personService;
-    private final AccessoryService accessoryService;
+    private final ItemCatalog itemCatalog;
     private final PromotionService promotionService;
     private final WarrantyService warrantyService;
 
@@ -51,24 +48,24 @@ public class SaleService {
      * Creates the sale service with all its collaborators, injected by
      * constructor from {@code Main}.
      *
-     * @param salePersistence  persistence used to save and load sales
-     * @param productService   service that owns the product catalogue and stock
+     * @param salePersistence  persistence used to save the sales
+     * @param saleAssembler    assembler used to rebuild the stored sales
      * @param personService    service used to resolve clients and sellers
-     * @param accessoryService service that owns the accessory catalogue and stock
+     * @param itemCatalog      intermediary used to find the items sold and
+     *                         update their stock
      * @param promotionService service used to select the best promotion
      * @param warrantyService  service used to grant warranties for the items sold
      */
     public SaleService(SalePersistence salePersistence,
-                       ProductService productService,
+                       SaleAssembler saleAssembler,
                        PersonService personService,
-                       AccessoryService accessoryService,
+                       ItemCatalog itemCatalog,
                        PromotionService promotionService,
                        WarrantyService warrantyService) {
         this.salePersistence = salePersistence;
-        this.productService = productService;
         this.personService = personService;
-        this.sales = salePersistence.loadAll(productService, personService);
-        this.accessoryService = accessoryService;
+        this.sales = saleAssembler.loadSales();
+        this.itemCatalog = itemCatalog;
         this.promotionService = promotionService;
         this.warrantyService = warrantyService;
     }
@@ -85,8 +82,8 @@ public class SaleService {
      *   <li>Grant the basic warranty of every console and the extended
      *       warranties requested, adding their cost to the sale.</li>
      *   <li>Calculate the final total: subtotal - discount + extended warranty cost.</li>
-     *   <li>Update the inventory, delegating to ProductService or
-     *       AccessoryService according to the type of each item.</li>
+     *   <li>Update the inventory through the item catalog, which knows
+     *       the catalog that owns each item.</li>
      *   <li>Persist the sale (its warranties are stored by WarrantyService
      *       when they are granted in step 5).</li>
      * </ol>
@@ -172,7 +169,7 @@ public class SaleService {
     private List<Product> resolveItems(List<String> productIds) {
         List<Product> items = new ArrayList<>();
         for (String productId : productIds) {
-            Product item = findSellableItem(productId);
+            Product item = itemCatalog.findItem(productId);
             ProductValidator.validateProductExists(item, productId);
             items.add(item);
         }
@@ -233,7 +230,7 @@ public class SaleService {
 
         for (Product item : items) {
 
-            if (!(item instanceof Console)) {
+            if (!item.isWarrantyEligible()) {
                 continue;
             }
 
@@ -248,35 +245,15 @@ public class SaleService {
     }
 
     /**
-     * Step 7 of the flow: reduces the stock of every item sold, delegating
-     * to the service that owns that item's inventory.
+     * Step 7 of the flow: reduces the stock of every item sold through the
+     * item catalog, which updates the catalog that owns each item.
      *
      * @param items items included in the sale
      */
     private void updateInventory(List<Product> items) {
         for (Product item : items) {
-            if (item instanceof Accessory) {
-                accessoryService.decreaseStock(item.getId(), 1);
-            } else {
-                productService.reduceStock(item.getId(), 1);
-            }
+            itemCatalog.decreaseStock(item, 1);
         }
-    }
-
-    /**
-     * Resolves a sale item id, which may belong either to the product
-     * catalogue (video games, consoles) or to the accessory catalogue
-     * (controllers, cables, memory units).
-     *
-     * @param itemId identifier of the item being sold
-     * @return the matching product or accessory, or {@code null} if neither exists
-     */
-    private Product findSellableItem(String itemId) {
-        Product product = productService.findById(itemId);
-        if (product != null) {
-            return product;
-        }
-        return accessoryService.findById(itemId);
     }
 
     /**
@@ -309,7 +286,7 @@ public class SaleService {
 
         for (Sale sale : sales) {
 
-            if (sale.getClient().getId().equals(clientId)) {
+            if (sale.belongsToClient(clientId)) {
                 result.add(sale);
             }
         }
@@ -327,7 +304,7 @@ public class SaleService {
 
         for (Sale sale : sales) {
 
-            if (sale.getSeller().getId().equals(sellerId)) {
+            if (sale.wasAttendedBy(sellerId)) {
                 result.add(sale);
             }
         }

@@ -13,6 +13,7 @@ import com.gamezone.service.ItemCatalog;
 import com.gamezone.service.PersonService;
 import com.gamezone.service.ProductService;
 import com.gamezone.service.PromotionService;
+import com.gamezone.service.SaleAssembler;
 import com.gamezone.service.ReturnService;
 import com.gamezone.service.SaleService;
 import com.gamezone.service.WarrantyService;
@@ -69,17 +70,18 @@ public class Main {
         PromotionRepository promotionRepository = new PromotionRepository("data/promotions.csv");
         PromotionService promotionService = new PromotionService(promotionRepository);
 
-        SalePersistence salePersistence = new SalePersistence("data/sales.txt", accessoryService);
+        SalePersistence salePersistence = new SalePersistence("data/sales.txt");
+        SaleAssembler saleAssembler = new SaleAssembler(salePersistence, personService, itemCatalog);
 
-        // The warranty module is built before the sales module. Its
-        // repository only stores ids and the service resolves them, so
-        // neither of them depends on SaleService (no circular dependency).
+        // The warranty module is built before the sales module. Both rebuild
+        // the stored sales through SaleAssembler, so the warranty module does
+        // not depend on SaleService (no circular dependency).
         WarrantyRepository warrantyRepository = new WarrantyRepository("data/warranties.csv");
         WarrantyService warrantyService = new WarrantyService(
-                warrantyRepository, salePersistence, productService, personService);
+                warrantyRepository, saleAssembler, productService);
 
         SaleService saleService = new SaleService(
-                salePersistence, productService, personService, accessoryService,
+                salePersistence, saleAssembler, personService, itemCatalog,
                 promotionService, warrantyService);
 
         ReturnRepository returnRepository = new ReturnRepository("data/returns.txt");

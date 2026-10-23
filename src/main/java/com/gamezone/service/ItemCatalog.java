@@ -46,6 +46,21 @@ public class ItemCatalog {
     }
 
     /**
+     * Takes units of a sold item from the stock of the catalog that owns it
+     * and persists the change in that catalog's file.
+     *
+     * @param item   item whose stock is decreased
+     * @param amount number of units to take
+     */
+    public void decreaseStock(Product item, int amount) {
+        if (item instanceof Accessory) {
+            accessoryService.decreaseStock(item.getId(), amount);
+        } else {
+            productService.reduceStock(item.getId(), amount);
+        }
+    }
+
+    /**
      * Returns units of an item to the stock of the catalog that owns it and
      * persists the change in that catalog's file.
      *

@@ -5,7 +5,6 @@ import com.gamezone.model.ExtendedWarranty;
 import com.gamezone.model.Product;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Warranty;
-import com.gamezone.persistence.SalePersistence;
 import com.gamezone.persistence.WarrantyRepository;
 import com.gamezone.persistence.WarrantyRepository.WarrantyRecord;
 
@@ -28,9 +27,7 @@ import java.util.UUID;
 public class WarrantyService {
 
     private final WarrantyRepository repository;
-    private final SalePersistence salePersistence;
     private final ProductService productService;
-    private final PersonService personService;
     private final List<Warranty> warranties;
 
     /**
@@ -38,21 +35,29 @@ public class WarrantyService {
      * stored, resolving the sale and product of each one from the
      * identifiers kept by the repository.
      *
-     * @param repository      repository used to persist warranty records
-     * @param salePersistence persistence used to rebuild the stored sales
-     * @param productService  service used to resolve product references
-     * @param personService   service used by SalePersistence to resolve
-     *                        clients and sellers
+     * @param repository     repository used to persist warranty records
+     * @param saleAssembler  assembler used to rebuild the stored sales
+     * @param productService service used to resolve product references
      */
     public WarrantyService(WarrantyRepository repository,
-                           SalePersistence salePersistence,
-                           ProductService productService,
-                           PersonService personService) {
+                           SaleAssembler saleAssembler,
+                           ProductService productService) {
+        this(repository, saleAssembler.loadSales(), productService);
+    }
+
+    /**
+     * Creates the service from the stored sales already rebuilt.
+     *
+     * @param repository     repository used to persist warranty records
+     * @param sales          stored sales, used to resolve the sale of each
+     *                       warranty
+     * @param productService service used to resolve product references
+     */
+    private WarrantyService(WarrantyRepository repository, List<Sale> sales,
+                            ProductService productService) {
         this.repository = repository;
-        this.salePersistence = salePersistence;
         this.productService = productService;
-        this.personService = personService;
-        this.warranties = loadWarranties();
+        this.warranties = loadWarranties(sales);
     }
 
     /**
@@ -61,12 +66,12 @@ public class WarrantyService {
      * discriminator. Records whose product or sale no longer exist are
      * skipped.
      *
+     * @param sales stored sales, used to resolve the sale of each warranty
      * @return the warranties reconstructed from persistence
      */
-    private List<Warranty> loadWarranties() {
+    private List<Warranty> loadWarranties(List<Sale> sales) {
 
         List<Warranty> result = new ArrayList<>();
-        List<Sale> sales = salePersistence.loadAll(productService, personService);
 
         for (WarrantyRecord record : repository.loadAll()) {
 

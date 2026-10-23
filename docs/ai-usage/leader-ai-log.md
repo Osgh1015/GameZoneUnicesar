@@ -176,3 +176,57 @@ The Technical Lead (Omar Sebastian Gamez Heredia) was responsible for the sales 
 
 **Solution obtained and decision taken:** Audited `Sale`, `SalePersistence`, `SaleService`, `ConsoleMenu`, `Main` and `ProductService.restoreStock` with the tool and recorded eight violations with their evidence on the audited commit. The creation of domain objects in `ConsoleMenu`, reported by Developer 1, was examined and kept as correct (Creator). In the consolidation I checked the coverage of the 43 classes, verified every cited line, assigned the definitive identifiers V-01 to V-20 in the order Developer 1 → Developer 2 → Technical Lead, split each boundary finding by owner and recorded four out-of-scope defects. Related findings that each owner can correct completely were kept as separate violations with a shared solution. Also wrote the answers to questions 2 and 5.
 
+## Requirement 7 — Phase 2: Correction
+
+## Entry 14
+
+**Date:** 2026-10-23 **Tool used:** Claude
+
+**Reason for use:** Correct the Information Expert and Polymorphism violations of the Technical Lead (V-13 to V-17) in `Sale`, `SaleService`, `ProductService.restoreStock` and `ConsoleMenu`, using the methods that Developer 1 added to the products and to `ExtendedWarranty` inside my task group.
+
+**Problem faced:** The history queries, the warranty listing and the sale flow navigated `Sale → Client`, `Sale → Seller` and `Warranty → Sale`, calculated the stock with `getQuantity`/`setQuantity` and decided with `instanceof Console` which products admit a warranty. The receipt also had a private `describeItemType` with one branch per product type. I had to change all of this without changing a single message of the menu, and some of the methods I needed (`isWarrantyEligible`, `getTypeLabel`, `quoteFor`) belonged to Developer 1's classes, so they had to exist before my commits.
+
+**Prompt used:** cómo aplicar Information Expert y Polymorphism en Sale, SaleService y el menú sin cambiar ningún mensaje, y en qué orden coordinar los métodos que tiene que agregar el Desarrollador 1
+
+**Solution obtained and decision taken:** Added `Sale.belongsToClient` and `Sale.wasAttendedBy` and used them in the history queries and in the listing of the warranties of a sale. `restoreStock` now asks `product.increaseStock`. The menu asks `ExtendedWarranty.quoteFor` for the price it offers. `SaleService`, the sale flow and the listing of sellable items ask `isWarrantyEligible()` and `getTypeLabel()` instead of checking classes, and `describeItemType` was removed. Developer 1 made S4, S5 and S6 first, so every commit compiled. I compared the output of the scripted run after each commit: no differences. Every suggested change was reviewed against the original code before committing it.
+
+
+
+## Entry 15
+
+**Date:** 2026-10-23 **Tool used:** Claude
+
+**Reason for use:** Correct V-18 (Indirection) and V-19 (Low Coupling): `SalePersistence` depended on `PersonService`, `ProductService` and `AccessoryService` to rebuild the sales, and `SaleService` looked up items and stock in two services with `instanceof`.
+
+**Problem faced:** `SalePersistence` was used by `SaleService` and by `WarrantyService` (Developer 2), and `WarrantyService` has to be built before `SaleService`, so making `SaleService` rebuild the sales would create a cycle. A damaged line of `sales.txt` also had to produce exactly the same `PersistenceException` at the same point as before, and a line whose client no longer exists had to be skipped as before. The change touched Developer 2's `WarrantyService` and the wiring in `Main`, and every commit had to compile.
+
+**Prompt used:** cómo quitar la dependencia de SalePersistence hacia los servicios sin crear un ciclo entre SaleService y WarrantyService, manteniendo el mismo comportamiento con archivos dañados
+
+**Solution obtained and decision taken:** `SalePersistence` now returns `SaleRecord` objects with the identifiers and the amounts as they were written. I created `SaleAssembler` in the service layer to rebuild the sales from those records, shared by `SaleService` and `WarrantyService`, so there is no cycle. `SaleService` uses `ItemCatalog` (Developer 2) for the lookup and the stock of the sold items. The order was additive: new code first with the old constructor kept `@Deprecated`, then Developer 2 moved `WarrantyService` (P5), then `Main` (M), then Developer 2 and I removed the deprecated code (P6, N). The damaged-file case was checked with a broken line of `sales.txt` (same message before and after), and the scripted run gave the same output after every commit.
+
+
+## Entry 16
+
+**Date:** 2026-10-23 **Tool used:** Claude
+
+**Reason for use:** Correct V-20 (High Cohesion): `ConsoleMenu` had 1026 lines with the seven submenus, the input readers and the main loop in one class.
+
+**Problem faced:** All the options share one `Scanner` over `System.in`, so the submenus could not create their own reader without losing input. The extraction had to be done in small commits that compile, one submenu at a time, with the same prompts, the same validation loops and the same handling of exceptions, and without changing `Main`.
+
+**Prompt used:** cómo dividir ConsoleMenu en un submenú por módulo compartiendo el mismo Scanner, en commits pequeños y sin cambiar la salida
+
+**Solution obtained and decision taken:** First moved the input readers to `ConsoleInput`, which wraps the single scanner (O). Then extracted one submenu per commit — `ProductMenu`, `PersonMenu`, `SaleMenu`, `AccessoryMenu`, `ReturnMenu`, `PromotionMenu`, `WarrantyMenu` — each receiving the shared `ConsoleInput` and only the services of its module (P to V). Finally `ConsoleMenu` kept only the main loop and the differentiated `catch` blocks, delegating to the submenus that it creates in its constructor with the services it already received, so `Main` did not change (W). After every extraction I compiled and ran the full script; the output was identical.
+
+
+## Entry 17
+
+**Date:** 2026-10-23 **Tool used:** Claude
+
+**Reason for use:** Close Phase 2: final non-regression verification, change log of the Technical Lead, after class diagram and README.
+
+**Problem faced:** The evidence had to show that the behavior of the whole system did not change after the 52 code commits of the three roles, including the returns that depend on the date of the run, and the documentation had to describe the new classes without modifying the documents of the previous requirements.
+
+**Prompt used:** cómo registrar la verificación final de no regresión y qué debe mostrar el diagrama de clases después de la corrección GRASP
+
+**Solution obtained and decision taken:** Ran the same script of 308 entries on the final branch on the same day as the baseline and compared the normalized output and data files with `diff`: 1676 identical lines. Recorded the result, my rows of the change log and the design decisions (the single `instanceof` left in `ItemCatalog`, `ConsoleMenu` creating its submenus, records with raw amounts) in `docs/grasp-refactor-log.md`. Added the after class diagram to `docs/grasp-class-diagram.md` and a GRASP section to the README. The Mermaid diagram was checked to render before committing.
+
