@@ -15,6 +15,7 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 | Module (requirement) | Classes and methods audited |
 |---|---|
 | People (Taller 1) | `Person`, `Client` (statement: `Customer`), `Seller`, `PersonRepository`, `PersonService` |
+| Accessories (Requerimiento 1) | `AccessoryRepository`, `AccessoryService` |
 
 ## Single Responsibility Principle (SRP)
 
@@ -22,17 +23,23 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 - **People — Correct.** `PersonRepository` only reads and writes the two people files; `PersonService` only registers and looks up people; `Client` and `Seller` hold their data and description.
 
+- **Accessories — Correct.** `AccessoryRepository` only handles `data/accessories.csv`; `AccessoryService` only handles the accessory catalogue and its stock.
+
 ## Open/Closed Principle (OCP)
 
 **Verdict:** _pending — audit in progress._
 
 - **People — Correct.** A new kind of person would be a new subclass of `Person` implementing `getDescription`; the services work with the concrete lists they own.
 
+- **Accessories — Correct, examined.** A new accessory type is a new subclass that reports its type (`getAccessoryType`, GRASP V-07), so `AccessoryService.listAccessoriesByType` does not change. The type tags of `AccessoryRepository` are accepted for the reason of Q1: it is the only class that knows the file format.
+
 ## Liskov Substitution Principle (LSP)
 
 **Verdict:** _pending — audit in progress._
 
 - **People — Correct.** `Client` and `Seller` implement `getDescription` without new preconditions or exceptions and keep the identity data of `Person`; any of them can be printed or validated as a `Person` (`PersonValidator.validateUniquePerson` receives `List<? extends Person>`).
+
+- **Accessories, promotions, returns and warranties — Not applicable.** The repositories and services in scope have no subclasses and do not extend any class.
 
 ## Interface Segregation Principle (ISP)
 
@@ -45,6 +52,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 **Verdict:** _pending — audit in progress._
 
 - **People — Violation (V-01).** `PersonService` depends on the concrete `PersonRepository`.
+
+- **Accessories — Violation (V-01).** Same for `AccessoryService`.
 
 ### V-01
 
