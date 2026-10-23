@@ -93,4 +93,14 @@ public abstract class Product {
      * @return true if this product belongs to the category
      */
     public abstract boolean belongsToCategory(String category);
+
+    /**
+     * Tells whether this product admits a warranty when it is sold. Only
+     * consoles do; every other product answers {@code false}.
+     *
+     * @return true if the product admits a warranty
+     */
+    public boolean isWarrantyEligible() {
+        return false;
+    }
 }

@@ -58,4 +58,14 @@ public class Console extends Product {
     public boolean belongsToCategory(String category) {
         return "CONSOLE".equalsIgnoreCase(category);
     }
+
+    /**
+     * A console admits the basic and the extended warranty.
+     *
+     * @return always true
+     */
+    @Override
+    public boolean isWarrantyEligible() {
+        return true;
+    }
 }
