@@ -157,4 +157,21 @@ Developer 1 (Santiago Andres Herrera Acuña) was responsible for the products mo
 
 **Related commits:** `<hash A>` … `<hash H>` (PR #<n>)
 
+## Requirement 8 — Phase 1: Audit
+
+## Entry 13
+
+**Date:** 2026-10-23 **Tool used:** Claude
+
+**Reason for use:** Audit the code under the responsibility of Developer 1, including what I created or changed in the GRASP correction, against the five SOLID principles.
+
+**Problem faced:** Some code had already been corrected in Requerimiento 7, so I had to tell apart what GRASP had solved for good (the category matching of `CategoryDiscount`, which was also an OCP problem) from what still breaks a SOLID principle (`ProductService` receives its repository by constructor but as a concrete class). The type tags of `ProductRepository` also look like an OCP problem.
+
+**Prompt used:** cómo revisar mis clases con los cinco principios SOLID y cómo saber si un instanceof en el repositorio rompe Open/Closed o es aceptable
+
+**Solution obtained and decision taken:** Recorded three violations with evidence on the audited commit: V-01 and V-02 (SRP, `Return` and `Warranty` lay out the receipt and the certificate inside the domain classes) and V-03 (DIP, `ProductService` depends on the concrete `ProductRepository`). OCP, LSP and ISP are correct in my scope. The type tags of the repository, the static validators and the product descriptions were examined and accepted with their reason. I reported to the Technical Lead the same SRP problem in `Sale.generateReceipt` and the two places where Developer 2's code may need something from my classes (`ItemCatalog` and the warranty kinds). Also wrote the answers to questions 1 and 3.
+
+**Related commits:** `<hash commit 1>` … `<hash commit 8>` (PR #<n>)
+
+
 
