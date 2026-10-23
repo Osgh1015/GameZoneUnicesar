@@ -121,4 +121,14 @@ public abstract class Accessory extends Product {
      * @return "CONTROLLER", "CABLE" or "MEMORY"
      */
     public abstract String getAccessoryType();
+
+    /**
+     * Every accessory (controller, cable or memory) is shown as "Accesorio".
+     *
+     * @return "Accesorio"
+     */
+    @Override
+    public String getTypeLabel() {
+        return "Accesorio";
+    }
 }

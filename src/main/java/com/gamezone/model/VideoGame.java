@@ -58,4 +58,12 @@ public class VideoGame extends Product {
     public boolean belongsToCategory(String category) {
         return "VIDEOGAME".equalsIgnoreCase(category);
     }
+
+    /**
+     * @return "Videojuego"
+     */
+    @Override
+    public String getTypeLabel() {
+        return "Videojuego";
+    }
 }
