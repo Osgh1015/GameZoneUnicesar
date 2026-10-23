@@ -230,3 +230,18 @@ The Technical Lead (Omar Sebastian Gamez Heredia) was responsible for the sales 
 
 **Solution obtained and decision taken:** Ran the same script of 308 entries on the final branch on the same day as the baseline and compared the normalized output and data files with `diff`: 1676 identical lines. Recorded the result, my rows of the change log and the design decisions (the single `instanceof` left in `ItemCatalog`, `ConsoleMenu` creating its submenus, records with raw amounts) in `docs/grasp-refactor-log.md`. Added the after class diagram to `docs/grasp-class-diagram.md` and a GRASP section to the README. The Mermaid diagram was checked to render before committing.
 
+## Requirement 8 — Phase 1: Audit
+
+## Entry 15
+
+**Date:** 2026-10-23 **Tool used:** Claude
+
+**Reason for use:** Audit the code under the responsibility of the Technical Lead against the five SOLID principles and consolidate the three reports.
+
+**Problem faced:** After the GRASP correction most of my code already looked well divided (`ConsoleMenu` split into submenus, `SaleAssembler`, constructor injection), so I had to tell apart what GRASP had really solved and what was still a SOLID problem. The sale registration depends on three services of Developer 2, and the returns module depends on my `SaleService`, so several findings crossed roles and had to be registered once, with the commits of each owner.
+
+**Prompt used:** cómo revisar SaleService, SaleAssembler y el menú principal con SOLID después de la corrección GRASP, y cómo consolidar tres auditorías con hallazgos de frontera
+
+**Solution obtained and decision taken:** Recorded four violations with evidence on the audited commit: V-01 (SRP, `Sale.generateReceipt`), V-02 (DIP, `SalePersistence` concrete), V-03 (ISP, the whole services of Developer 2 in the sale registration) and V-04 (OCP, the main menu lists every module in three places). LSP does not apply to my classes. The dependency on `ItemCatalog`, the submenus on their services and `Main` as composition root were examined and accepted. In the consolidation I checked the coverage of the 53 classes, verified every cited line, assigned V-01 to V-12 in the order Developer 1 → Developer 2 → Technical Lead, split the five boundary findings by owner and kept the out-of-scope defects of Requerimiento 7 untouched. Also wrote the answers to questions 2 and 5.
+
+
