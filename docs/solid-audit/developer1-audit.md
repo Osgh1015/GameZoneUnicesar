@@ -20,10 +20,11 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 | Returns (Requerimiento 3) | `Return`, `Sale.canBeReturned` |
 | Warranties (Requerimiento 4) | `Warranty`, `BasicWarranty`, `ExtendedWarranty` |
 | Exceptions and validation (Requerimiento 6) | `GameZoneException`, `ResourceNotFoundException`, `BusinessRuleException`, `InvalidDataException`, `PersistenceException`, `ProductValidator`, `PersonValidator`, `SaleValidator` |
+| GRASP correction (Requerimiento 7) | `Product.decreaseStock`/`increaseStock`, `belongsToCategory`, `isWarrantyEligible`, `getTypeLabel` and their overrides; `Accessory.getAccessoryType` and its overrides; `Return.belongsToClient`/`belongsToSale` and `calculatePaidRatio`; `Warranty.covers`/`belongsToSale`; `ExtendedWarranty.quoteFor`; `CategoryDiscount.calculateDiscount`; the constructors `ProductRepository(String)` and `ProductService(ProductRepository)` |
 
 ## Single Responsibility Principle (SRP)
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Violation — see V-01 and V-02.
 
 - **Products — Correct.** `Product` and its subclasses hold the product data and its description (`VideoGame.java:45`, `Console.java:45`), which the Taller defines as part of each product; `ProductRepository` only reads and writes `data/products.txt`; `ProductService` only applies the inventory rules and asks the repository to persist them.
 
@@ -65,7 +66,7 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 ## Open/Closed Principle (OCP)
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Correct — every hierarchy is extended by adding subclasses; the type tags of the repository were examined and accepted.
 
 - **Products — Correct for the hierarchy, accepted for the repository.** A new product type is a new subclass of `Product` that implements `getDescription`, `belongsToCategory` and `getTypeLabel` (`Product.java:86`, `:95`, `:113`); no existing class changes. `ProductRepository.toLine`/`fromLine` (`ProductRepository.java:107-128`) branch on the type and would change for a new type. This is **not** counted: a new product type brings new fields in the file, so the format changes anyway, and this class is the only one that knows the format (criterion of Q1).
 
@@ -81,7 +82,7 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 ## Liskov Substitution Principle (LSP)
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Correct — every subclass can replace its base class without changing the expected behavior.
 
 - **Products — Correct.** `VideoGame` and `Console` implement `getDescription`, `belongsToCategory` and `getTypeLabel` without stronger preconditions or new exceptions; `Console.isWarrantyEligible` (`Console.java:68`) only changes a value the base class declares as overridable (`Product.java:103`). `ProductRepository` and `ProductService` have no subclasses.
 
@@ -97,7 +98,7 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 ## Interface Segregation Principle (ISP)
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Correct — the clients in scope use what they depend on.
 
 - **Products — Correct.** `ProductService` uses every operation of `ProductRepository` (`save`, `load`). Developer 1's classes are mostly providers; how other roles' classes use `ProductService` is audited by them.
 
@@ -109,7 +110,7 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 ## Dependency Inversion Principle (DIP)
 
-**Verdict:** _pending — audit in progress._
+**Verdict:** Violation — see V-03.
 
 - **Products — Violation (V-03).** `ProductService` depends on the concrete `ProductRepository`.
 
@@ -129,3 +130,29 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 | Consequence | Changing the storage (another file format, a database, an in-memory store for a test run) requires editing `ProductService`. |
 | Proposed solution | Introduce a `ProductStore` interface (`save`, `load`) in the persistence package, implemented by `ProductRepository`, and make `ProductService` depend on it. The interface lives in persistence so that the layer rule `service → persistence` still holds; `Main` keeps passing `new ProductRepository("data/products.txt")`, so it does not change. |
 | Other role's code involved | No. |
+
+## GRASP additions (Requerimiento 7)
+
+- **Correct under the five principles.** Each method added in the GRASP correction answers one question with the class's own data (`belongsToCategory`, `isWarrantyEligible`, `getTypeLabel`, `getAccessoryType`, `Return.belongsToClient`/`belongsToSale`, `Warranty.covers`/`belongsToSale`) or one rule of the class (`decreaseStock`/`increaseStock`, `ExtendedWarranty.quoteFor`); the overrides keep the base contracts (LSP).
+- **Constructor injection of `ProductService`** removed the fixed file (GRASP V-02), but it injects the concrete repository: recorded above as V-03.
+
+## Summary of verdicts
+
+| Principle | Verdict | Violations |
+|---|---|---|
+| Single Responsibility Principle (SRP) | Violation | V-01, V-02 |
+| Open/Closed Principle (OCP) | Correct | — |
+| Liskov Substitution Principle (LSP) | Correct | — |
+| Interface Segregation Principle (ISP) | Correct | — |
+| Dependency Inversion Principle (DIP) | Violation | V-03 |
+
+Distinct violations: 3 (V-01 to V-03).
+
+## Notes
+
+- **Examined and accepted (not counted):** the type tags of `ProductRepository.toLine`/`fromLine` under OCP; the static validators under DIP; the descriptions of the products under SRP (the Taller defines `getDescription` as part of each product).
+- **Relation with GRASP:** the GRASP correction already removed an OCP problem in Developer 1's code — `CategoryDiscount` no longer maps category names to classes (Requerimiento 7, V-03).
+- **Reported to the Technical Lead** (problems whose origin is in another role's code, not audited here):
+    - `Sale.generateReceipt` (Technical Lead) lays out the sale receipt inside the domain class, the same SRP problem as V-01.
+    - `ItemCatalog` (Developer 2) depends on the concrete `ProductService` and decides with `instanceof Accessory` which catalog owns an item; correcting it may need `ProductService` to implement an abstraction of a catalog.
+    - `WarrantyRepository` and `WarrantyService` (Developer 2) decide the kind of each warranty with type tags and `instanceof ExtendedWarranty`; correcting it may need each warranty to report its kind.
