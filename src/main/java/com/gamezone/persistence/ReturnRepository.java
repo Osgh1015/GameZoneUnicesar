@@ -19,7 +19,7 @@ import java.util.*;
  * return service resolves them into sales and products, so the
  * persistence layer does not depend on any service.
  */
-public class ReturnRepository {
+public class ReturnRepository implements ReturnStore {
 
     private static final String SEPARATOR = ";";
     private static final String PRODUCTS_SEPARATOR = "\\|";
@@ -35,6 +35,7 @@ public class ReturnRepository {
     }
 
 
+    @Override
     public void saveAll(List<Return> returns) {
         try (FileWriter writer = new FileWriter(filePath)) {
             for (Return r : returns) {
@@ -46,6 +47,7 @@ public class ReturnRepository {
         }
     }
 
+    @Override
     public List<ReturnRecord> loadAll() {
         List<ReturnRecord> returns = new ArrayList<>();
         File file = new File(filePath);

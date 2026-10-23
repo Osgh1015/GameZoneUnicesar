@@ -1,7 +1,7 @@
 package com.gamezone.service;
 
 import com.gamezone.model.*;
-import com.gamezone.persistence.ReturnRepository;
+import com.gamezone.persistence.ReturnStore;
 import com.gamezone.persistence.ReturnRepository.ReturnRecord;
 
 import java.time.LocalDate;
@@ -16,7 +16,7 @@ import java.util.*;
  */
 public class ReturnService {
 
-    private final ReturnRepository repository;
+    private final ReturnStore repository;
     private final SaleService saleService;
     private final ItemCatalog itemCatalog;
     private final WarrantyService warrantyService;
@@ -33,7 +33,7 @@ public class ReturnService {
      * @param warrantyService service used to cancel the warranties of
      *                        returned items
      */
-    public ReturnService(ReturnRepository repository, SaleService saleService,
+    public ReturnService(ReturnStore repository, SaleService saleService,
                          ItemCatalog itemCatalog, WarrantyService warrantyService) {
         this.repository = repository;
         this.saleService = saleService;
