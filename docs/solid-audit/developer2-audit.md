@@ -19,6 +19,7 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 | Promotions (Requerimiento 2) | `PromotionRepository`, `PromotionService` |
 | Returns (Requerimiento 3) | `ReturnRepository` (with `ReturnRecord`), `ReturnService` (including the monthly balance) |
 | Warranties (Requerimiento 4) | `WarrantyRepository` (with `WarrantyRecord`), `WarrantyService` |
+| Exceptions and validation (Requerimiento 6) | Use of the custom exceptions and of the validators in the services and repositories above |
 
 ## Single Responsibility Principle (SRP)
 
@@ -33,6 +34,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 - **Returns — Violation (V-03).** `ReturnService` also produces the monthly balance. `ReturnRepository` only handles `data/returns.txt` and returns `ReturnRecord` objects.
 
 - **Warranties — Correct.** `WarrantyService` assigns, queries and cancels warranties and rebuilds them from their records; `WarrantyRepository` only handles its file.
+
+- **Exceptions and validation — Correct.** `PersonService` delegates every check to `PersonValidator`, and `PersonRepository` translates file errors into `PersistenceException`, so the service keeps only its rules.
 
 ### V-03
 
@@ -118,6 +121,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 - **Returns — Violation (V-01, V-02).** `ReturnService` depends on the concrete `ReturnRepository` and on the concrete `SaleService`.
 
 - **Warranties — Violation (V-01).** `WarrantyService` depends on the concrete `WarrantyRepository`.
+
+- **Validation — Correct, examined.** `PersonService` calls the static methods of `PersonValidator`; they are stateless rule checks with no alternative implementation, so this was not counted.
 
 ### V-01
 
