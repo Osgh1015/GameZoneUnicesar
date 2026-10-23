@@ -56,6 +56,18 @@ public class ExtendedWarranty extends Warranty {
      */
     @Override
     public double getAdditionalCost() {
-        return Math.round(getProduct().getPrice() * COST_RATE * 100.0) / 100.0;
+        return Math.round(quoteFor(getProduct()) * 100.0) / 100.0;
+    }
+
+    /**
+     * Calculates, before rounding, the cost of the extended coverage for a
+     * product: ten percent of its price. It is used to offer the coverage
+     * before the warranty exists.
+     *
+     * @param product product to cover
+     * @return the cost of the extended coverage for that product
+     */
+    public static double quoteFor(Product product) {
+        return product.getPrice() * COST_RATE;
     }
 }
