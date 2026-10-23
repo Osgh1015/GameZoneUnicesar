@@ -396,7 +396,9 @@ public class ConsoleMenu {
         boolean anyProduct = false;
         for (Product product : productService.listAll()) {
             if (product.getQuantity() > 0) {
-                String type = product instanceof Console ? "Consola - admite garantía extendida" : "Videojuego";
+                String type = product.isWarrantyEligible()
+                        ? product.getTypeLabel() + " - admite garantía extendida"
+                        : product.getTypeLabel();
                 System.out.printf("  %s | %s [%s] | $%.2f | stock: %d%n",
                         product.getId(), product.getTitle(), type, product.getPrice(), product.getQuantity());
                 anyProduct = true;
