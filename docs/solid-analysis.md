@@ -49,7 +49,19 @@ The lesson for the correction is that a GRASP fix is not undone by the SOLID fix
 
 ## Q4. Non-regression strategy
 
-*To be written by Developer 2.*
+*Written by Developer 2.*
+
+The SOLID correction is a refactor, so "nothing broke" has the same meaning as in Requerimiento 7: for the same inputs, every menu operation prints the same text and leaves the same content in the files of `data/`. The team reuses the verification built for Requerimiento 7, which already covers every operation of the menu:
+
+1. **Compilation.** `mvn clean compile` (or *Build → Rebuild Project*) before every commit of code and before every Pull Request, so the shared branch always compiles.
+2. **Scripted run of the whole menu.** The application runs from a scratch copy of the data files, never from the repository's own `data/`, with the fixed input script of 308 entries: products, people, accessories, promotions, sales (including every error case), returns, the monthly balance, warranties, an invalid option and exit. The data are the files of `data/` plus three seeded records (a sale of today with warranties and a previous return, and a sale of 45 days ago), so that the returns and warranty operations can be exercised on any day.
+3. **Comparison.** The standard output and the final content of every data file are captured; the random identifiers become `<uuid>` and the dates of the run become `<TODAY>` and `<OLD>`, and the normalized result is compared with the baseline line by line with `diff`.
+
+When it runs: on `develop` before the first correction (baseline), on the branch before every Pull Request of Phase 2, and at the end of the phase over all the operations.
+
+Because Requerimiento 7 ended with the same normalized result as its own baseline, the baseline of Requerimiento 8 also has to match it. If it does not, the difference is investigated before any SOLID correction starts.
+
+The evidence shown at the end is recorded in `docs/solid-refactor-log.md`: the commit of the baseline, the number of entries of the script and of normalized lines, and the result of the comparison, which must be **no differences**. Defects recorded as out of scope (in Requerimiento 7 or in this one) are part of the expected output, so a refactor that changes one of them by accident also shows up in the comparison.
 
 ## Q5. Order of the corrections and coordination
 
