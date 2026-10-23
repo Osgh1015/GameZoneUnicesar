@@ -16,6 +16,7 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 |---|---|
 | People (Taller 1) | `Person`, `Client` (the statement calls it `Customer`), `Seller`, `PersonRepository`, `PersonService` |
 | Accessories (Requerimiento 1) | `AccessoryRepository`, `AccessoryService` |
+| Promotions (Requerimiento 2) | `PromotionRepository`, `PromotionService` |
 
 ## Information Expert
 
@@ -24,6 +25,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **People — Correct.** `Client.getDescription()` and `Seller.getDescription()` build the description from their own fields; `PersonService.findClientById` and `findVendorById` (`PersonService.java:88`, `:103`) search the lists the service owns.
 
 - **Accessories — Mixed.** `AccessoryService.findAccessoriesCompatibleWith` (`AccessoryService.java:99`) asks each accessory `isCompatibleWith(consoleId)` instead of reading its list, which is correct; the stock update is a violation (V-02).
+
+- **Promotions — Correct.** `PromotionService.listActivePromotions` (`PromotionService.java:141`) asks each promotion `isActive(date)`, and `findBestPromotionFor` (`PromotionService.java:160`) asks each promotion `calculateDiscount(sale)` and only compares the results.
 
 ### V-02
 
@@ -46,6 +49,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 - **Accessories — Correct.** `AccessoryRepository.fromLine` (`AccessoryRepository.java:131-135`) creates each accessory type from the record it reads.
 
+- **Promotions — Correct.** `PromotionService.registerPercentageDiscount`, `registerCategoryDiscount` and `registerBulkPurchaseDiscount` (`PromotionService.java:48`, `:71`, `:117`) create the promotions they register and aggregate.
+
 ## Controller
 
 **Verdict:** _pending — audit in progress._
@@ -57,6 +62,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **People — Violation (V-01).** `Person`, `Client` and `Seller` import nothing outside the model, and `PersonRepository` depends only on the model and the exceptions, which is correct; `PersonService` is tied to the concrete `PersonRepository` and to its files because it creates it.
 
 - **Accessories — Correct except for V-03.** `AccessoryService` receives its repository by constructor; `matchesType` additionally ties it to `Controller`, `Cable` and `Memory` (part of V-03).
+
+- **Promotions — Correct.** `PromotionService` receives its repository by constructor and depends only on the model; `PromotionRepository` depends only on the model.
 
 ### V-01
 
@@ -79,6 +86,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 - **Accessories — Correct.** `AccessoryRepository` only handles `data/accessories.csv`; `AccessoryService` only handles the accessory rules.
 
+- **Promotions — Correct.** `PromotionService` holds registration, validation of the promotion data and selection of the best promotion — all promotion rules.
+
 ## Polymorphism
 
 **Verdict:** _pending — audit in progress._
@@ -86,6 +95,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **People — Correct.** `Person.getDescription()` is abstract and `Client`/`Seller` override it; no code in scope asks a person for its concrete type.
 
 - **Accessories — Mixed.** `AccessoryRepository.toLine`/`fromLine` (`AccessoryRepository.java:100-110`, `:131-135`) branch on the concrete type and on a type tag; this is **not** treated as a violation: the repository is a Pure Fabrication whose job is to keep the file format out of the model. `AccessoryService.matchesType` is a violation (V-03).
+
+- **Promotions — Correct.** `findBestPromotionFor` relies on the polymorphic `calculateDiscount` and never asks for the type of a promotion; the type tags of `PromotionRepository` (`PromotionRepository.java:95-104`, `:120-125`) are judged correct for the same reason as the accessory repository.
 
 ### V-03
 
@@ -108,6 +119,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 - **Accessories — Correct.** `AccessoryRepository` keeps the CSV format out of the accessory hierarchy.
 
+- **Promotions — Correct.** `PromotionRepository` keeps the CSV format out of the promotion hierarchy.
+
 ## Indirection
 
 **Verdict:** _pending — audit in progress._
@@ -116,6 +129,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 - **Accessories — Correct.** `AccessoryService` mediates between the menu and `AccessoryRepository`.
 
+- **Promotions — Correct.** `PromotionService` mediates between the menu, the sale registration and `PromotionRepository`.
+
 ## Protected Variations
 
 **Verdict:** _pending — audit in progress._
@@ -123,3 +138,5 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **People — Violation (V-01).** A change of the file format is confined to `PersonRepository`, which is correct, but the file locations are fixed inside the repository and the service creates its own repository, so a change of location is not protected.
 
 - **Accessories — Violation (V-03).** The vocabulary of accessory types and its mapping to classes is hard-coded in the service. The full analysis is recorded once, under Polymorphism.
+
+- **Promotions — Correct.** `validateCategory` (`PromotionService.java:82`) checks the category against the constants of `CategoryDiscount`, so the list of categories lives in one place.
