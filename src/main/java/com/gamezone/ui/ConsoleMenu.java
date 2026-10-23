@@ -432,7 +432,7 @@ public class ConsoleMenu {
 
         Product product = productService.findById(productId);
 
-        if (!(product instanceof Console)) {
+        if (product == null || !product.isWarrantyEligible()) {
             return;
         }
 
