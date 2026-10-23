@@ -18,6 +18,7 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 | Accessories (Requerimiento 1) | `AccessoryRepository`, `AccessoryService` |
 | Promotions (Requerimiento 2) | `PromotionRepository`, `PromotionService` |
 | Returns (Requerimiento 3) | `ReturnRepository`, `ReturnService` (including the monthly balance: `calculateMonthlySales`, `calculateMonthlyReturns`, `generateMonthlyBalance`) |
+| Warranties (Requerimiento 4) | `WarrantyRepository`, `WarrantyService` |
 
 ## Information Expert
 
@@ -30,6 +31,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **Promotions — Correct.** `PromotionService.listActivePromotions` (`PromotionService.java:141`) asks each promotion `isActive(date)`, and `findBestPromotionFor` (`PromotionService.java:160`) asks each promotion `calculateDiscount(sale)` and only compares the results.
 
 - **Returns — Violation (V-04, V-05).** The monthly balance asks each sale `calculateFinalTotal()` (`ReturnService.java:224`) and each return `getRefundAmount()` (`:242`), and the 30-day rule is asked to the sale with `canBeReturned()` (`:71`), which is correct; but the queries navigate the associations of `Return` (V-04) and the registration searches the products of the sale by itself (V-05).
+
+- **Warranties — Mixed.** `listActiveWarranties` (`WarrantyService.java:185`) asks each warranty `isActive(today)` and the costs are asked with `getAdditionalCost()` (`:290`, `:294`, `:321`), which is correct; the coverage checks navigate the warranty's associations (V-08).
 
 ### V-02
 
@@ -70,6 +73,19 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 | Proposed solution | Ask the sale: `sale.findProduct(productId)` and `sale.countUnitsOf(productId)`, and remove `countSoldUnits`. Pattern applied: Information Expert. |
 | Other role's code involved | Yes — `Sale` belongs to the Technical Lead; the Technical Lead must add the two methods. |
 
+### V-08
+
+| Field | Content |
+|---|---|
+| ID | V-08 |
+| Pattern | Information Expert |
+| Module | Warranties (Requerimiento 4) and integration adjustments A2 and A7 (Requerimiento 5) |
+| Evidence | `WarrantyService.findWarrantyByProduct(String, String)`, `WarrantyService.java:211-212`, and `WarrantyService.cancelWarranties(String, String)`, `WarrantyService.java:270-271`: `boolean sameProduct = warranty.getProduct().getId().equals(productId); boolean sameSale = warranty.getSale().getId().equals(saleId);`; `WarrantyService.calculateWarrantyCost(String)`, `WarrantyService.java:320`: `warranty.getSale().getId().equals(saleId)` |
+| Explanation | The service navigates the associations of the warranty to decide whether it covers a product in a sale. The warranty holds its product and its sale and is the expert to answer that question. |
+| Consequence | The same comparison is written three times in the service, and the service depends on the internal structure of `Warranty`. |
+| Proposed solution | Ask the warranty: `warranty.covers(productId, saleId)` and `warranty.belongsToSale(saleId)`. Pattern applied: Information Expert. |
+| Other role's code involved | Yes — `Warranty` is Developer 1's code; Developer 1 must add the two methods. |
+
 ## Creator
 
 **Verdict:** _pending — audit in progress._
@@ -81,6 +97,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **Promotions — Correct.** `PromotionService.registerPercentageDiscount`, `registerCategoryDiscount` and `registerBulkPurchaseDiscount` (`PromotionService.java:48`, `:71`, `:117`) create the promotions they register and aggregate.
 
 - **Returns — Correct.** `ReturnService.registerReturn` (`ReturnService.java:95`) creates the `Return` it records, with the sale and items it has just validated.
+
+- **Warranties — Correct.** `WarrantyService.assignBasicWarranty` and `assignExtendedWarranty` (`WarrantyService.java:124`, `:151`) create the warranties they record; `loadWarranties` (`:81-82`) rebuilds each type from the resolved record.
 
 ## Controller
 
@@ -97,6 +115,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **Promotions — Correct.** `PromotionService` receives its repository by constructor and depends only on the model; `PromotionRepository` depends only on the model.
 
 - **Returns — Violation (V-06).** `ReturnService` receives all its collaborators by constructor, but `ReturnRepository` depends on three services.
+
+- **Warranties — Correct, with a boundary note.** `WarrantyRepository` returns `WarrantyRecord` objects and does not depend on any service. `WarrantyService` depends on `SalePersistence` and receives `PersonService` only to pass it to `SalePersistence.loadAll` (`WarrantyService.java:69`); this exists because `Main` builds the warranty module before `SaleService` to avoid a cycle, and changing it requires changing `SalePersistence` and `Main` (Technical Lead). It is reported to the Technical Lead instead of being recorded here.
 
 ### V-01
 
@@ -136,6 +156,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 - **Returns — Correct.** `ReturnService` groups return registration, return queries and the monthly balance (`ReturnService.java:220-258`), which the requirement defines as part of the returns module; the balance only adds the totals that each sale and each return already calculate.
 
+- **Warranties — Correct.** `WarrantyRepository` only handles `data/warranties.csv`; `WarrantyService` only assigns, queries and cancels warranties.
+
 ## Polymorphism
 
 **Verdict:** _pending — audit in progress._
@@ -147,6 +169,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **Promotions — Correct.** `findBestPromotionFor` relies on the polymorphic `calculateDiscount` and never asks for the type of a promotion; the type tags of `PromotionRepository` (`PromotionRepository.java:95-104`, `:120-125`) are judged correct for the same reason as the accessory repository.
 
 - **Returns — Violation (V-07).** `registerReturn` decides with `instanceof` which items have warranties and which catalog restores their stock.
+
+- **Warranties — Correct.** The costs are asked polymorphically with `getAdditionalCost()`. The `BASIC`/`EXTENDED` tag of `WarrantyRepository.toLine` (`WarrantyRepository.java:126`) and of `loadWarranties` (`WarrantyService.java:81-82`) is serialization, judged correct like the other repositories. `findWarrantyByProduct` and `cancelWarranties` (`:215`, `:277`) distinguish the extended warranty because the rule itself is about the two kinds (prefer the extended coverage; cancel at most one of each kind per returned unit); they ask nothing that the warranty could answer polymorphically, so they are not recorded as a violation.
 
 ### V-03
 
@@ -186,6 +210,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 - **Returns — Correct.** `ReturnRepository` keeps the file format out of `Return` (its dependency on services is recorded under Low Coupling, V-06).
 
+- **Warranties — Correct.** `WarrantyRepository` and its `WarrantyRecord` are fabrications that store only identifiers, so the persistence layer does not need any service.
+
 ## Indirection
 
 **Verdict:** _pending — audit in progress._
@@ -198,6 +224,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 - **Returns — Violation (V-07).** No intermediary exists between the return module and the two catalogs of sellable items, so `ReturnService` and `ReturnRepository` talk to both and repeat the lookup order. The full analysis is recorded once, under Polymorphism.
 
+- **Warranties — Correct.** `WarrantyService` mediates between the sale registration, the returns and `WarrantyRepository`.
+
 ## Protected Variations
 
 **Verdict:** _pending — audit in progress._
@@ -207,3 +235,5 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **Accessories — Violation (V-03).** The vocabulary of accessory types and its mapping to classes is hard-coded in the service. The full analysis is recorded once, under Polymorphism.
 
 - **Promotions — Correct.** `validateCategory` (`PromotionService.java:82`) checks the category against the constants of `CategoryDiscount`, so the list of categories lives in one place.
+
+- **Warranties — Correct.** A new warranty type changes `WarrantyRepository` and `loadWarranties` only, and the costs keep being asked polymorphically.
