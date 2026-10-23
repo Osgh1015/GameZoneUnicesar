@@ -5,12 +5,15 @@ import com.gamezone.model.ExtendedWarranty;
 import com.gamezone.model.Product;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Warranty;
+import com.gamezone.model.WarrantyKind;
 import com.gamezone.persistence.WarrantyStore;
 import com.gamezone.persistence.WarrantyRepository.WarrantyRecord;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -82,18 +85,30 @@ public class WarrantyService {
                 continue;
             }
 
-            Warranty warranty = switch (record.type()) {
-                case "BASIC" -> new BasicWarranty(record.id(), product, sale, record.startDate());
-                case "EXTENDED" -> new ExtendedWarranty(record.id(), product, sale, record.startDate());
-                default -> null;
-            };
+            WarrantyKind kind = findKind(record.type());
 
-            if (warranty != null) {
-                result.add(warranty);
+            if (kind != null) {
+                result.add(kind.create(record.id(), product, sale, record.startDate()));
             }
         }
 
         return result;
+    }
+
+    /**
+     * Finds the kind of warranty stored with the given code.
+     *
+     * @param code code written in the file ("BASIC", "EXTENDED", ...)
+     * @return the kind, or {@code null} when the code is unknown, so that
+     *         the record is skipped
+     */
+    private WarrantyKind findKind(String code) {
+        for (WarrantyKind kind : WarrantyKind.values()) {
+            if (kind.name().equals(code)) {
+                return kind;
+            }
+        }
+        return null;
     }
 
     /**
@@ -214,7 +229,7 @@ public class WarrantyService {
         for (Warranty warranty : warranties) {
 
             if (warranty.covers(productId, saleId)) {
-                if (warranty instanceof ExtendedWarranty) {
+                if (warranty.getKind().isPreferredCoverage()) {
                     return warranty;
                 }
                 found = warranty;
@@ -264,36 +279,24 @@ public class WarrantyService {
      */
     public double cancelWarranties(String productId, String saleId) {
 
-        Warranty basicToCancel = null;
-        Warranty extendedToCancel = null;
+        // At most one warranty of each kind is cancelled per returned unit.
+        Map<WarrantyKind, Warranty> toCancel = new EnumMap<>(WarrantyKind.class);
 
         for (Warranty warranty : warranties) {
 
-            if (!warranty.covers(productId, saleId)) {
-                continue;
-            }
-
-            if (warranty instanceof ExtendedWarranty) {
-                if (extendedToCancel == null) {
-                    extendedToCancel = warranty;
-                }
-            } else if (basicToCancel == null) {
-                basicToCancel = warranty;
+            if (warranty.covers(productId, saleId)) {
+                toCancel.putIfAbsent(warranty.getKind(), warranty);
             }
         }
 
         double refundableCost = 0.0;
 
-        if (basicToCancel != null) {
-            warranties.remove(basicToCancel);
-            refundableCost += basicToCancel.getAdditionalCost();
-        }
-        if (extendedToCancel != null) {
-            warranties.remove(extendedToCancel);
-            refundableCost += extendedToCancel.getAdditionalCost();
+        for (Warranty warranty : toCancel.values()) {
+            warranties.remove(warranty);
+            refundableCost += warranty.getAdditionalCost();
         }
 
-        if (basicToCancel != null || extendedToCancel != null) {
+        if (!toCancel.isEmpty()) {
             repository.saveAll(warranties);
         }
 
