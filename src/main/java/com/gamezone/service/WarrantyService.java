@@ -27,7 +27,7 @@ import java.util.UUID;
  *
  * Responsabilidad: Desarrollador 2 - Servicio de garantias.
  */
-public class WarrantyService {
+public class WarrantyService implements WarrantyAssigner {
 
     private final WarrantyStore repository;
     private final ProductService productService;
@@ -136,6 +136,7 @@ public class WarrantyService {
      * @param startDate date on which the coverage begins
      * @return the basic warranty that was granted
      */
+    @Override
     public BasicWarranty assignBasicWarranty(
             Product product,
             Sale sale,
@@ -163,6 +164,7 @@ public class WarrantyService {
      * @param startDate date on which the coverage begins
      * @return the extended warranty that was granted
      */
+    @Override
     public ExtendedWarranty assignExtendedWarranty(
             Product product,
             Sale sale,
