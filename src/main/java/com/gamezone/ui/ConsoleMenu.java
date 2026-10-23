@@ -13,6 +13,7 @@ import com.gamezone.service.ReturnService;
 import com.gamezone.service.SaleService;
 import com.gamezone.service.WarrantyService;
 
+import java.util.List;
 import java.util.Scanner;
 
 /**
@@ -30,13 +31,7 @@ import java.util.Scanner;
 public class ConsoleMenu {
 
     private final ConsoleInput userInput = new ConsoleInput(new Scanner(System.in));
-    private final ProductMenu productMenu;
-    private final PersonMenu personMenu;
-    private final SaleMenu saleMenu;
-    private final AccessoryMenu accessoryMenu;
-    private final ReturnMenu returnMenu;
-    private final PromotionMenu promotionMenu;
-    private final WarrantyMenu warrantyMenu;
+    private final List<MenuOption> options;
 
     /**
      * Creates the console menu with the services of every module.
@@ -53,14 +48,15 @@ public class ConsoleMenu {
                        SaleService saleService, AccessoryService accessoryService,
                        ReturnService returnService, PromotionService promotionService,
                        WarrantyService warrantyService) {
-        this.productMenu = new ProductMenu(userInput, productService);
-        this.personMenu = new PersonMenu(userInput, personService);
-        this.saleMenu = new SaleMenu(userInput, productService, accessoryService, saleService, warrantyService);
-        this.accessoryMenu = new AccessoryMenu(userInput, accessoryService);
-        this.returnMenu = new ReturnMenu(userInput, returnService,
-                new MonthlyBalanceService(saleService, returnService));
-        this.promotionMenu = new PromotionMenu(userInput, promotionService);
-        this.warrantyMenu = new WarrantyMenu(userInput, warrantyService);
+        this.options = List.of(
+                new ProductMenu(userInput, productService),
+                new PersonMenu(userInput, personService),
+                new SaleMenu(userInput, productService, accessoryService, saleService, warrantyService),
+                new AccessoryMenu(userInput, accessoryService),
+                new ReturnMenu(userInput, returnService,
+                        new MonthlyBalanceService(saleService, returnService)),
+                new PromotionMenu(userInput, promotionService),
+                new WarrantyMenu(userInput, warrantyService));
     }
 
     /**
@@ -76,55 +72,23 @@ public class ConsoleMenu {
 
         while (running) {
             System.out.println("\n=== GAMEZONE UNICESAR ===");
-            System.out.println("1. Menú de productos");
-            System.out.println("2. Menú de personas");
-            System.out.println("3. Menú de ventas");
-            System.out.println("4. Gestión de accesorios");
-            System.out.println("5. Gestión de devoluciones");
-            System.out.println("6. Gestión de promociones");
-            System.out.println("7. Gestión de garantías");
+            for (int i = 0; i < options.size(); i++) {
+                System.out.println((i + 1) + ". " + options.get(i).getTitle());
+            }
             System.out.println("0. Salir");
             System.out.print("Seleccione una opción: ");
 
             String option = userInput.nextLine();
 
             try {
-                switch (option) {
-                    case "1":
-                        productMenu.show();
-                        break;
-
-                    case "2":
-                        personMenu.show();
-                        break;
-
-                    case "3":
-                        saleMenu.show();
-                        break;
-
-                    case "4":
-                        accessoryMenu.show();
-                        break;
-
-                    case "5":
-                        returnMenu.show();
-                        break;
-
-                    case "6":
-                        promotionMenu.show();
-                        break;
-
-                    case "7":
-                        warrantyMenu.show();
-                        break;
-
-                    case "0":
-                        running = false;
-                        System.out.println("¡Hasta la próxima!");
-                        break;
-
-                    default:
-                        System.out.println("Opción inválida.");
+                MenuOption chosen = findOption(option);
+                if (chosen != null) {
+                    chosen.show();
+                } else if (option.equals("0")) {
+                    running = false;
+                    System.out.println("¡Hasta la próxima!");
+                } else {
+                    System.out.println("Opción inválida.");
                 }
             } catch (ResourceNotFoundException e) {
                 System.out.println("No se encontró el recurso solicitado: " + e.getMessage());
@@ -143,4 +107,19 @@ public class ConsoleMenu {
         }
     }
 
+    /**
+     * Finds the option whose number (its position in the main menu, from 1)
+     * is exactly the text typed by the user.
+     *
+     * @param option text typed by the user
+     * @return the chosen option, or {@code null} if no option has that number
+     */
+    private MenuOption findOption(String option) {
+        for (int i = 0; i < options.size(); i++) {
+            if (option.equals(String.valueOf(i + 1))) {
+                return options.get(i);
+            }
+        }
+        return null;
+    }
 }
