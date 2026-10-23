@@ -98,10 +98,7 @@ public class Return {
      * @return a value between 0 and 1; 1 when the sale had no discount
      */
     public double calculatePaidRatio() {
-        double itemsSubtotal = 0.0;
-        for (Product product : originalSale.getProducts()) {
-            itemsSubtotal += product.getPrice();
-        }
+        double itemsSubtotal = originalSale.calculateTotal();
         if (itemsSubtotal <= 0) {
             return 1.0;
         }

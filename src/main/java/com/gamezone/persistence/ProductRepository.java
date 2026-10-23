@@ -27,11 +27,12 @@ public class ProductRepository {
     private final String filePath;
 
     /**
-     * Creates the repository that stores the products in
-     * {@code data/products.txt}.
+     * Creates the repository that stores the products in the given file.
+     *
+     * @param filePath path of the products file
      */
-    public ProductRepository() {
-        this.filePath = "data/products.txt";
+    public ProductRepository(String filePath) {
+        this.filePath = filePath;
     }
 
     /**

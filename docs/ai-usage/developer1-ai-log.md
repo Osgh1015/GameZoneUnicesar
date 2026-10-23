@@ -141,3 +141,20 @@ Developer 1 (Santiago Andres Herrera Acuña) was responsible for the products mo
 
 **Related commits:** `<hash commit 1>` … `<hash commit 8>` (PR #<n>)
 
+## Requirement 7 — Phase 2: Correction
+
+## Entry 12
+
+**Date:** 2026-10-23 **Tool used:** Claude
+
+**Reason for use:** Correct the violations assigned to Developer 1 in the consolidated audit without changing what the user sees.
+
+**Problem faced:** The corrections had to keep exactly the same results: the same products must receive a category discount for every target string, the refund of a return must keep the same value, and `Main` (Technical Lead) still created `ProductService` with its old constructor, so removing it at once would have left the project without compiling.
+
+**Prompt used:** cómo corregir las violaciones del desarrollador 1 sin cambiar el comportamiento del menú y en qué orden hacer los commits para que siempre compile
+
+**Solution obtained and decision taken:** `Product` received `decreaseStock`/`increaseStock` and the abstract `belongsToCategory(String)`, implemented by `VideoGame`, `Console` and `Accessory` ignoring case as before; `CategoryDiscount` delegates to it and lost its `instanceof` chain; `Return.calculatePaidRatio` asks the sale for `calculateTotal()`; `ProductRepository` and `ProductService` received constructors with the file path and the repository. The old constructors were kept as `@Deprecated` until the Technical Lead rewired `Main` inside this task group, and then removed, so every commit compiles. The same scripted run of the menu was executed before and after the corrections and the outputs, including the data files, were identical.
+
+**Related commits:** `<hash A>` … `<hash H>` (PR #<n>)
+
+

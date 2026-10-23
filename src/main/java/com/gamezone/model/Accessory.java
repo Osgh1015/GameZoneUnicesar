@@ -101,4 +101,18 @@ public abstract class Accessory extends Product {
         }
         return String.join(", ", compatibleConsoleIds);
     }
+
+    /**
+     * Every accessory (controller, cable or memory) belongs to the
+     * "ACCESSORY" category.
+     *
+     * @param category category name
+     * @return true if the category is "ACCESSORY", ignoring case
+     */
+
+    @Override
+    public boolean belongsToCategory(String category) {
+        return "ACCESSORY".equalsIgnoreCase(category);
+    }
 }
+

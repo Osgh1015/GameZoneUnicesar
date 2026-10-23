@@ -18,7 +18,7 @@ public abstract class Product {
      * @param price    unit price of the product
      * @param quantity quantity currently available in inventory
      */
-    
+
     public Product(String id, String title, double price, int quantity) {
         this.id = id;
         this.title = title;
@@ -59,6 +59,24 @@ public abstract class Product {
     }
 
     /**
+     * Decreases the stock of this product by the given amount.
+     *
+     * @param amount quantity to subtract
+     */
+    public void decreaseStock(int amount) {
+        this.quantity -= amount;
+    }
+
+    /**
+     * Increases the stock of this product by the given amount.
+     *
+     * @param amount quantity to add
+     */
+    public void increaseStock(int amount) {
+        this.quantity += amount;
+    }
+
+    /**
      * Builds a complete textual description of the product, integrating
      * the particular characteristics of each subclass. Every subclass
      * must provide its own implementation.
@@ -66,4 +84,13 @@ public abstract class Product {
      * @return a full description of the product
      */
     public abstract String getDescription();
+
+    /**
+     * Tells whether this product belongs to the given promotion category.
+     * Each subclass answers for its own category, ignoring case.
+     *
+     * @param category category name ("VIDEOGAME", "CONSOLE" or "ACCESSORY")
+     * @return true if this product belongs to the category
+     */
+    public abstract boolean belongsToCategory(String category);
 }

@@ -26,12 +26,14 @@ public class ProductService {
     private final List<Product> products;
 
     /**
-     * Creates the service and loads the products already stored on disk.
+     * Creates the service and loads the products already stored by the
+     * given repository.
      *
+     * @param repository repository that stores the products
      * @throws PersistenceException if the products file cannot be read
      */
-    public ProductService() {
-        this.repository = new ProductRepository();
+    public ProductService(ProductRepository repository) {
+        this.repository = repository;
         this.products = repository.load();
     }
 
@@ -109,7 +111,7 @@ public class ProductService {
         Product product = findById(productId);
         ProductValidator.validateProductExists(product, productId);
         ProductValidator.validateStockAvailability(product, amount);
-        product.setQuantity(product.getQuantity() - amount);
+        product.decreaseStock(amount);
         repository.save(products);
     }
 

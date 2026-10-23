@@ -47,4 +47,15 @@ public class Console extends Product {
                 "Console: %s | Brand: %s | Model: %s | Generation: %d | Price: %.2f | Stock: %d",
                 getTitle(), brand, model, generation, getPrice(), getQuantity());
     }
+
+    /**
+     * A console belongs to the "CONSOLE" category.
+     *
+     * @param category category name
+     * @return true if the category is "CONSOLE", ignoring case
+     */
+    @Override
+    public boolean belongsToCategory(String category) {
+        return "CONSOLE".equalsIgnoreCase(category);
+    }
 }
