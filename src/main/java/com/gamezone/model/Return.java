@@ -58,6 +58,26 @@ public class Return {
         return originalSale;
     }
 
+    /**
+     * Tells whether this return was made on a sale of the given client.
+     *
+     * @param clientId identifier of the client
+     * @return true if the original sale belongs to that client
+     */
+    public boolean belongsToClient(String clientId) {
+        return originalSale.getClient().getId().equals(clientId);
+    }
+
+    /**
+     * Tells whether this return was made on the given sale.
+     *
+     * @param saleId identifier of the sale
+     * @return true if the original sale has that id
+     */
+    public boolean belongsToSale(String saleId) {
+        return originalSale.getId().equals(saleId);
+    }
+
     public List<Product> getReturnedProducts() {
         return returnedProducts;
     }
