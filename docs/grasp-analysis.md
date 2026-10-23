@@ -32,7 +32,24 @@ The pattern that guides the correction is the one whose solution removes the roo
 
 ## Q4. Non-regression strategy
 
-*To be written by Developer 2.*
+*Written by Developer 2.*
+
+The correction is a refactor, so "nothing broke" means: for the same inputs, every menu operation prints the same text and leaves the same content in the files of `data/`. The project has no automated test suite, so the team uses two complementary checks, run on `develop` **before** the first correction (baseline), on every Pull Request of the correction (affected operations) and at the end of the phase (all operations):
+
+1. **Compilation.** `mvn clean compile` (or *Build → Rebuild Project* in IntelliJ) must succeed before every commit of code, not only before each Pull Request, so that the shared branch always compiles.
+2. **Scripted run of the whole menu.** The application is run from a scratch copy of `data/`, never from the repository's own files, with a fixed input script that exercises every menu operation:
+    - Products: register a video game and a console, a duplicated id, a price of zero, list.
+    - People: register a client, a duplicated id, an invalid email, list clients and sellers.
+    - Sales: a sale with a console with extended warranty, a video game and accessories; a sale that activates each category promotion (consoles, video games, accessories); an unknown client, an unknown item, insufficient stock, a sale without items; the full history, by client and by seller; the receipt of an existing and of a missing sale.
+    - Accessories: register a controller, a cable and a memory; list all; list by type; compatible accessories of a console.
+    - Promotions: register the three types, an invalid category, reversed dates; list all and active.
+    - Returns: a partial return of a console and an accessory, the same product returned again, a product that is not in the sale; list all, by client and by sale; the monthly balance.
+    - Warranties: query an existing and a missing warranty; list all, active and expiring soon.
+    - An invalid option of the main menu, non-numeric input and exit.
+
+   The standard output and the final content of every file in `data/` are captured. Values that legitimately change between runs are normalized before comparing: the random sale, return and warranty identifiers (UUIDs) become `<uuid>` and today's date becomes `<TODAY>`. The normalized output is compared with the baseline line by line.
+
+The evidence shown at the end is recorded in `docs/grasp-refactor-log.md`: the commit of the baseline, the number of normalized lines of the baseline and of the final run, and the result of the comparison, which must be **no differences**. Defects recorded as out of scope are part of the expected output, so a refactor that changes one of them by accident also shows up in the comparison.
 
 ## Q5. Order of the corrections and coordination
 
