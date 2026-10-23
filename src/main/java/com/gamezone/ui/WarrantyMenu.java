@@ -13,7 +13,7 @@ import java.util.List;
  * results; it never accesses persistence. It is created by
  * {@link ConsoleMenu}, which delegates to it the option of the main menu.
  */
-public class WarrantyMenu {
+public class WarrantyMenu implements MenuOption {
 
     private final ConsoleInput userInput;
     private final WarrantyService warrantyService;
@@ -32,9 +32,20 @@ public class WarrantyMenu {
     }
 
     /**
+     * {@inheritDoc}
+     *
+     * @return "Gestión de garantías"
+     */
+    @Override
+    public String getTitle() {
+        return "Gestión de garantías";
+    }
+
+    /**
      * Shows the warranty management submenu and executes the option
      * chosen by the user.
      */
+    @Override
     public void show() {
         System.out.println("\n-- Gestión de garantías --");
         System.out.println("1. Consultar la garantía de un producto en una venta");

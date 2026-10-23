@@ -15,7 +15,7 @@ import java.util.List;
  * results; it never accesses persistence. It is created by
  * {@link ConsoleMenu}, which delegates to it the option of the main menu.
  */
-public class ReturnMenu {
+public class ReturnMenu implements MenuOption {
 
     private final ConsoleInput userInput;
     private final ReturnService returnService;
@@ -38,8 +38,19 @@ public class ReturnMenu {
     }
 
     /**
+     * {@inheritDoc}
+     *
+     * @return "Gestión de devoluciones"
+     */
+    @Override
+    public String getTitle() {
+        return "Gestión de devoluciones";
+    }
+
+    /**
      * Shows the returns submenu and executes the option chosen by the user.
      */
+    @Override
     public void show() {
         System.out.println("\n-- Gestión de devoluciones --");
         System.out.println("1. Registrar una devolución");

@@ -12,7 +12,7 @@ import com.gamezone.service.PersonService;
  * results; it never accesses persistence. It is created by
  * {@link ConsoleMenu}, which delegates to it the option of the main menu.
  */
-public class PersonMenu {
+public class PersonMenu implements MenuOption {
 
     private final ConsoleInput userInput;
     private final PersonService personService;
@@ -31,8 +31,19 @@ public class PersonMenu {
     }
 
     /**
+     * {@inheritDoc}
+     *
+     * @return "Menú de personas"
+     */
+    @Override
+    public String getTitle() {
+        return "Menú de personas";
+    }
+
+    /**
      * Shows the people submenu and executes the option chosen by the user.
      */
+    @Override
     public void show() {
         System.out.println("\n-- Menú de personas --");
         System.out.println("1. Registrar cliente");

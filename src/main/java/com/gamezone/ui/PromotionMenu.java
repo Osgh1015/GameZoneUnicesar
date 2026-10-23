@@ -16,7 +16,7 @@ import java.util.List;
  * results; it never accesses persistence. It is created by
  * {@link ConsoleMenu}, which delegates to it the option of the main menu.
  */
-public class PromotionMenu {
+public class PromotionMenu implements MenuOption {
 
     private final ConsoleInput userInput;
     private final PromotionService promotionService;
@@ -35,8 +35,19 @@ public class PromotionMenu {
     }
 
     /**
+     * {@inheritDoc}
+     *
+     * @return "Gestión de promociones"
+     */
+    @Override
+    public String getTitle() {
+        return "Gestión de promociones";
+    }
+
+    /**
      * Shows the promotions submenu and executes the option chosen by the user.
      */
+    @Override
     public void show() {
         System.out.println("\n-- Gestión de promociones --");
         System.out.println("1. Registrar promoción por porcentaje");

@@ -17,7 +17,7 @@ import java.util.List;
  * results; it never accesses persistence. It is created by
  * {@link ConsoleMenu}, which delegates to it the option of the main menu.
  */
-public class AccessoryMenu {
+public class AccessoryMenu implements MenuOption {
 
     private final ConsoleInput userInput;
     private final AccessoryService accessoryService;
@@ -36,8 +36,19 @@ public class AccessoryMenu {
     }
 
     /**
+     * {@inheritDoc}
+     *
+     * @return "Gestión de accesorios"
+     */
+    @Override
+    public String getTitle() {
+        return "Gestión de accesorios";
+    }
+
+    /**
      * Shows the accessories submenu and executes the option chosen by the user.
      */
+    @Override
     public void show() {
         System.out.println("\n-- Gestión de accesorios --");
         System.out.println("1. Registrar control");

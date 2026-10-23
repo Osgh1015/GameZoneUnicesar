@@ -21,7 +21,7 @@ import java.util.List;
  * results; it never accesses persistence. It is created by
  * {@link ConsoleMenu}, which delegates to it the option of the main menu.
  */
-public class SaleMenu {
+public class SaleMenu implements MenuOption {
 
     private final ConsoleInput userInput;
     private final ProductService productService;
@@ -52,8 +52,19 @@ public class SaleMenu {
     }
 
     /**
+     * {@inheritDoc}
+     *
+     * @return "Menú de ventas"
+     */
+    @Override
+    public String getTitle() {
+        return "Menú de ventas";
+    }
+
+    /**
      * Shows the sales submenu and executes the option chosen by the user.
      */
+    @Override
     public void show() {
         System.out.println("\n-- Menú de ventas --");
         System.out.println("1. Registrar venta");
