@@ -15,6 +15,7 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 | Module (requirement) | Classes and methods audited |
 |---|---|
 | Products (Taller 1) | `Product`, `VideoGame`, `Console`, `ProductRepository`, `ProductService` (every method except `restoreStock`, which belongs to the Technical Lead) |
+| Accessories (Requerimiento 1) | `Accessory`, `Controller`, `Cable`, `Memory` |
 
 ## Single Responsibility Principle (SRP)
 
@@ -22,17 +23,23 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 - **Products — Correct.** `Product` and its subclasses hold the product data and its description (`VideoGame.java:45`, `Console.java:45`), which the Taller defines as part of each product; `ProductRepository` only reads and writes `data/products.txt`; `ProductService` only applies the inventory rules and asks the repository to persist them.
 
+- **Accessories — Correct.** Each subclass adds only its attributes and its description (`Controller.java:49`, `Cable.java:66`, `Memory.java:65`).
+
 ## Open/Closed Principle (OCP)
 
 **Verdict:** _pending — audit in progress._
 
 - **Products — Correct for the hierarchy, accepted for the repository.** A new product type is a new subclass of `Product` that implements `getDescription`, `belongsToCategory` and `getTypeLabel` (`Product.java:86`, `:95`, `:113`); no existing class changes. `ProductRepository.toLine`/`fromLine` (`ProductRepository.java:107-128`) branch on the type and would change for a new type. This is **not** counted: a new product type brings new fields in the file, so the format changes anyway, and this class is the only one that knows the format (criterion of Q1).
 
+- **Accessories — Correct.** A new accessory is a new subclass that implements `getDescription` and `getAccessoryType` (`Accessory.java:123`).
+
 ## Liskov Substitution Principle (LSP)
 
 **Verdict:** _pending — audit in progress._
 
 - **Products — Correct.** `VideoGame` and `Console` implement `getDescription`, `belongsToCategory` and `getTypeLabel` without stronger preconditions or new exceptions; `Console.isWarrantyEligible` (`Console.java:68`) only changes a value the base class declares as overridable (`Product.java:103`). `ProductRepository` and `ProductService` have no subclasses.
+
+- **Accessories — Correct.** `Accessory.belongsToCategory` (`Accessory.java:113`) answers for the "ACCESSORY" category, a valid answer under the base contract; `Controller`, `Cable` and `Memory` keep every behavior of `Product`.
 
 ## Interface Segregation Principle (ISP)
 
@@ -45,6 +52,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 **Verdict:** _pending — audit in progress._
 
 - **Products — Violation (V-03).** `ProductService` depends on the concrete `ProductRepository`.
+
+- **Accessories, promotions, returns and warranties — Correct.** The model classes depend only on other model classes, never on persistence or services.
 
 ### V-03
 
