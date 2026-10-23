@@ -77,6 +77,38 @@ public class Sale {
     }
 
     /**
+     * Finds one of the products of this sale by its id.
+     *
+     * @param productId identifier of the product
+     * @return the first product of the sale with that id, or {@code null}
+     *         if the sale does not contain it
+     */
+    public Product findProduct(String productId) {
+        for (Product product : products) {
+            if (product.getId().equals(productId)) {
+                return product;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Counts how many units of a product were sold in this sale.
+     *
+     * @param productId identifier of the product
+     * @return number of units of that product in the sale
+     */
+    public int countUnitsOf(String productId) {
+        int count = 0;
+        for (Product product : products) {
+            if (product.getId().equals(productId)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /**
      * Returns the extra amount charged for the extended warranties
      * requested during this sale.
      *
