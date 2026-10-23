@@ -2,6 +2,7 @@ package com.gamezone;
 
 import com.gamezone.exceptions.PersistenceException;
 import com.gamezone.persistence.AccessoryRepository;
+import com.gamezone.persistence.ProductRepository;
 import com.gamezone.persistence.PromotionRepository;
 import com.gamezone.persistence.ReturnRepository;
 import com.gamezone.persistence.SalePersistence;
@@ -53,7 +54,8 @@ public class Main {
      * @throws PersistenceException if a data file cannot be read
      */
     private static ConsoleMenu buildApplication() {
-        ProductService productService = new ProductService();
+        ProductRepository productRepository = new ProductRepository("data/products.txt");
+        ProductService productService = new ProductService(productRepository);
         PersonService personService = new PersonService();
 
         AccessoryRepository accessoryRepository = new AccessoryRepository("data/accessories.csv");
