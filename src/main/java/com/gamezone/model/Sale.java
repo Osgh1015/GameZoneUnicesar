@@ -228,7 +228,7 @@ public class Sale {
         sb.append("Productos:\n");
         for (Product product : products) {
             sb.append(String.format("  - %s [%s] ($%.2f)%n",
-                    product.getTitle(), describeItemType(product), product.getPrice()));
+                    product.getTitle(), product.getTypeLabel(), product.getPrice()));
         }
         sb.append(String.format("Subtotal: $%.2f%n", calculateTotal()));
         if (appliedPromotionName != null && discountAmount > 0) {
@@ -243,26 +243,6 @@ public class Sale {
         }
         sb.append(String.format("Total final: $%.2f%n", calculateFinalTotal()));
         return sb.toString();
-    }
-
-    /**
-     * Returns the name of the type of an item, in Spanish, to be shown in
-     * the receipt.
-     *
-     * @param product item of the sale
-     * @return "Consola", "Videojuego", "Accesorio" or "Producto"
-     */
-    private String describeItemType(Product product) {
-        if (product instanceof Console) {
-            return "Consola";
-        }
-        if (product instanceof VideoGame) {
-            return "Videojuego";
-        }
-        if (product instanceof Accessory) {
-            return "Accesorio";
-        }
-        return "Producto";
     }
 
     /**
