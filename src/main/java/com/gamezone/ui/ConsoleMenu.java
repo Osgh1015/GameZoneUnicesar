@@ -44,6 +44,7 @@ import java.util.Scanner;
 public class ConsoleMenu {
 
     private final ConsoleInput userInput = new ConsoleInput(new Scanner(System.in));
+    private final ProductMenu productMenu;
     private ProductService productService;
     private PersonService personService;
     private SaleService saleService;
@@ -74,6 +75,8 @@ public class ConsoleMenu {
         this.returnService = returnService;
         this.promotionService = promotionService;
         this.warrantyService = warrantyService;
+        // submenus
+        this.productMenu = new ProductMenu(userInput, productService);
     }
 
     /**
@@ -104,7 +107,7 @@ public class ConsoleMenu {
             try {
                 switch (option) {
                     case "1":
-                        productsMenu();
+                        productMenu.show();
                         break;
 
                     case "2":
@@ -154,89 +157,6 @@ public class ConsoleMenu {
                 System.out.println("Ocurrió un error inesperado. Intente de nuevo.");
             }
         }
-    }
-
-    private void productsMenu() {
-        System.out.println("\n-- Menú de productos --");
-        System.out.println("1. Registrar videojuego");
-        System.out.println("2. Registrar consola");
-        System.out.println("3. Listar productos");
-        System.out.println("0. Volver");
-        System.out.print("Seleccione una opción: ");
-
-        String option = userInput.nextLine();
-
-        switch (option) {
-            case "1":
-                registerVideoGameFlow();
-                break;
-
-            case "2":
-                registerConsoleFlow();
-                break;
-
-            case "3":
-                List<Product> products = productService.listAll();
-
-                if (products.isEmpty()) {
-                    System.out.println("Aún no hay productos registrados.");
-                }
-
-                for (Product p : products) {
-                    System.out.println(
-                            p.getDescription() + " | stock: " + p.getQuantity()
-                    );
-                }
-                break;
-
-            case "0":
-                break;
-
-            default:
-                System.out.println("Opción inválida.");
-        }
-    }
-
-    private void registerVideoGameFlow() {
-        System.out.print("ID del producto: ");
-        String id = userInput.nextLine();
-        System.out.print("Título: ");
-        String title = userInput.nextLine();
-        System.out.print("Precio: ");
-        double price = userInput.readDouble();
-        System.out.print("Cantidad en stock: ");
-        int quantity = userInput.readInt();
-        System.out.print("Plataforma: ");
-        String platform = userInput.nextLine();
-        System.out.print("Género: ");
-        String genre = userInput.nextLine();
-        System.out.print("Clasificación de edad: ");
-        String ageRating = userInput.nextLine();
-
-        VideoGame videoGame = new VideoGame(id, title, price, quantity, platform, genre, ageRating);
-        productService.registerVideoGame(videoGame);
-        System.out.println("Videojuego registrado correctamente.");
-    }
-
-    private void registerConsoleFlow() {
-        System.out.print("ID del producto: ");
-        String id = userInput.nextLine();
-        System.out.print("Título: ");
-        String title = userInput.nextLine();
-        System.out.print("Precio: ");
-        double price = userInput.readDouble();
-        System.out.print("Cantidad en stock: ");
-        int quantity = userInput.readInt();
-        System.out.print("Marca: ");
-        String brand = userInput.nextLine();
-        System.out.print("Modelo: ");
-        String model = userInput.nextLine();
-        System.out.print("Generación: ");
-        int generation = userInput.readInt();
-
-        Console console = new Console(id, title, price, quantity, brand, model, generation);
-        productService.registerConsole(console);
-        System.out.println("Consola registrada correctamente.");
     }
 
     private void peopleMenu() {
