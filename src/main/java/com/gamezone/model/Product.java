@@ -103,4 +103,12 @@ public abstract class Product {
     public boolean isWarrantyEligible() {
         return false;
     }
+
+    /**
+     * Returns the name of the type of this product, in Spanish, as it is
+     * shown to the user in receipts and listings.
+     *
+     * @return "Videojuego", "Consola" or "Accesorio"
+     */
+    public abstract String getTypeLabel();
 }

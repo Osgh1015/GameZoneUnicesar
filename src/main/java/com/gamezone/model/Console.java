@@ -68,4 +68,12 @@ public class Console extends Product {
     public boolean isWarrantyEligible() {
         return true;
     }
+
+    /**
+     * @return "Consola"
+     */
+    @Override
+    public String getTypeLabel() {
+        return "Consola";
+    }
 }
