@@ -75,13 +75,7 @@ public class ReturnService {
 
         List<Product> productsToReturn = new ArrayList<>();
         for (String productId : productIds) {
-            Product match = null;
-            for (Product p : sale.getProducts()) {
-                if (p.getId().equals(productId)) {
-                    match = p;
-                    break;
-                }
-            }
+            Product match = sale.findProduct(productId);
             if (match == null) {
                 throw new IllegalArgumentException(
                         "El producto " + productId + " no pertenece a la venta indicada.");
@@ -130,30 +124,13 @@ public class ReturnService {
     private void validateReturnableUnits(Sale sale, List<String> productIds) {
         for (String productId : new LinkedHashSet<>(productIds)) {
             int requested = Collections.frequency(productIds, productId);
-            int available = countSoldUnits(sale, productId)
+            int available = sale.countUnitsOf(productId)
                     - countReturnedUnits(sale.getId(), productId);
             if (requested > available) {
                 throw new IllegalArgumentException("Solo se pueden devolver " + available
                         + " unidad(es) del producto " + productId + " en esta venta.");
             }
         }
-    }
-
-    /**
-     * Counts how many units of a product were sold in a sale.
-     *
-     * @param sale      the sale
-     * @param productId id of the product
-     * @return number of units sold
-     */
-    private int countSoldUnits(Sale sale, String productId) {
-        int count = 0;
-        for (Product product : sale.getProducts()) {
-            if (product.getId().equals(productId)) {
-                count++;
-            }
-        }
-        return count;
     }
 
     /**
