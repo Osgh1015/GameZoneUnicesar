@@ -2,6 +2,7 @@ package com.gamezone.service;
 
 import com.gamezone.model.*;
 import com.gamezone.persistence.ReturnRepository;
+import com.gamezone.persistence.ReturnRepository.ReturnRecord;
 
 import java.time.LocalDate;
 import java.util.*;
@@ -59,7 +60,39 @@ public class ReturnService {
         this.saleService = saleService;
         this.itemCatalog = itemCatalog;
         this.warrantyService = warrantyService;
-        this.returns = repository.loadAll();
+        this.returns = loadReturns();
+    }
+
+    /**
+     * Loads the stored return records and resolves their sale and items.
+     * Records whose sale no longer exists are skipped, and so are items
+     * that no catalog has any more.
+     *
+     * @return the returns rebuilt from persistence
+     */
+    private List<Return> loadReturns() {
+        List<Return> result = new ArrayList<>();
+        for (ReturnRecord record : repository.loadAll()) {
+            Sale originalSale = saleService.findById(record.saleId());
+            if (originalSale == null) {
+                continue;
+            }
+            List<Product> returnedProducts = new ArrayList<>();
+            for (String productId : record.productIds()) {
+                Product product = itemCatalog.findItem(productId);
+                if (product != null) {
+                    returnedProducts.add(product);
+                }
+            }
+            Return r = new Return(record.id(), record.date(), originalSale,
+                    returnedProducts, record.reason());
+            if (record.warrantyRefund() != null) {
+                r.setWarrantyRefund(record.warrantyRefund());
+            }
+            r.calculateRefundAmount();
+            result.add(r);
+        }
+        return result;
     }
 
     /**
