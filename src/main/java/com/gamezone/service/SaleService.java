@@ -45,34 +45,6 @@ public class SaleService {
     private final WarrantyService warrantyService;
 
     /**
-     * Creates the sale service building its own assembler and item catalog.
-     *
-     * @param salePersistence  persistence used to save and load sales
-     * @param productService   service that owns the product catalogue and stock
-     * @param personService    service used to resolve clients and sellers
-     * @param accessoryService service that owns the accessory catalogue and stock
-     * @param promotionService service used to select the best promotion
-     * @param warrantyService  service used to grant warranties for the items sold
-     * @deprecated use {@link #SaleService(SalePersistence, SaleAssembler,
-     *             PersonService, ItemCatalog, PromotionService, WarrantyService)};
-     *             kept only until {@code Main} injects them (V-18, V-19)
-     */
-    @Deprecated
-    public SaleService(SalePersistence salePersistence,
-                       ProductService productService,
-                       PersonService personService,
-                       AccessoryService accessoryService,
-                       PromotionService promotionService,
-                       WarrantyService warrantyService) {
-        this(salePersistence,
-                new SaleAssembler(salePersistence, personService,
-                        new ItemCatalog(productService, accessoryService)),
-                personService,
-                new ItemCatalog(productService, accessoryService),
-                promotionService, warrantyService);
-    }
-
-    /**
      * Creates the sale service with all its collaborators, injected by
      * constructor from {@code Main}.
      *
