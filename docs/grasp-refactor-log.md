@@ -1,4 +1,4 @@
-# GRASP Refactor Log — Requerimiento 7
+git # GRASP Refactor Log — Requerimiento 7
 
 This log records every correction of Phase 2 and the evidence that the external behavior of the system did not change. The violations and their identifiers are those of `docs/grasp-audit/consolidated-audit.md`.
 
@@ -38,3 +38,11 @@ When it runs: on `develop` before the first correction (baseline), on every Pull
 
 | Class | Change | Violation ID | Pattern applied | Commit / PR | Owner |
 |---|---|---|---|---|---|
+| `Product` | Added `decreaseStock(int)` and `increaseStock(int)`; the product updates its own stock | V-01 | Information Expert | `<hash A>` / PR #<n> | Developer 1 |
+| `ProductService` | `decreaseStock` delegates to `product.decreaseStock(amount)` instead of computing the stock with getter and setter | V-01 | Information Expert | `<hash B>` / PR #<n> | Developer 1 |
+| `Product`, `VideoGame`, `Console`, `Accessory` | Added abstract `belongsToCategory(String)`; video games answer `"VIDEOGAME"`, consoles `"CONSOLE"`, every accessory `"ACCESSORY"`, ignoring case (same results as before for every target string) | V-03 | Polymorphism, Protected Variations | `<hash C>` / PR #<n> | Developer 1 |
+| `CategoryDiscount` | `calculateDiscount` sums the products for which `product.belongsToCategory(targetCategory)`; the private `instanceof` chain was removed | V-03 | Polymorphism, Low Coupling, Protected Variations | `<hash D>` / PR #<n> | Developer 1 |
+| `Return` | `calculatePaidRatio` asks the sale for its subtotal with `originalSale.calculateTotal()` | V-04 | Information Expert | `<hash E>` / PR #<n> | Developer 1 |
+| `ProductRepository`, `ProductService` | New constructors `ProductRepository(String filePath)` and `ProductService(ProductRepository)`; the old ones kept `@Deprecated` for one step | V-02 | Low Coupling, Protected Variations | `<hash F>` / PR #<n> | Developer 1 |
+| `Main` | **Boundary coordination:** the Technical Lead (owner of `Main`) creates `ProductRepository("data/products.txt")` and injects it into `ProductService` inside Developer 1's task group | V-02 | Low Coupling | `<hash G>` / PR #<n> | Technical Lead |
+| `ProductRepository`, `ProductService` | Removed the transitional `@Deprecated` constructors; `ProductService` no longer creates its repository | V-02 | Low Coupling, Protected Variations | `<hash H>` / PR #<n> | Developer 1 |
