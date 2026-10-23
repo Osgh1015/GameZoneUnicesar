@@ -99,3 +99,37 @@ Rules for every solution: the delegating methods keep their name and their text,
 1. **Developer 1 — V-01, V-02, V-03.** No dependency on other corrections.
 2. **Developer 2 — V-04, V-05, V-06, V-07, V-08.** Inside this group: Developer 1 implements `ItemSource` in `ProductService` (after `ItemSource` exists) and adds `getKind()` to the warranties (after `WarrantyKind` exists); the Technical Lead implements `SaleLookup` in `SaleService` and makes the returns menu ask `MonthlyBalanceService` (before the balance is removed from `ReturnService`).
 3. **Technical Lead — V-09, V-10, V-11, V-12.** Inside this group: Developer 2 implements `PersonLookup`, `PromotionSelector` and `WarrantyAssigner` (after the Technical Lead creates them, before `SaleService` depends on them). V-12 is the last correction because `Main` composes the final services and menus.
+
+## Boundary findings
+
+Each one is registered once, in the report of the role whose class holds the violation; the other role only makes the commit in its own class, inside the task group of the owner.
+
+| ID | Owner of the violation | Other role's class | What the other role does |
+|---|---|---|---|
+| V-05 | Developer 2 (`ItemCatalog`) | `ProductService` (Developer 1) | Declares `implements ItemSource` with `findItem`, `owns`, `takeStock`, `returnStock` |
+| V-06 | Developer 2 (`WarrantyRepository`, `WarrantyService`) | `Warranty`, `BasicWarranty`, `ExtendedWarranty` (Developer 1) | Adds `getKind()` |
+| V-07 | Developer 2 (`ReturnService`) | `SaleService` (Technical Lead) | Declares `implements SaleLookup` |
+| V-08 | Developer 2 (`ReturnService`) | `ReturnMenu`, `ConsoleMenu` (Technical Lead) | The menu asks `MonthlyBalanceService` for the balance |
+| V-11 | Technical Lead (`SaleService`, `SaleAssembler`) | `PersonService`, `PromotionService`, `WarrantyService` (Developer 2) | Declare `implements PersonLookup`, `PromotionSelector`, `WarrantyAssigner` |
+
+### Findings reported between roles
+
+- Developer 1 reported `Sale.generateReceipt` (the same SRP problem as V-01): registered as V-09 in the Technical Lead's report.
+- Developer 1 reported `ItemCatalog` and the warranty tags: they are V-05 and V-06 of Developer 2, with the boundary commits of Developer 1.
+- Developer 2 reported the dependency of `SaleService` on its whole services: registered as V-11 in the Technical Lead's report.
+
+### Findings examined and discarded
+
+| Finding | Reason it is not a violation |
+|---|---|
+| Type tags in `ProductRepository`, `AccessoryRepository` and `PromotionRepository` (OCP) | The repository is the only class that knows the file format; a new type must be written somewhere and this is the expected place (Q1) |
+| `PromotionService.validateCategory` (OCP) | The list of categories is a business rule of Requerimiento 2, not a type check |
+| `ReturnService` on `WarrantyService` (ISP) | It uses the operations of warranties that the returns rule needs |
+| Static validators (DIP) | Pure functions without state or files; there is no detail to invert |
+| Sale registration on `ItemCatalog` (ISP) | Intermediary created for the sales and returns modules; every operation is used |
+| Submenus on the services of their module (DIP) | The services are the entry points of the use cases and the user interface is the outermost layer |
+| `Main` creates every concrete class (DIP) | It is the composition root |
+
+## Out-of-scope findings
+
+No new defects were found outside SOLID. The four defects recorded in Requerimiento 7 (OS-01 to OS-04 of `docs/grasp-audit/consolidated-audit.md`) are still out of scope and are not registered again: no SOLID correction may change them, and the non-regression comparison shows it.
