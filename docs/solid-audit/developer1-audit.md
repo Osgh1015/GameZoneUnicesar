@@ -16,6 +16,7 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 |---|---|
 | Products (Taller 1) | `Product`, `VideoGame`, `Console`, `ProductRepository`, `ProductService` (every method except `restoreStock`, which belongs to the Technical Lead) |
 | Accessories (Requerimiento 1) | `Accessory`, `Controller`, `Cable`, `Memory` |
+| Promotions (Requerimiento 2) | `Promotion`, `PercentageDiscount`, `CategoryDiscount`, `BulkPurchaseDiscount` |
 
 ## Single Responsibility Principle (SRP)
 
@@ -25,6 +26,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 - **Accessories — Correct.** Each subclass adds only its attributes and its description (`Controller.java:49`, `Cable.java:66`, `Memory.java:65`).
 
+- **Promotions — Correct.** Each promotion holds its parameters and its discount calculation; `Promotion.isActive` (`Promotion.java:72`) only uses its own dates.
+
 ## Open/Closed Principle (OCP)
 
 **Verdict:** _pending — audit in progress._
@@ -32,6 +35,8 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 - **Products — Correct for the hierarchy, accepted for the repository.** A new product type is a new subclass of `Product` that implements `getDescription`, `belongsToCategory` and `getTypeLabel` (`Product.java:86`, `:95`, `:113`); no existing class changes. `ProductRepository.toLine`/`fromLine` (`ProductRepository.java:107-128`) branch on the type and would change for a new type. This is **not** counted: a new product type brings new fields in the file, so the format changes anyway, and this class is the only one that knows the format (criterion of Q1).
 
 - **Accessories — Correct.** A new accessory is a new subclass that implements `getDescription` and `getAccessoryType` (`Accessory.java:123`).
+
+- **Promotions — Correct.** A new promotion is a subclass of `Promotion` that implements `calculateDiscount` (`Promotion.java:84`). Since the GRASP correction, `CategoryDiscount.calculateDiscount` (`CategoryDiscount.java:68`) asks `product.belongsToCategory`, so it no longer changes for a new product type.
 
 ## Liskov Substitution Principle (LSP)
 
@@ -41,11 +46,15 @@ Verdicts: **Violation** (the code breaks the principle at one or more points), *
 
 - **Accessories — Correct.** `Accessory.belongsToCategory` (`Accessory.java:113`) answers for the "ACCESSORY" category, a valid answer under the base contract; `Controller`, `Cable` and `Memory` keep every behavior of `Product`.
 
+- **Promotions — Correct.** The three subclasses return a non-negative discount for any sale and never throw (`PercentageDiscount.java:42`, `CategoryDiscount.java:68`, `BulkPurchaseDiscount.java:55`), which is what `PromotionService.findBestPromotionFor` expects from any `Promotion`.
+
 ## Interface Segregation Principle (ISP)
 
 **Verdict:** _pending — audit in progress._
 
 - **Products — Correct.** `ProductService` uses every operation of `ProductRepository` (`save`, `load`). Developer 1's classes are mostly providers; how other roles' classes use `ProductService` is audited by them.
+
+- **Promotions — Correct.** The promotions depend on `Sale`, the domain object they evaluate, and use its products and subtotal; they do not depend on any service.
 
 ## Dependency Inversion Principle (DIP)
 
