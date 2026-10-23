@@ -50,4 +50,12 @@ public class Controller extends Accessory {
         return String.format("Control: %s | Conexión: %s | Precio: %.2f | Stock: %d | Compatible con: %s",
                 getTitle(), connectionType, getPrice(), getQuantity(), formatCompatibility());
     }
+
+    /**
+     * @return "CONTROLLER", the type code of every controller
+     */
+    @Override
+    public String getAccessoryType() {
+        return "CONTROLLER";
+    }
 }

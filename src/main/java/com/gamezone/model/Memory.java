@@ -66,4 +66,12 @@ public class Memory extends Accessory {
         return String.format("Memoria: %s | Capacidad: %d GB | Tipo: %s | Precio: %.2f | Stock: %d | Compatible con: %s",
                 getTitle(), capacityInGb, memoryType, getPrice(), getQuantity(), formatCompatibility());
     }
+
+    /**
+     * @return "MEMORY", the type code of every memory unit
+     */
+    @Override
+    public String getAccessoryType() {
+        return "MEMORY";
+    }
 }
