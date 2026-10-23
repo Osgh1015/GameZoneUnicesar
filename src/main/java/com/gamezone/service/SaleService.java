@@ -309,7 +309,7 @@ public class SaleService {
 
         for (Sale sale : sales) {
 
-            if (sale.getClient().getId().equals(clientId)) {
+            if (sale.belongsToClient(clientId)) {
                 result.add(sale);
             }
         }
@@ -327,7 +327,7 @@ public class SaleService {
 
         for (Sale sale : sales) {
 
-            if (sale.getSeller().getId().equals(sellerId)) {
+            if (sale.wasAttendedBy(sellerId)) {
                 result.add(sale);
             }
         }
