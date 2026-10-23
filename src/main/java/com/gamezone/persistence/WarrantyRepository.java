@@ -28,7 +28,7 @@ import java.util.List;
  *
  * Responsabilidad: Desarrollador 2 - Persistencia de garantias.
  */
-public class WarrantyRepository {
+public class WarrantyRepository implements WarrantyStore {
 
     private static final String DELIMITER = ";";
     private static final String BASIC_TYPE = "BASIC";
@@ -51,6 +51,7 @@ public class WarrantyRepository {
      *
      * @param warranties warranties to persist
      */
+    @Override
     public void saveAll(List<Warranty> warranties) {
 
         try (PrintWriter writer =
@@ -73,6 +74,7 @@ public class WarrantyRepository {
      *
      * @return stored warranty records
      */
+    @Override
     public List<WarrantyRecord> loadAll() {
 
         List<WarrantyRecord> records =

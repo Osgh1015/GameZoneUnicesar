@@ -5,7 +5,7 @@ import com.gamezone.model.ExtendedWarranty;
 import com.gamezone.model.Product;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Warranty;
-import com.gamezone.persistence.WarrantyRepository;
+import com.gamezone.persistence.WarrantyStore;
 import com.gamezone.persistence.WarrantyRepository.WarrantyRecord;
 
 import java.time.LocalDate;
@@ -26,7 +26,7 @@ import java.util.UUID;
  */
 public class WarrantyService {
 
-    private final WarrantyRepository repository;
+    private final WarrantyStore repository;
     private final ProductService productService;
     private final List<Warranty> warranties;
 
@@ -39,7 +39,7 @@ public class WarrantyService {
      * @param saleAssembler  assembler used to rebuild the stored sales
      * @param productService service used to resolve product references
      */
-    public WarrantyService(WarrantyRepository repository,
+    public WarrantyService(WarrantyStore repository,
                            SaleAssembler saleAssembler,
                            ProductService productService) {
         this(repository, saleAssembler.loadSales(), productService);
@@ -53,7 +53,7 @@ public class WarrantyService {
      *                       warranty
      * @param productService service used to resolve product references
      */
-    private WarrantyService(WarrantyRepository repository, List<Sale> sales,
+    private WarrantyService(WarrantyStore repository, List<Sale> sales,
                             ProductService productService) {
         this.repository = repository;
         this.productService = productService;
