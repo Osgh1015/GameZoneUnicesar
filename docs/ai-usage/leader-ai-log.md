@@ -244,4 +244,17 @@ The Technical Lead (Omar Sebastian Gamez Heredia) was responsible for the sales 
 
 **Solution obtained and decision taken:** Recorded four violations with evidence on the audited commit: V-01 (SRP, `Sale.generateReceipt`), V-02 (DIP, `SalePersistence` concrete), V-03 (ISP, the whole services of Developer 2 in the sale registration) and V-04 (OCP, the main menu lists every module in three places). LSP does not apply to my classes. The dependency on `ItemCatalog`, the submenus on their services and `Main` as composition root were examined and accepted. In the consolidation I checked the coverage of the 53 classes, verified every cited line, assigned V-01 to V-12 in the order Developer 1 → Developer 2 → Technical Lead, split the five boundary findings by owner and kept the out-of-scope defects of Requerimiento 7 untouched. Also wrote the answers to questions 2 and 5.
 
+## Requirement 8 — Phase 2: Correction
+
+## Entry 19
+
+**Date:** 2026-10-23 **Tool used:** Claude
+
+**Reason for use:** Correct the SOLID violations assigned to the Technical Lead and verify that the behavior of the system did not change.
+
+**Problem faced:** `SaleService` and `SaleAssembler` had to stop depending on three services of Developer 2 without breaking any commit, so the interfaces, their implementations and the change of the dependencies had to go in that order. The main menu had to keep exactly the same numbers, titles and messages (including the invalid options and the exit) after replacing the `switch`, and `ConsoleMenu` could no longer create the submenus if a new module was to be added without editing it.
+
+**Prompt used:** cómo crear interfaces pequeñas para que SaleService no dependa de los servicios completos de otro rol, y cómo reemplazar el switch del menú principal sin cambiar la salida
+
+**Solution obtained and decision taken:** Moved the receipt layout to `SaleReceipt` and kept `generateReceipt()` as a delegation. Created `SaleStore`, implemented by `SalePersistence`. Created `PersonLookup`, `PromotionSelector` and `WarrantyAssigner`, made `PersonService`, `PromotionService` and `WarrantyService` implement them (agreed with Developer 2) and then made `SaleService` and `SaleAssembler` depend on them, with `Main` unchanged. Created `MenuOption`, implemented by the seven submenus with their old titles; `ConsoleMenu` prints and runs the list that `Main` composes, and keeps option 0 and the exception handling. Every commit compiles; the scripted run of 316 inputs gave identical output and data files after every commit of the three roles and in the final verification.
 
