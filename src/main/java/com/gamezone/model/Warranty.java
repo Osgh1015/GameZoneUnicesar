@@ -123,6 +123,14 @@ public abstract class Warranty {
     public abstract double getAdditionalCost();
 
     /**
+     * Declares the kind of this warranty, used to store it and to choose
+     * the preferred coverage.
+     *
+     * @return the kind of the warranty
+     */
+    public abstract WarrantyKind getKind();
+
+    /**
      * Checks whether the coverage is active on a given date. The
      * warranty is considered active when the date is not before the
      * start date and not after the end date, so both limits are
