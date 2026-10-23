@@ -5,7 +5,6 @@ import com.gamezone.model.ExtendedWarranty;
 import com.gamezone.model.Product;
 import com.gamezone.model.Sale;
 import com.gamezone.model.Warranty;
-import com.gamezone.persistence.SalePersistence;
 import com.gamezone.persistence.WarrantyRepository;
 import com.gamezone.persistence.WarrantyRepository.WarrantyRecord;
 
@@ -30,26 +29,6 @@ public class WarrantyService {
     private final WarrantyRepository repository;
     private final ProductService productService;
     private final List<Warranty> warranties;
-
-    /**
-     * Creates the warranty service rebuilding the stored sales with the
-     * deprecated service-based loading of {@link SalePersistence}.
-     *
-     * @param repository      repository used to persist warranty records
-     * @param salePersistence persistence used to rebuild the stored sales
-     * @param productService  service used to resolve product references
-     * @param personService   service used to resolve clients and sellers
-     * @deprecated use {@link #WarrantyService(WarrantyRepository,
-     *             SaleAssembler, ProductService)}; kept only until
-     *             {@code Main} injects the assembler (V-19)
-     */
-    @Deprecated
-    public WarrantyService(WarrantyRepository repository,
-                           SalePersistence salePersistence,
-                           ProductService productService,
-                           PersonService personService) {
-        this(repository, salePersistence.loadAll(productService, personService), productService);
-    }
 
     /**
      * Creates the warranty service and loads the warranties already
