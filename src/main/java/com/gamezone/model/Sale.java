@@ -60,6 +60,26 @@ public class Sale {
     }
 
     /**
+     * Tells whether this sale was made by the given client.
+     *
+     * @param clientId identifier of the client
+     * @return true if the client of the sale has that id
+     */
+    public boolean belongsToClient(String clientId) {
+        return client.getId().equals(clientId);
+    }
+
+    /**
+     * Tells whether this sale was attended by the given seller.
+     *
+     * @param sellerId identifier of the seller
+     * @return true if the seller of the sale has that id
+     */
+    public boolean wasAttendedBy(String sellerId) {
+        return seller.getId().equals(sellerId);
+    }
+
+    /**
      * Returns the list of products purchased in this sale. The returned
      * list is a copy to preserve encapsulation of the internal state.
      * @return list of purchased products
