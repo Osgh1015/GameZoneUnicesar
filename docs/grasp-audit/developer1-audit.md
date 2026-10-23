@@ -15,12 +15,15 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 | Module (requirement) | Classes and methods audited |
 |---|---|
 | Products (Taller 1) | `Product`, `VideoGame`, `Console`, `ProductRepository`, `ProductService` (every method except `restoreStock`, which belongs to the Technical Lead; the calls to validators and `PersistenceException` added in Requerimiento 6 belong to Developer 2) |
+| Accessories (Requerimiento 1) | `Accessory`, `Controller`, `Cable`, `Memory` |
 
 ## Information Expert
 
 **Verdict:** _pending — audit in progress._
 
 - **Products — Violation (V-01).** `VideoGame.getDescription` and `Console.getDescription` (`VideoGame.java:45`, `Console.java:45`) build the description from their own fields, which is correct, but `ProductService.decreaseStock` computes the new stock itself instead of asking the product to update it.
+
+- **Accessories — Correct.** `Accessory.isCompatibleWith(String)` (`Accessory.java:76`) answers with the list of compatible consoles it owns; each subclass describes itself from its own attributes.
 
 ### V-01
 
@@ -41,6 +44,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 - **Products — Correct.** `ProductRepository.fromLine` (`ProductRepository.java:118-129`) creates `VideoGame` and `Console` objects from the records it reads, so it holds the initializing data. `ProductService.registerVideoGame`/`registerConsole` (`ProductService.java:46`, `:58`) receive the product already built by the menu; the creation of domain objects inside `ConsoleMenu` is Technical Lead code and was reported to the Technical Lead.
 
+- **Accessories, promotions, returns and warranties — Correct.** The model classes in scope do not create other domain objects; their instances are created by the repositories and services that aggregate them (Developer 2 and Technical Lead code).
+
 ## Controller
 
 **Verdict:** _pending — audit in progress._
@@ -50,6 +55,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 **Verdict:** _pending — audit in progress._
 
 - **Products — Violation (V-02).** `Product`, `VideoGame` and `Console` import nothing outside the model, and `ProductRepository` depends only on the model, which is correct; `ProductService` is tied to the concrete `ProductRepository` and to its file because it creates it.
+
+- **Accessories — Correct.** The accessory hierarchy depends only on `Product`.
 
 ### V-02
 
@@ -70,11 +77,15 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 - **Products — Correct.** `ProductRepository` only reads and writes the products file; `ProductService` only applies inventory rules. It keeps two pairs of equivalent methods (`reduceStock`/`decreaseStock`, `ProductService.java:138`; `listAll`/`listProducts`, `ProductService.java:167`) because other modules call both names; they do the same job, so the class is still focused.
 
+- **Accessories — Correct.** Each subclass adds only its own attributes and its description.
+
 ## Polymorphism
 
 **Verdict:** _pending — audit in progress._
 
 - **Products — Correct.** `Product.getDescription()` (`Product.java:68`) is abstract and `VideoGame`/`Console` override it. `ProductRepository.toLine`/`fromLine` (`ProductRepository.java:105-129`) branch on the concrete type and on a type tag; this is **not** treated as a violation: the repository is a Pure Fabrication whose job is to keep the file format out of the model, and moving serialization into the hierarchy would put persistence knowledge inside the domain classes, which Taller 1 forbids.
+
+- **Accessories — Correct.** `Controller`, `Cable` and `Memory` override `getDescription()` (`Controller.java:49`, `Cable.java:66`, `Memory.java:65`); no code in scope asks an accessory for its concrete type.
 
 ## Pure Fabrication
 
@@ -93,3 +104,4 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 **Verdict:** _pending — audit in progress._
 
 - **Products — Violation (V-02).** A change of storage format is confined to `ProductRepository`, which is correct, but the file location is fixed inside the repository and the service creates its own repository, so a change of location is not protected.
+
