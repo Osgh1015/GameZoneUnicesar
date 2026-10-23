@@ -19,6 +19,7 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 | Promotions (Requerimiento 2) | `PromotionRepository`, `PromotionService` |
 | Returns (Requerimiento 3) | `ReturnRepository`, `ReturnService` (including the monthly balance: `calculateMonthlySales`, `calculateMonthlyReturns`, `generateMonthlyBalance`) |
 | Warranties (Requerimiento 4) | `WarrantyRepository`, `WarrantyService` |
+| Exceptions and validation (Requerimiento 6) | Use of the custom exceptions and of the validators in the services and repositories listed above (`PersonService`, `PersonRepository`, and the calls added to `ProductService`, `ProductRepository`, `SaleService` and `SalePersistence` in Requerimiento 6) |
 
 ## Information Expert
 
@@ -33,6 +34,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **Returns — Violation (V-04, V-05).** The monthly balance asks each sale `calculateFinalTotal()` (`ReturnService.java:224`) and each return `getRefundAmount()` (`:242`), and the 30-day rule is asked to the sale with `canBeReturned()` (`:71`), which is correct; but the queries navigate the associations of `Return` (V-04) and the registration searches the products of the sale by itself (V-05).
 
 - **Warranties — Mixed.** `listActiveWarranties` (`WarrantyService.java:185`) asks each warranty `isActive(today)` and the costs are asked with `getAdditionalCost()` (`:290`, `:294`, `:321`), which is correct; the coverage checks navigate the warranty's associations (V-08).
+
+- **Exceptions and validation — Correct.** `PersonService.registerClient` (`PersonService.java:54-57`) passes the data and the existing lists to `PersonValidator`, which checks only what it receives; the service, which owns the lists, supplies them.
 
 ### V-02
 
@@ -117,6 +120,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **Returns — Violation (V-06).** `ReturnService` receives all its collaborators by constructor, but `ReturnRepository` depends on three services.
 
 - **Warranties — Correct, with a boundary note.** `WarrantyRepository` returns `WarrantyRecord` objects and does not depend on any service. `WarrantyService` depends on `SalePersistence` and receives `PersonService` only to pass it to `SalePersistence.loadAll` (`WarrantyService.java:69`); this exists because `Main` builds the warranty module before `SaleService` to avoid a cycle, and changing it requires changing `SalePersistence` and `Main` (Technical Lead). It is reported to the Technical Lead instead of being recorded here.
+
+- **Exceptions and validation — Correct.** The services depend on the validators and the validators depend only on the model and the exceptions, never on services or repositories.
 
 ### V-01
 
@@ -212,6 +217,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 - **Warranties — Correct.** `WarrantyRepository` and its `WarrantyRecord` are fabrications that store only identifiers, so the persistence layer does not need any service.
 
+- **Exceptions and validation — Correct.** `PersonService` delegates every check to `PersonValidator`, an artificial class that concentrates the rules of the module, so the service keeps only business logic.
+
 ## Indirection
 
 **Verdict:** _pending — audit in progress._
@@ -226,6 +233,8 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 
 - **Warranties — Correct.** `WarrantyService` mediates between the sale registration, the returns and `WarrantyRepository`.
 
+- **Exceptions and validation — Correct.** Services reach the rules through `PersonValidator`, so a rule changes in one place without touching the services.
+
 ## Protected Variations
 
 **Verdict:** _pending — audit in progress._
@@ -237,3 +246,5 @@ Verdicts: **Violation** (the code breaks the pattern at one or more points), **C
 - **Promotions — Correct.** `validateCategory` (`PromotionService.java:82`) checks the category against the constants of `CategoryDiscount`, so the list of categories lives in one place.
 
 - **Warranties — Correct.** A new warranty type changes `WarrantyRepository` and `loadWarranties` only, and the costs keep being asked polymorphically.
+
+- **Exceptions and validation — Correct.** `PersonRepository` translates every `IOException` into `PersistenceException` (`PersonRepository.java:50`, `:84`, `:119`), so the services and the menu are protected from file errors; `PersonService` is protected from changes in the rules by `PersonValidator`.
