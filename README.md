@@ -52,6 +52,10 @@ Diagramas de diseño disponibles en la carpeta [`docs/`](./docs):
 - [`docs/grasp-analysis.md`](./docs/grasp-analysis.md) — Preguntas orientadoras de la auditoría GRASP
 - [`docs/grasp-refactor-log.md`](./docs/grasp-refactor-log.md) — Bitácora de cambios y evidencia de no regresión
 - [`docs/grasp-class-diagram.md`](./docs/grasp-class-diagram.md) — Diagrama de clases antes/después de la corrección GRASP
+- [`docs/solid-audit/consolidated-audit.md`](./docs/solid-audit/consolidated-audit.md) — Auditoría SOLID consolidada (Requerimiento 8); los informes individuales están en la misma carpeta
+- [`docs/solid-analysis.md`](./docs/solid-analysis.md) — Preguntas orientadoras de la auditoría SOLID
+- [`docs/solid-refactor-log.md`](./docs/solid-refactor-log.md) — Bitácora de cambios SOLID y evidencia de no regresión
+- [`docs/solid-class-diagram.md`](./docs/solid-class-diagram.md) — Diagrama de clases antes/después de la corrección SOLID
 
 ## Validaciones y manejo de errores (Requerimiento 6)
 
@@ -89,6 +93,22 @@ El equipo auditó todo el código del sistema contra los nueve patrones GRASP (I
 - **High Cohesion:** `ConsoleMenu` quedó solo con el menú principal y el manejo de excepciones; cada módulo tiene su submenú (`ProductMenu`, `PersonMenu`, `SaleMenu`, `AccessoryMenu`, `ReturnMenu`, `PromotionMenu`, `WarrantyMenu`) y todos comparten `ConsoleInput`.
 
 **No regresión.** Un guion fijo de 308 entradas recorre todas las operaciones del menú sobre una copia de los datos. El resultado normalizado (1676 líneas, incluidos los archivos de datos) es idéntico antes y después de la corrección.
+
+## Auditoría y corrección SOLID (Requerimiento 8)
+
+Después de la corrección GRASP, el equipo auditó todo el código del sistema contra los cinco principios SOLID (responsabilidad única, abierto/cerrado, sustitución de Liskov, segregación de interfaces e inversión de dependencias) y corrigió las violaciones **sin cambiar el comportamiento** ni deshacer ninguna corrección GRASP: el menú muestra los mismos mensajes y los archivos de `data/` quedan con el mismo contenido.
+
+**Fase 1 — Auditoría.** Cada integrante auditó su propio código (`docs/solid-audit/leader-audit.md`, `developer1-audit.md`, `developer2-audit.md`) y el Líder Técnico consolidó los tres informes en `docs/solid-audit/consolidated-audit.md`: 12 violaciones (V-01 a V-12), su responsable, los hallazgos de frontera y los descartados. Las respuestas a las preguntas orientadoras están en `docs/solid-analysis.md`.
+
+**Fase 2 — Corrección.** Cada corrección está en `docs/solid-refactor-log.md` con su commit, su principio y su responsable. Los diagramas antes/después están en `docs/solid-class-diagram.md`. Principales cambios de diseño:
+
+- **SRP:** los recibos y el certificado se arman en `SaleReceipt`, `ReturnReceipt` y `WarrantyCertificate`; las clases del dominio solo delegan. El balance mensual pasó a `MonthlyBalanceService`.
+- **OCP:** `ItemCatalog` ya no usa `instanceof`, pregunta a sus fuentes (`ItemSource`); los tipos de garantía están en `WarrantyKind`; el menú principal recorre una lista de `MenuOption` armada en `Main`, así que un módulo nuevo se agrega sin modificar `ConsoleMenu`.
+- **ISP:** cada servicio cliente ve solo lo que usa: `SaleLookup` para devoluciones; `PersonLookup`, `PromotionSelector` y `WarrantyAssigner` para el registro de ventas.
+- **DIP:** los servicios dependen de interfaces (`ProductStore`, `PersonStore`, `AccessoryStore`, `PromotionStore`, `ReturnStore`, `WarrantyStore`, `SaleStore`) que implementan los repositorios; `Main` sigue creando los mismos objetos.
+- **LSP:** se verificó que todas las subclases (productos, accesorios, promociones, garantías, personas y excepciones) se pueden usar donde se espera su clase base; no hubo que corregir nada.
+
+**No regresión.** El guion del Requerimiento 7 más dos consultas del certificado de garantía (316 entradas) recorre todas las operaciones del menú sobre una copia de los datos. El resultado normalizado (1730 líneas, incluidos los archivos de datos) es idéntico antes y después de la corrección.
 
 ## Requisitos previos
 
@@ -233,6 +253,14 @@ repositorio/
     ├── grasp-class-diagram.md
     ├── grasp-refactor-log.md
     ├── grasp-audit/
+    │   ├── leader-audit.md
+    │   ├── developer1-audit.md
+    │   ├── developer2-audit.md
+    │   └── consolidated-audit.md
+    ├── solid-analysis.md
+    ├── solid-class-diagram.md
+    ├── solid-refactor-log.md
+    ├── solid-audit/
     │   ├── leader-audit.md
     │   ├── developer1-audit.md
     │   ├── developer2-audit.md
