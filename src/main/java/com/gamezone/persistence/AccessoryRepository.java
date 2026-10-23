@@ -20,7 +20,7 @@ import java.util.List;
  * accessory types share a single file, so every row starts with a
  * discriminator that tells which type must be rebuilt when loading.
  */
-public class AccessoryRepository {
+public class AccessoryRepository implements AccessoryStore {
 
     private static final String DELIMITER = ";";
     private static final String LIST_SEPARATOR = "\\|";
@@ -42,6 +42,7 @@ public class AccessoryRepository {
      *
      * @param accessories list of accessories to persist
      */
+    @Override
     public void saveAll(List<Accessory> accessories) {
         try (PrintWriter writer = new PrintWriter(new FileWriter(filePath))) {
             for (Accessory accessory : accessories) {
@@ -58,6 +59,7 @@ public class AccessoryRepository {
      *
      * @return the list of accessories read from the file
      */
+    @Override
     public List<Accessory> loadAll() {
         List<Accessory> accessories = new ArrayList<>();
         File file = new File(filePath);
