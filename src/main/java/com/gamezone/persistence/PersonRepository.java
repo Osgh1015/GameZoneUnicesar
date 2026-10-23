@@ -27,7 +27,7 @@ import java.util.List;
  * Any problem reading or writing a file is reported as a
  * {@link PersistenceException} that names the file and the operation.
  */
-public class PersonRepository {
+public class PersonRepository implements PersonStore {
 
     private static final String DELIMITER = ";";
 
@@ -52,6 +52,7 @@ public class PersonRepository {
      * @param clients the clients to persist
      * @throws PersistenceException if the file cannot be written
      */
+    @Override
     public void saveClients(List<Client> clients) {
         try (PrintWriter writer = new PrintWriter(new FileWriter(clientsFile))) {
             for (Client c : clients) {
@@ -72,6 +73,7 @@ public class PersonRepository {
      * @throws PersistenceException if the file cannot be read or one of its
      *                              lines is corrupted
      */
+    @Override
     public List<Client> loadClients() {
         List<Client> clients = new ArrayList<>();
         File file = new File(clientsFile);
@@ -107,6 +109,7 @@ public class PersonRepository {
      * @throws PersistenceException if the file cannot be read or one of its
      *                              lines is corrupted
      */
+    @Override
     public List<Seller> loadVendors() {
         List<Seller> vendors = new ArrayList<>();
         File file = new File(vendorsFile);
