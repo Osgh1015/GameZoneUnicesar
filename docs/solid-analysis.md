@@ -26,7 +26,19 @@ Minimum evidence accepted in the consolidation for each verdict:
 
 ## Q2. Boundary findings
 
-*To be written by the Technical Lead.*
+*Written by the Technical Lead.*
+
+A boundary finding is a violation whose correction needs code of more than one role. We looked for them in two ways: every report fills the field "Other role's code involved" for each violation, and in the consolidation we checked every dependency that crosses from one role's class to another's (constructor parameters, fields and method calls between services, and the wiring in `Main`).
+
+The concrete cases found are dependencies of a service of one role on a concrete service of another role, of which the client uses only one or two operations:
+
+- **`SaleService` (Technical Lead) → `PromotionService` and `WarrantyService` (Developer 2).** The sale registration uses only `findBestPromotionFor` and `assignBasicWarranty`/`assignExtendedWarranty`, but it depends on the two complete concrete services (ISP and DIP). The client defines what it needs, so the Technical Lead creates the small interfaces in the service layer, Developer 2 makes `PromotionService` and `WarrantyService` implement them, and the Technical Lead changes `SaleService` to depend on them.
+- **`ReturnService` (Developer 2) → `SaleService` (Technical Lead).** The returns module uses only `findById` and `getSalesHistory` of `SaleService` (ISP and DIP). Developer 2 creates the read-only interface, the Technical Lead makes `SaleService` implement it, and Developer 2 changes `ReturnService` to depend on it.
+- **`ItemCatalog` (Developer 2) → `ProductService` (Developer 1) and `AccessoryService` (Developer 2).** `ItemCatalog` decides with `instanceof` which catalog owns an item (OCP) and depends on the concrete services (DIP). Developer 2 creates the abstraction of an item source and implements it in `AccessoryService`, Developer 1 implements it in `ProductService`, and Developer 2 makes `ItemCatalog` delegate to the sources.
+
+Each one is registered **once** in `consolidated-audit.md`, in the report of the role whose class holds the violation, with the part that touches another role's class written in its "Other role's code involved" field. The rules of the statement decide the split: the new abstraction is created by the owner of the violation, and every class is changed only by its owner.
+
+Two cases looked like boundary findings and were not: the services that depend on their concrete repository (DIP) are corrected completely by the owner of each service, because the repository is passed by `Main` as the same object and `Main` does not need to change; and the type tags of the repositories were judged correct for the reason given in Q1.
 
 ## Q3. Relation with the GRASP audit of Requerimiento 7
 
@@ -65,4 +77,17 @@ The evidence shown at the end is recorded in `docs/solid-refactor-log.md`: the c
 
 ## Q5. Order of the corrections and coordination
 
-*To be written by the Technical Lead.*
+*Written by the Technical Lead.*
+
+The order follows the dependencies between corrections, from the abstractions other corrections need to the classes that use them, and it keeps the same role order as Requerimiento 7:
+
+1. **Developer 1 — model and products first.** Moving the receipt and certificate layouts out of `Return` and `Warranty` and the abstraction of the product repository do not depend on anyone else's correction, and the other roles build on them.
+2. **Developer 2 — repositories and services of the extension modules.** It introduces the abstractions of its repositories, the item source used by `ItemCatalog`, the kinds of warranty and the read-only view of sales used by `ReturnService`. The parts that touch other roles' classes (`ProductService` implementing the item source and each warranty reporting its kind, by Developer 1; `SaleService` implementing the read-only view, by the Technical Lead) are done by their owners inside Developer 2's group.
+3. **Technical Lead — sales, user interface and `Main` last.** `SaleService`, `SaleAssembler`, `ConsoleMenu` and `Main` use the services of the other roles, so they are corrected when those services already have their final API. The interfaces that `SaleService` needs from `PromotionService` and `WarrantyService` are created by the Technical Lead and implemented by Developer 2 inside this group.
+
+Coordination rules on the shared branch `feature/solid-refactor`:
+
+- Only one task group works on the branch at a time. Each group starts with `git pull`, and it ends with the project compiling, its non-regression run and its Pull Request merged; only then does the next group start.
+- New interfaces are introduced as purely additive commits (nobody uses them yet), then the implementing class declares `implements`, and only then the client changes the type of its dependency. Every commit compiles.
+- When a change in one role's class would break another role's class, it is done in three steps: the owner adds the new code and keeps the old one `@Deprecated`; the owner of the other class adapts it inside the same task group; the owner removes the deprecated code.
+- Commits that correct a violation mention its definitive identifier, for example `refactor(service): ... (V-07)`, and each correction is logged in `docs/solid-refactor-log.md` by its author, including the boundary commits made by another role.
